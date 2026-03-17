@@ -3,7 +3,7 @@
 <jsp:useBean id="user" class="user.userBean" />
 <%
 Integer uids = (Integer) session.getAttribute("userId");
-
+ 
 // Check if session is null or expired
 if (uids == null) {
     response.setContentType("text/html");
