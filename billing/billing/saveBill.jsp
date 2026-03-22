@@ -28,6 +28,13 @@ try {
     if (customerIdStr != null && !customerIdStr.trim().isEmpty()) {
         customerId = Integer.parseInt(customerIdStr);
     }
+
+    // Get commission eligibility for new customer creation
+    int isEligibleForCommission = 0;
+    String isEligibleCommStr = request.getParameter("isEligibleForCommission");
+    if (isEligibleCommStr != null && !isEligibleCommStr.trim().isEmpty()) {
+        isEligibleForCommission = Integer.parseInt(isEligibleCommStr);
+    }
     
     // If customer name is provided and not "-", handle customer logic
     if (customerName != null && !customerName.equals("-") && !customerName.trim().isEmpty()) {
@@ -39,7 +46,7 @@ try {
                 customerId = existingCustomerId;
             } else {
                 // Insert new customer
-                prod.AddCustomer(customerName, "", customerPhn, "",0,0,0,50000);
+                prod.AddCustomer(customerName, "", customerPhn, "", 0, isEligibleForCommission);
                 customerId = prod.checkTheCustomerNameExist(customerName);
             }
         }
@@ -153,12 +160,13 @@ try {
         double discount = p.getDouble("discount");
         double total = p.getDouble("total");
         int batchId = p.getInt("batchId");
+        double commission = p.has("commission") ? p.getDouble("commission") : 0.0;
         
         // Get product GST, but set to 0 if not a tax bill
         int gst = isTaxBill == 1 ? bill.getProductGST(productId) : 0;
         
         double cost = bill.getProductCost(productId, batchId);
-        productList.add(new ProductItem(productId, qty, price, discount, total, gst, cost));
+        productList.add(new ProductItem(productId, qty, price, discount, total, gst, cost, commission));
     }
 
     String billDisplay = bill.saveBillItems(productList, customerName, finalDiscount, payableAmount, grandTotal, uid, priceTotal, discountTotal,customerPhn,totalPaid,cashPaid,bankPaid,mode,type,balance,customerId,priceCategory,attenderId,isTaxBill);

@@ -8,11 +8,10 @@ String custAddress = request.getParameter("custAddress");
 String custPhn  = request.getParameter("custPhn");
 String gstin   = request.getParameter("gstin");
 String isGstParam = request.getParameter("isGst");
+String isEligibleParam = request.getParameter("isEligibleForCommission");
 
 int isGst = (isGstParam != null && isGstParam.equals("1")) ? 1 : 0;
-int salesman = 0;
-int area = 0;
-double creditLimit = 0.0;
+int isEligibleForCommission = (isEligibleParam != null && isEligibleParam.equals("1")) ? 1 : 0;
 
 if (gstin == null) gstin = "";
 if (custAddress == null) custAddress = "";
@@ -26,7 +25,7 @@ try {
         return;
     }
 
-    prod.AddCustomer(custName, custAddress, custPhn, gstin, isGst, salesman, area, creditLimit);
+    prod.AddCustomer(custName, custAddress, custPhn, gstin, isGst, isEligibleForCommission);
     response.sendRedirect(request.getContextPath() + "/product/master/customer/page.jsp?msg=Customer+added+successfully!&type=success");
 
 } catch (Exception e) {

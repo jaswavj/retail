@@ -9,13 +9,21 @@ int catId = Integer.parseInt(request.getParameter("catId"));
 java.math.BigDecimal curStock = prod.getCurrentStock(catId);
 int proBatch = prod.getBatch(catId);
 
-// Get product unit information
+// Get product unit and conversion information
 Vector batchList = prod.getAllProductBatch(catId);
 String unitName = "";
+String convertionUnit = "";
+java.math.BigDecimal convertionCalculation = java.math.BigDecimal.ZERO;
 if (batchList.size() > 0) {
     Vector firstBatch = (Vector) batchList.get(0);
     if (firstBatch.size() > 6 && firstBatch.elementAt(6) != null) {
         unitName = firstBatch.elementAt(6).toString();
+    }
+    if (firstBatch.size() > 7 && firstBatch.elementAt(7) != null) {
+        convertionUnit = firstBatch.elementAt(7).toString();
+    }
+    if (firstBatch.size() > 8 && firstBatch.elementAt(8) != null) {
+        try { convertionCalculation = new java.math.BigDecimal(firstBatch.elementAt(8).toString()); } catch (Exception ex) {}
     }
 }
 
@@ -74,6 +82,7 @@ if(existingProdId == 0){
                     <input type="hidden" id="catId" name="catId" value="<%=catId%>">
                     <input type="hidden" id="curStock" name="curStock" value="<%=curStock%>">
                     <input type="hidden" id="proBatch" name="proBatch" value="<%=proBatch%>">
+                    <input type="hidden" id="convertionCalculation" name="convertionCalculation" value="<%=convertionCalculation%>">
 
                     <div class="col-md-3">
                         <label style="font-size: 0.85rem;">Product Name</label>
@@ -95,6 +104,13 @@ if(existingProdId == 0){
                     <div class="col-md-3">
                         <label id="quantityLabel" style="font-size: 0.85rem;">Quantity<%=unitName.isEmpty() ? "" : " (" + unitName + ")"%></label>
                         <input type="text" id="discValue" name="discValue" class="form-control" value="0.00" disabled required>
+                        <%
+                            if (convertionCalculation.compareTo(java.math.BigDecimal.ZERO) > 0 && !convertionUnit.isEmpty()) {
+                                java.math.BigDecimal displayStock = curStock.divide(convertionCalculation, 3, java.math.RoundingMode.HALF_UP);
+                        %>
+                        <small class="text-info d-block mt-1">Current stock: <%=displayStock.stripTrailingZeros().toPlainString()%> <%=convertionUnit%></small>
+                        <% } %>
+                        <small id="conversionNote" class="text-muted d-block mt-1"></small>
                     </div>
                     <div class="col-md-3">
                         <label style="font-size: 0.85rem;">Reason Category</label>
@@ -193,6 +209,21 @@ if(existingProdId == 0){
 </script>
 <script>
     const curStock = <%= curStock %>; // JSP variable to JS
+    const convertionCalculation = <%= convertionCalculation.compareTo(java.math.BigDecimal.ZERO) > 0 ? convertionCalculation : "0" %>;
+    const convertionUnit = "<%=convertionUnit.replace("\"","&quot;")%>";
+
+    document.getElementById('discValue').addEventListener('input', function () {
+        const note = document.getElementById('conversionNote');
+        if (convertionCalculation > 0 && convertionUnit) {
+            const qty = parseFloat(this.value);
+            if (!isNaN(qty) && qty > 0) {
+                const converted = (qty * convertionCalculation).toFixed(3);
+                note.textContent = 'Converted: ' + converted + ' ' + convertionUnit + ' (' + qty + ' x ' + convertionCalculation + ')';
+            } else {
+                note.textContent = '';
+            }
+        }
+    });
     //alert(curStock);
 </script>
 <script>

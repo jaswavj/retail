@@ -113,7 +113,7 @@
             <%= label %>
         </span>
     </td>
-    <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= row.get(5) %></td>  <!-- stock -->
+    <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= row.get(5) %><%=(row.size() > 11 && row.get(11) != null && !row.get(11).toString().isEmpty()) ? " " + row.get(11) : ""%></td>  <!-- stock -->
     <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= row.get(6) %></td>  <!-- date -->
     <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= row.get(7) %></td>  <!-- time -->
     <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= row.get(10) %></td> <!-- user_name -->

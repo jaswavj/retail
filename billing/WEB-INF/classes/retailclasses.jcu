@@ -53,17 +53,5 @@
 			<index>2</index>
 			<active>false</active>
 		</docitem>
-		<docitem>
-			<path>print\POSPrinter.java</path>
-			<source>true</source>
-			<index>3</index>
-			<active>false</active>
-		</docitem>
-		<docitem>
-			<path>print\BarcodePrinter.java</path>
-			<source>true</source>
-			<index>4</index>
-			<active>false</active>
-		</docitem>
 	</open_files>
 </workspace_user>

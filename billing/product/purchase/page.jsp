@@ -365,10 +365,10 @@
                 + "<td class='text-center'><button type='button' class='btn btn-sm btn-info' id='_historyBtn_" + proRowCount + "' onclick='viewPurchaseHistory(" + proRowCount + ");'><i class='fas fa-history'></i></button></td>"
                 + "<td><input type='text' class='form-control form-control-sm' id='_pack_" + proRowCount + "' name='_pack_" + proRowCount + "' value='" + itemData.pack + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
                 + "<td><input type='text' class='form-control form-control-sm' id='_qtyperpack_" + proRowCount + "' name='_qtyperpack_" + proRowCount + "' value='" + itemData.qtyperpack + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
-                + "<td><input type='text' class='form-control form-control-sm' id='_totqty_" + proRowCount + "' name='_totqty_" + proRowCount + "' value='0' readonly></td>"
+                + "<td><div class='d-flex flex-column'><div class='d-flex align-items-center gap-1'><input type='text' class='form-control form-control-sm' id='_totqty_" + proRowCount + "' name='_totqty_" + proRowCount + "' value='0' readonly><span class='text-muted small' id='_totunit_" + proRowCount + "'></span></div><small class='text-primary' id='_convtotqty_" + proRowCount + "'></small></div></td>"
                 + "<td><input type='text' class='form-control form-control-sm' id='_freeqty_" + proRowCount + "' name='_freeqty_" + proRowCount + "' value='" + itemData.free + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
-                + "<td><input type='text' class='form-control form-control-sm' id='_cost_" + proRowCount + "' name='_cost_" + proRowCount + "' value='" + itemData.cost + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
-                + "<td><input type='text' class='form-control form-control-sm' id='_mrp_" + proRowCount + "' name='_mrp_" + proRowCount + "' value='" + itemData.mrp + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
+                + "<td><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_cost_" + proRowCount + "' name='_cost_" + proRowCount + "' value='" + itemData.cost + "' onkeyup='calculateRow(" + proRowCount + ");'><small class='text-info' id='_costperconv_" + proRowCount + "'></small></div></td>"
+                + "<td><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_mrp_" + proRowCount + "' name='_mrp_" + proRowCount + "' value='" + itemData.mrp + "' onkeyup='calculateRow(" + proRowCount + ");'><small class='text-info' id='_mrpperconv_" + proRowCount + "'></small></div></td>"
                 + "<td><input type='text' class='form-control form-control-sm' id='_disc_" + proRowCount + "' name='_disc_" + proRowCount + "' value='" + itemData.disc + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
                 + "<td><input type='text' class='form-control form-control-sm' id='_tax_" + proRowCount + "' name='_tax_" + proRowCount + "' value='" + itemData.tax + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
                 + "<td><label id='_costtotal_" + proRowCount + "'>0.00</label></td>"
@@ -386,6 +386,33 @@
             
             // Calculate row totals
             calculateRow(proRowCount);
+            // Fetch conversion data for this PO item
+            fetchConversionData(proRowCount, itemData.name);
+        }
+
+        // Fetch conversion unit data for a pre-filled product row (PO items)
+        function fetchConversionData(rowIndex, productName) {
+            $.ajax({
+                type: "POST",
+                url: contextPath + "/product/purchase/details.jsp",
+                data: { status: 1, productName: productName },
+                success: function (_result) {
+                    var resArr = _result.trim().split("<#>");
+                    if (resArr.length > 1) {
+                        var unitName = (resArr.length > 10) ? resArr[10] : '';
+                        var convertionUnit = (resArr.length > 11) ? resArr[11].trim() : '';
+                        var convertionCalc = (resArr.length > 12) ? parseFloat(resArr[12]) || 1 : 1;
+                        $('#_productName_' + rowIndex).data('unitName', unitName);
+                        $('#_productName_' + rowIndex).data('convertionUnit', convertionUnit);
+                        $('#_productName_' + rowIndex).data('convertionCalc', convertionCalc);
+                        if (unitName) {
+                            $('#_qtyunit_' + rowIndex).text(unitName);
+                            $('#_totunit_' + rowIndex).text(unitName);
+                        }
+                        calculateRow(rowIndex);
+                    }
+                }
+            });
         }
     </script>
 </body>

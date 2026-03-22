@@ -727,7 +727,7 @@ public Vector getUnits() throws Exception
 		
 	Vector units = new Vector();
 
-	pt = con.prepareStatement("SELECT name,id FROM prod_units ORDER BY name");
+    pt = con.prepareStatement("SELECT name,id,convertion_unit,convertion_calculation FROM prod_units ORDER BY name");
 	rs =pt.executeQuery();
 	while(rs.next())
 		{
@@ -736,6 +736,8 @@ public Vector getUnits() throws Exception
 
 			vec.addElement(rs.getString(1) );
 			vec.addElement(rs.getString(2) );
+            vec.addElement(rs.getString(3) );
+            vec.addElement(rs.getBigDecimal(4) );
 			
 
 		units.addElement(vec);
@@ -963,7 +965,7 @@ public int checkTheProductNameExist(String name)throws Exception
         if (con != null) try { con.close(); } catch (Exception e) { }
     }
 }*/
-public void addProduct(String productName, int categoryId, int brandId, String code, double cost, double mrp, int discType, double discValue, BigDecimal stock,int uid,int gst, int unitId, String hsn) throws Exception {
+public void addProduct(String productName, int categoryId, int brandId, String code, double cost, double mrp, int discType, double discValue, BigDecimal stock,int uid,int gst, int unitId, String hsn, double commission) throws Exception {
     Connection con = null;
     PreparedStatement pt1 = null, pt2 = null, pt3 = null;
     ResultSet rs = null;
@@ -1006,7 +1008,7 @@ public void addProduct(String productName, int categoryId, int brandId, String c
 
         // Step 2: Insert into prod_batch
         String batchCode = "Z" + code;
-        String sql2 = "INSERT INTO `prod_batch` (NAME, product_id, cost, mrp, stock, disc_type, discount, DATE, TIME, added_stock,uid) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?,?)";
+        String sql2 = "INSERT INTO `prod_batch` (NAME, product_id, cost, mrp, stock, disc_type, discount, DATE, TIME, added_stock,uid,commission) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?,?,?)";
         pt2 = con.prepareStatement(sql2, Statement.RETURN_GENERATED_KEYS);
         pt2.setString(1, batchCode);
         pt2.setInt(2, prodId);
@@ -1017,6 +1019,7 @@ public void addProduct(String productName, int categoryId, int brandId, String c
         pt2.setDouble(7, discValue);
         pt2.setBigDecimal(8, stock);
         pt2.setInt(9, uid);
+        pt2.setDouble(10, commission);
 
         int rows2 = pt2.executeUpdate();
         if (rows2 <= 0) {
@@ -1071,11 +1074,12 @@ public Vector getAllProducts() throws Exception
 	pt = con.prepareStatement("SELECT a.`name`,a.`code`,b.`name`,c.`name`,d.`mrp`,CASE "
 							+"	WHEN d.disc_type = 1 THEN CONCAT(CAST(d.discount AS UNSIGNED), ' RS')  "
 							+"	WHEN d.disc_type = 2 THEN CONCAT(CAST(d.discount AS UNSIGNED), ' %') "
-							+"	ELSE 'No Discount' END AS discount_display,d.stock,d.added_stock,a.id,d.cost,d.disc_type,d.discount,a.gst,a.unit_id,a.hsn  "
+							+"	ELSE 'No Discount' END AS discount_display,d.stock,d.added_stock,a.id,d.cost,d.disc_type,d.discount,a.gst,a.unit_id,a.hsn,e.`name`,d.commission  "
 							+"	FROM `prod_product` a "
 							+"	JOIN `prod_category` b ON a.`category_id`=b.id "
 							+"	JOIN `prod_brands` c ON a.`brand_id`=c.id "
-							+"	JOIN `prod_batch` d ON a.id=d.`product_id` WHERE a.is_active=1 ORDER BY CAST(SUBSTRING(a.code, 2) AS UNSIGNED);");
+							+"	JOIN `prod_batch` d ON a.id=d.`product_id` "
+							+"	LEFT JOIN `prod_units` e ON a.unit_id=e.id WHERE a.is_active=1 ORDER BY CAST(SUBSTRING(a.code, 2) AS UNSIGNED);");
 
 	rs =pt.executeQuery();
 	while(rs.next())
@@ -1098,7 +1102,8 @@ public Vector getAllProducts() throws Exception
 			vec.addElement(rs.getString(13) );
 			vec.addElement(rs.getString(14) );  // unit_id
 			vec.addElement(rs.getString(15) );  // hsn
-			
+			vec.addElement(rs.getString(16) );  // unit name
+			vec.addElement(rs.getString(17) );  // commission
 
 		major.addElement(vec);
 
@@ -1379,7 +1384,7 @@ public Vector getAllProductBatch(int id)throws Exception
 			pt = con.prepareStatement("SELECT b.name,b.mrp,CASE "
 								      +"  WHEN b.disc_type = 1 THEN CONCAT(CAST(discount AS UNSIGNED), ' RS') "
 								      +"  WHEN b.disc_type = 2 THEN CONCAT(CAST(discount AS UNSIGNED), ' %') "
-								      +"  ELSE 'No Discount' END AS discount_display,b.id,b.stock,added_stock,IFNULL(u.name,'') AS unit_name "
+								      +"  ELSE 'No Discount' END AS discount_display,b.id,b.stock,added_stock,IFNULL(u.name,'') AS unit_name,IFNULL(u.convertion_unit,'') AS convertion_unit,IFNULL(u.convertion_calculation,0) AS convertion_calculation "
 							+"	FROM prod_batch b "
 							+"	LEFT JOIN prod_product p ON p.id = b.product_id "
 							+"	LEFT JOIN prod_units u ON u.id = p.unit_id "
@@ -1397,6 +1402,8 @@ public Vector getAllProductBatch(int id)throws Exception
 		vec1.addElement(rs.getString(5));
 		vec1.addElement(rs.getString(6));
 		vec1.addElement(rs.getString(7)); // unit_name
+		vec1.addElement(rs.getString(8)); // convertion_unit
+		vec1.addElement(rs.getString(9)); // convertion_calculation
 		vec.addElement(vec1);
 		}
 	return vec;
@@ -1517,7 +1524,7 @@ public void blockProduct(int id)throws Exception
 		}
 }*/
 public void editProduct(int productId, String newProduct, String proCode, int categoryId, int brandId,
-                        double mrp, double cost, double discValue, int discType, int gst, int uid, int unitId, String hsn) throws Exception {
+                        double mrp, double cost, double discValue, int discType, int gst, int uid, int unitId, String hsn, double commission) throws Exception {
     Connection con = null;
     PreparedStatement pt = null;
     ResultSet rs = null;
@@ -1571,13 +1578,14 @@ public void editProduct(int productId, String newProduct, String proCode, int ca
         rs.close();
         pt.close();
 
-        pt = con.prepareStatement("UPDATE prod_batch SET name = CONCAT('Z', ?), cost=?, mrp=?, disc_type=?, discount=? WHERE product_id=?");
+        pt = con.prepareStatement("UPDATE prod_batch SET name = CONCAT('Z', ?), cost=?, mrp=?, disc_type=?, discount=?, commission=? WHERE product_id=?");
         pt.setString(1, proCode);
         pt.setDouble(2, cost);
         pt.setDouble(3, mrp);
         pt.setInt(4, discType);
         pt.setDouble(5, discValue);
-        pt.setInt(6, productId);
+        pt.setDouble(6, commission);
+        pt.setInt(7, productId);
         pt.executeUpdate();
         pt.close();
 
@@ -2164,7 +2172,7 @@ finally
 //////////////////////////---------------------------
 // Customer Management Methods
 ///////////////////////////////--------------------------
-public void AddCustomer(String name,String custAddress,String custPhn,String gstin, int isGst, int salesman, int area, double creditLimit) throws Exception {
+public void AddCustomer(String name,String custAddress,String custPhn,String gstin, int isGst, int isEligibleForCommission) throws Exception {
     Connection con = null;
     PreparedStatement pt = null;
 
@@ -2172,16 +2180,14 @@ public void AddCustomer(String name,String custAddress,String custPhn,String gst
         con = util.DBConnectionManager.getConnectionFromPool();
         con.setAutoCommit(false); // IMPORTANT
 
-        String sql = "INSERT INTO customers(name, date, time, address, phone_number, gstin, is_gst, salesman, area, credit_limit) VALUES (?, NOW(), NOW(), ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO customers(name, date, time, address, phone_number, gstin, is_gst, is_eligible_for_commission) VALUES (?, NOW(), NOW(), ?, ?, ?, ?, ?)";
         pt = con.prepareStatement(sql);
         pt.setString(1, name);
 		pt.setString(2, custAddress);
 		pt.setString(3, custPhn);
 		pt.setString(4, gstin);
 		pt.setInt(5, isGst);
-		pt.setInt(6, salesman);
-		pt.setInt(7, area);
-		pt.setDouble(8, creditLimit);
+		pt.setInt(6, isEligibleForCommission);
 		
         int rows = pt.executeUpdate();
         if (rows > 0) {
@@ -2216,7 +2222,8 @@ public Vector getCustomerDetails() throws Exception
 	pt = con.prepareStatement("SELECT name,id, "
 							 +"   CASE WHEN address = '' OR address IS NULL THEN '-' ELSE address END AS address, "
 							+"    CASE WHEN phone_number = '' OR phone_number IS NULL THEN '-' ELSE phone_number END AS phone_number, "
-							+"    CASE WHEN gstin = '' OR gstin IS NULL THEN '-' ELSE gstin END AS gstin "
+							+"    CASE WHEN gstin = '' OR gstin IS NULL THEN '-' ELSE gstin END AS gstin, "
+							+"    COALESCE(is_gst, 0), COALESCE(is_eligible_for_commission, 0) "
 					+"		FROM customers "
 					+"		WHERE is_active = 1;");
 	rs =pt.executeQuery();
@@ -2230,6 +2237,8 @@ public Vector getCustomerDetails() throws Exception
 			vec.addElement(rs.getString(3) );
 			vec.addElement(rs.getString(4) );
 			vec.addElement(rs.getString(5) );
+			vec.addElement(rs.getString(6) );
+			vec.addElement(rs.getString(7) );
 			
 
 		major.addElement(vec);
@@ -2259,7 +2268,7 @@ finally
 		}
 }
 ///////////////////////////////--------------------------
-public void editCustomer(int id,String name,String custPhn,String custAddress,String gstin, int isGst, int salesman, int area, double creditLimit)throws Exception
+public void editCustomer(int id, String name, String custPhn, String custAddress, String gstin, int isGst, int isEligibleForCommission) throws Exception
 	{
 	Connection con 			= null;
 	PreparedStatement pt 	= null;
@@ -2267,16 +2276,14 @@ public void editCustomer(int id,String name,String custPhn,String custAddress,St
 	try
 		{
 		con						= util.DBConnectionManager.getConnectionFromPool();
-		pt=con.prepareStatement("UPDATE customers SET name=?, phone_number=?, address=?, gstin=?, is_gst=?, salesman=?, area=?, credit_limit=? WHERE id=?");
+		pt=con.prepareStatement("UPDATE customers SET name=?, phone_number=?, address=?, gstin=?, is_gst=?, is_eligible_for_commission=? WHERE id=?");
 		pt.setString(1,name);
 		pt.setString(2,custPhn);
 		pt.setString(3,custAddress);
 		pt.setString(4,gstin);
 		pt.setInt(5,isGst);
-		pt.setInt(6,salesman);
-		pt.setInt(7,area);
-		pt.setDouble(8,creditLimit);
-		pt.setInt(9,id);
+		pt.setInt(6,isEligibleForCommission);
+		pt.setInt(7,id);
 
 		pt.executeUpdate();
 		con.commit();
@@ -2428,6 +2435,33 @@ public int checkTheCustomerNameExist(String name,int id)throws Exception
 			}
 }
 /////////////////////////////////////////////////
+public Vector getCommissionCustomers() throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector major = new Vector();
+        pt = con.prepareStatement(
+            "SELECT id, name FROM customers " +
+            "WHERE is_active = 1 AND is_eligible_for_commission = 1 " +
+            "ORDER BY name"
+        );
+        rs = pt.executeQuery();
+        while (rs.next()) {
+            Vector vec = new Vector();
+            vec.addElement(rs.getInt(1));    // id
+            vec.addElement(rs.getString(2)); // name
+            major.addElement(vec);
+        }
+        return major;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) { }
+        if (pt != null) try { pt.close(); } catch (SQLException e) { }
+        if (con != null) try { con.close(); } catch (Exception e) { }
+    }
+}
+/////////////////////////////////////////////////
 public Vector searchCustomers(String query) throws Exception {
     Connection con = null;
     PreparedStatement pt = null;
@@ -2443,7 +2477,8 @@ public Vector searchCustomers(String query) throws Exception {
             "CASE WHEN address = '' OR address IS NULL THEN '-' ELSE address END AS address, " +
             "CASE WHEN gstin = '' OR gstin IS NULL THEN '-' ELSE gstin END AS gstin, " +
             "COALESCE(credit_limit, 0) AS credit_limit, " +
-            "COALESCE(is_gst, 0) AS is_gst " +
+            "COALESCE(is_gst, 0) AS is_gst, " +
+            "COALESCE(is_eligible_for_commission, 0) AS is_eligible_for_commission " +
             "FROM customers " +
             "WHERE is_active = 1 AND name LIKE ? " +
             "ORDER BY name LIMIT 10"
@@ -2460,6 +2495,7 @@ public Vector searchCustomers(String query) throws Exception {
             vec.addElement(rs.getString(5));   // gstin
             vec.addElement(rs.getDouble(6));   // credit_limit
             vec.addElement(rs.getInt(7));      // is_gst
+            vec.addElement(rs.getInt(8));      // is_eligible_for_commission
             major.addElement(vec);
         }
         
@@ -2610,7 +2646,7 @@ Vector major = new Vector();
 pt = con.prepareStatement("SELECT b.`name`,b.`code`,a.stock,FORMAT(a.`cost`,2),FORMAT(a.`mrp`,2),FORMAT(CASE "
 						+"	        WHEN disc_type = 1 THEN discount  "                
 						+"	        WHEN disc_type = 2 THEN ROUND(mrp * (discount/100), 2)  "
-						+"	        ELSE 0 END,2) AS discount_in_rs,a.discount,FORMAT(a.cost*a.stock,2) AS costTotal,FORMAT(a.mrp*a.stock,2) AS mrpTotal,IFNULL(u.name,'') AS unit_name,b.category_id,IFNULL(c.name,'') AS category_name "
+						+"	        ELSE 0 END,2) AS discount_in_rs,a.discount,FORMAT(a.cost*a.stock,2) AS costTotal,FORMAT(a.mrp*a.stock,2) AS mrpTotal,IFNULL(u.name,'') AS unit_name,b.category_id,IFNULL(c.name,'') AS category_name,IFNULL(u.convertion_unit,'') AS convertion_unit "
 						+"	FROM `prod_batch` a "
 						+"	JOIN `prod_product` b ON b.id=a.`product_id` "
 						+"	LEFT JOIN `prod_units` u ON u.id=b.`unit_id` "
@@ -2634,6 +2670,7 @@ while(rs.next())
 		vec.addElement(rs.getString(10) ); // unit_name
 		vec.addElement(rs.getString(11) ); // category_id
 		vec.addElement(rs.getString(12) ); // category_name
+		vec.addElement(rs.getString(13) ); // convertion_unit
 		vec.addElement(rs.getString(8) ); // cost total
 		vec.addElement(rs.getString(9) ); // mrp total
 		vec.addElement(rs.getString(10) ); // unit_name
@@ -2718,10 +2755,11 @@ public Vector getStockAdjReport(String from, String to, int productId, int stock
 
         String sql = "SELECT psa.id, psa.product_id, p.name AS product_name, psa.batch_id, " +
                      "psa.stockType, psa.stock, psa.date, psa.time, psa.notes, " +
-                     "psa.uid, u.user_name " +
+                     "psa.uid, u.user_name, IFNULL(pu.convertion_unit,'') AS convertion_unit " +
                      "FROM prod_stock_adjustment psa " +
                      "JOIN prod_product p ON psa.product_id = p.id " +
                      "JOIN users u ON psa.uid = u.id " +
+                     "LEFT JOIN prod_units pu ON pu.id = p.unit_id " +
                      "WHERE psa.date BETWEEN ? AND ? ";
 
         if (productId > 0) {
@@ -2761,6 +2799,7 @@ public Vector getStockAdjReport(String from, String to, int productId, int stock
             vec1.addElement(rs.getString(9));  // notes
             vec1.addElement(rs.getString(10)); // uid
             vec1.addElement(rs.getString(11)); // user_name
+            vec1.addElement(rs.getString(12)); // convertion_unit
 
             vec.addElement(vec1);
         }
@@ -3201,7 +3240,7 @@ public String getProductFullDetails(String productName) throws Exception
 		String Qry				= "";
 		
 
-		pt = con.prepareStatement("SELECT a.name AS prodsName,b.name AS catName,c.name AS brandName,d.name AS batchNo,d.cost,d.mrp,a.id AS prodsId,b.id AS catId,c.id AS brandId,d.id AS batchId,COALESCE(u.name,'') AS unitName FROM prod_product a JOIN prod_category b ON a.category_id=b.id JOIN prod_brands c ON a.brand_id=c.id JOIN prod_batch d ON a.id=d.product_id LEFT JOIN prod_units u ON u.id=a.unit_id WHERE a.name=?");
+		pt = con.prepareStatement("SELECT a.name AS prodsName,b.name AS catName,c.name AS brandName,d.name AS batchNo,d.cost,d.mrp,a.id AS prodsId,b.id AS catId,c.id AS brandId,d.id AS batchId,COALESCE(u.name,'') AS unitName,COALESCE(u.convertion_unit,'') AS convertion_unit,COALESCE(u.convertion_calculation,1) AS convertion_calculation FROM prod_product a JOIN prod_category b ON a.category_id=b.id JOIN prod_brands c ON a.brand_id=c.id JOIN prod_batch d ON a.id=d.product_id LEFT JOIN prod_units u ON u.id=a.unit_id WHERE a.name=?");
 		pt.setString(1,productName);									  
 		rs = pt.executeQuery();
 		if(rs.next())
@@ -3218,7 +3257,9 @@ public String getProductFullDetails(String productName) throws Exception
 			String batchId		= rs.getString(10);
 			String unitName		= rs.getString(11);
 								
-			productDetails		= prodName+"<#>"+catName+"<#>"+brandName+"<#>"+batchNo+"<#>"+cost+"<#>"+mrp+"<#>"+prodsId+"<#>"+catId+"<#>"+brandId+"<#>"+batchId+"<#>"+unitName+"<#>";
+			String convertionUnit	= rs.getString(12);
+			String convertionCalc	= rs.getString(13);
+			productDetails		= prodName+"<#>"+catName+"<#>"+brandName+"<#>"+batchNo+"<#>"+cost+"<#>"+mrp+"<#>"+prodsId+"<#>"+catId+"<#>"+brandId+"<#>"+batchId+"<#>"+unitName+"<#>"+convertionUnit+"<#>"+convertionCalc+"<#>";
 			}
 		else
 			productDetails		= "Invalid Input";
@@ -3789,6 +3830,8 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
                 double mrp = Double.parseDouble(fields[6]);
                 double disc = Double.parseDouble(fields[7]);
                 double tax = Double.parseDouble(fields[8]);
+                double convertionCalc = fields.length > 10 ? Double.parseDouble(fields[10]) : 1.0;
+                if (convertionCalc <= 0) convertionCalc = 1.0;
                 int purid = 0;
                 int prodsid = 0;
                 double totalamt = totQty * cost;
@@ -3836,7 +3879,9 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
                 pt.setDouble(21, unitmrp);
                 bill = pt.executeUpdate();
 
-                BigDecimal stock = BigDecimal.valueOf(totQty + freeQty);
+                BigDecimal stock = BigDecimal.valueOf((totQty + freeQty) * convertionCalc);
+                double convertedCost = convertionCalc > 1 ? cost / convertionCalc : cost;
+                double convertedMrp = convertionCalc > 1 ? mrp / convertionCalc : mrp;
                 String userNotes = "While Stock Added Through Purchase Entry";
                 
                 pt = con.prepareStatement("UPDATE prod_product SET gst=? WHERE id = ?");
@@ -3844,10 +3889,12 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
                 pt.setInt(2, prodsid);  // Product ID
                 pt.executeUpdate();
 
-                // Update stock in ph_batch table
-                pt = con.prepareStatement("UPDATE prod_batch SET stock = stock + ? WHERE product_id = ?");
-                pt.setBigDecimal(1, stock);  // Update stock
-                pt.setInt(2, prodsid);  // Product ID
+                // Update stock, cost and mrp in prod_batch
+                pt = con.prepareStatement("UPDATE prod_batch SET stock = stock + ?, cost = ?, mrp = ? WHERE product_id = ?");
+                pt.setBigDecimal(1, stock);  // Update stock (converted units)
+                pt.setDouble(2, convertedCost);  // Update cost per base unit
+                pt.setDouble(3, convertedMrp);  // Update mrp per base unit
+                pt.setInt(4, prodsid);  // Product ID
                 pt.executeUpdate();
 
                 int prodTotId = 0;
@@ -4142,6 +4189,8 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
                 double disc = Double.parseDouble(fields[7]);
                 double tax = Double.parseDouble(fields[8]);
                 int poDetailId = fields.length > 9 ? Integer.parseInt(fields[9]) : 0;
+                double convertionCalc = fields.length > 10 ? Double.parseDouble(fields[10]) : 1.0;
+                if (convertionCalc <= 0) convertionCalc = 1.0;
                 
                 int purid = 0;
                 int prodsid = 0;
@@ -4237,7 +4286,9 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
                     pt.close();
                 }
 
-                BigDecimal stock = BigDecimal.valueOf(totQty + freeQty);
+                BigDecimal stock = BigDecimal.valueOf((totQty + freeQty) * convertionCalc);
+                double convertedCost = convertionCalc > 1 ? cost / convertionCalc : cost;
+                double convertedMrp = convertionCalc > 1 ? mrp / convertionCalc : mrp;
                 String userNotes = "While Stock Added Through Purchase Entry";
                 
                 pt = con.prepareStatement("UPDATE prod_product SET gst=? WHERE id = ?");
@@ -4246,10 +4297,12 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
                 pt.executeUpdate();
                 pt.close();
 
-                // Update stock in ph_batch table
-                pt = con.prepareStatement("UPDATE prod_batch SET stock = stock + ? WHERE product_id = ?");
-                pt.setBigDecimal(1, stock);  // Update stock
-                pt.setInt(2, prodsid);  // Product ID
+                // Update stock, cost and mrp in prod_batch
+                pt = con.prepareStatement("UPDATE prod_batch SET stock = stock + ?, cost = ?, mrp = ? WHERE product_id = ?");
+                pt.setBigDecimal(1, stock);  // Update stock (converted units)
+                pt.setDouble(2, convertedCost);  // Update cost per base unit
+                pt.setDouble(3, convertedMrp);  // Update mrp per base unit
+                pt.setInt(4, prodsid);  // Product ID
                 pt.executeUpdate();
                 pt.close();
 
@@ -5381,14 +5434,25 @@ public Vector getCustomerById(int id) throws Exception {
 }
 
 // Units Management Methods
-public void addUnit(String name) throws Exception {
+public void addUnit(String name, String convertionUnit, BigDecimal convertionCalculation) throws Exception {
     Connection con = null;
     PreparedStatement pt = null;
     try {
         con = util.DBConnectionManager.getConnectionFromPool();
         con.setAutoCommit(false);
-        pt = con.prepareStatement("INSERT INTO prod_units(name, is_active) VALUES (?, 1)");
+        pt = con.prepareStatement("INSERT INTO prod_units(name, convertion_unit, convertion_calculation, is_active) VALUES (?, ?, ?, 1)");
         pt.setString(1, name);
+        if (convertionUnit != null && convertionUnit.trim().length() > 0) {
+            pt.setString(2, convertionUnit.trim());
+        } else {
+            pt.setNull(2, java.sql.Types.VARCHAR);
+        }
+
+        if (convertionCalculation != null) {
+            pt.setBigDecimal(3, convertionCalculation);
+        } else {
+            pt.setNull(3, java.sql.Types.DECIMAL);
+        }
         pt.executeUpdate();
         con.commit();
     } catch (Exception e) {
@@ -5407,12 +5471,14 @@ public Vector getUnitsList() throws Exception {
     Vector list = new Vector();
     try {
         con = util.DBConnectionManager.getConnectionFromPool();
-        pt = con.prepareStatement("SELECT id, name, is_active FROM prod_units ORDER BY name");
+        pt = con.prepareStatement("SELECT id, name, convertion_unit, convertion_calculation, is_active FROM prod_units ORDER BY name");
         rs = pt.executeQuery();
         while (rs.next()) {
             Vector row = new Vector();
             row.addElement(rs.getInt("id"));
             row.addElement(rs.getString("name"));
+            row.addElement(rs.getString("convertion_unit"));
+            row.addElement(rs.getBigDecimal("convertion_calculation"));
             row.addElement(rs.getInt("is_active"));
             list.addElement(row);
         }
@@ -5447,15 +5513,53 @@ public Vector getActiveUnitsList() throws Exception {
     }
 }
 
-public void updateUnit(int id, String name) throws Exception {
+public Vector getUnitById(int id) throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    Vector row = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        pt = con.prepareStatement("SELECT id, name, convertion_unit, convertion_calculation, is_active FROM prod_units WHERE id = ?");
+        pt.setInt(1, id);
+        rs = pt.executeQuery();
+        if (rs.next()) {
+            row.addElement(rs.getInt("id"));
+            row.addElement(rs.getString("name"));
+            row.addElement(rs.getString("convertion_unit"));
+            row.addElement(rs.getBigDecimal("convertion_calculation"));
+            row.addElement(rs.getInt("is_active"));
+        }
+        return row;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (pt != null) try { pt.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public void updateUnit(int id, String name, String convertionUnit, BigDecimal convertionCalculation) throws Exception {
     Connection con = null;
     PreparedStatement pt = null;
     try {
         con = util.DBConnectionManager.getConnectionFromPool();
         con.setAutoCommit(false);
-        pt = con.prepareStatement("UPDATE prod_units SET name = ? WHERE id = ?");
+        pt = con.prepareStatement("UPDATE prod_units SET name = ?, convertion_unit = ?, convertion_calculation = ? WHERE id = ?");
         pt.setString(1, name);
-        pt.setInt(2, id);
+
+        if (convertionUnit != null && convertionUnit.trim().length() > 0) {
+            pt.setString(2, convertionUnit.trim());
+        } else {
+            pt.setNull(2, java.sql.Types.VARCHAR);
+        }
+
+        if (convertionCalculation != null) {
+            pt.setBigDecimal(3, convertionCalculation);
+        } else {
+            pt.setNull(3, java.sql.Types.DECIMAL);
+        }
+
+        pt.setInt(4, id);
         pt.executeUpdate();
         con.commit();
     } catch (Exception e) {

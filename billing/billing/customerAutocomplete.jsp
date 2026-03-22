@@ -22,6 +22,7 @@
                 obj.put("gstin", customer.elementAt(4));
                 obj.put("creditLimit", customer.elementAt(5));
                 obj.put("isGst", customer.elementAt(6));
+                obj.put("isEligibleForCommission", customer.elementAt(7));
                 
                 results.put(obj);
             }

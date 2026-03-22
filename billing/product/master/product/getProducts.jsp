@@ -33,6 +33,21 @@
         JSONObject result = new JSONObject();
         JSONArray productsArray = new JSONArray();
         
+        // Build unit lookup map: unitId -> [unitName, convertionUnit]
+        HashMap<String, String[]> unitMap = new HashMap<String, String[]>();
+        Vector allUnits = prod.getUnits();
+        if (allUnits != null) {
+            for (int u = 0; u < allUnits.size(); u++) {
+                Vector uu = (Vector) allUnits.get(u);
+                if (uu != null && uu.size() > 1 && uu.elementAt(1) != null) {
+                    String uid = uu.elementAt(1).toString();
+                    String uname = uu.elementAt(0) != null ? uu.elementAt(0).toString() : "";
+                    String cUnit = (uu.size() > 2 && uu.elementAt(2) != null) ? uu.elementAt(2).toString() : "";
+                    unitMap.put(uid, new String[]{uname, cUnit});
+                }
+            }
+        }
+
         // Get all products
         Vector productList = prod.getAllProducts();
         
@@ -83,27 +98,23 @@
                 productObj.put("gst", Integer.parseInt(row.elementAt(12).toString()));
                 productObj.put("unitId", row.elementAt(13) != null ? row.elementAt(13).toString() : "");
                 productObj.put("hsn", row.elementAt(14) != null ? row.elementAt(14).toString() : "");
+                productObj.put("commission", row.size() > 16 && row.elementAt(16) != null ? Double.parseDouble(row.elementAt(16).toString()) : 0.0);
                 productObj.put("stock", row.elementAt(6) != null ? row.elementAt(6).toString() : "0");
                 
-                // Get unit name
+                // Get unit name and conversion unit from pre-built map
                 String unitName = "";
+                String convertionUnit = "";
+                String unitIdStr = row.elementAt(13) != null ? row.elementAt(13).toString() : "";
                 if (row.size() > 15 && row.elementAt(15) != null) {
                     unitName = row.elementAt(15).toString();
-                } else if (row.elementAt(13) != null) {
-                    // Fallback: try to get unit name from unitId
-                    String unitId = row.elementAt(13).toString();
-                    Vector units = prod.getUnits();
-                    if (units != null) {
-                        for (int j = 0; j < units.size(); j++) {
-                            Vector unit = (Vector) units.get(j);
-                            if (unit != null && unit.elementAt(1) != null && unit.elementAt(1).toString().equals(unitId)) {
-                                unitName = unit.elementAt(0) != null ? unit.elementAt(0).toString() : "";
-                                break;
-                            }
-                        }
-                    }
+                }
+                if (!unitIdStr.isEmpty() && unitMap.containsKey(unitIdStr)) {
+                    String[] unitInfo = unitMap.get(unitIdStr);
+                    if (unitName.isEmpty()) unitName = unitInfo[0];
+                    convertionUnit = unitInfo[1];
                 }
                 productObj.put("unit", unitName);
+                productObj.put("convertionUnit", convertionUnit);
                 
                 productsArray.put(productObj);
             }

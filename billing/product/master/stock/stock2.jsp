@@ -17,6 +17,17 @@ int proBatch = Integer.parseInt(request.getParameter("proBatch"));
 int discType = Integer.parseInt(request.getParameter("discType"));
 BigDecimal discValue = new BigDecimal(request.getParameter("discValue"));
 
+// Convert quantity if unit has a conversion calculation
+String convertionCalcStr = request.getParameter("convertionCalculation");
+if (convertionCalcStr != null && !convertionCalcStr.trim().isEmpty()) {
+    try {
+        BigDecimal convertionCalc = new BigDecimal(convertionCalcStr.trim());
+        if (convertionCalc.compareTo(BigDecimal.ZERO) > 0) {
+            discValue = discValue.multiply(convertionCalc);
+        }
+    } catch (NumberFormatException e) { /* ignore */ }
+}
+
 // Append reason category to reason for Damage and Internal Use
 String fullReason = reason;
 if((discType == 3 || discType == 4) && !reasonCategory.isEmpty()) {

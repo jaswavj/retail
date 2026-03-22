@@ -193,6 +193,11 @@ function getProductDetails(str, str1) {
                     $('#_qtyunit_' + str).text('');
                     $('#_totunit_' + str).text('');
                 }
+                // Store conversion data
+                var convertionUnit = (resArr.length > 11) ? resArr[11].trim() : '';
+                var convertionCalc = (resArr.length > 12) ? parseFloat(resArr[12]) || 1 : 1;
+                $('#_productName_' + str).data('convertionUnit', convertionUnit);
+                $('#_productName_' + str).data('convertionCalc', convertionCalc);
             }
         }
     });
@@ -240,10 +245,10 @@ function addProductRow(event, str) {
             + "<td class='text-center'><button type='button' class='btn btn-sm btn-danger' id='_delProcRow_" + proRowCount + "' name='_delProcRow_" + proRowCount + "' onclick='deleteProductRow(this);'><i class='fas fa-trash'></i></button></td>"
             + "<td ><input type='text' class='form-control form-control-sm' id='_productName_" + proRowCount + "' name='_productName_" + proRowCount + "' placeholder='Product' onfocus='autoComplete(event," + proRowCount + ",1);' onblur='getProductDetails(" + proRowCount + ",1);calculateRow(" + proRowCount + ");enableAddButton(" + proRowCount + ");'></td>"            + "<td class='text-center'><button type='button' class='btn btn-sm btn-info' id='_historyBtn_" + proRowCount + "' onclick='viewPurchaseHistory(" + proRowCount + ");'><i class='fas fa-history'></i></button></td>"            + "<td ><input type='text' class='form-control form-control-sm' id='_pack_" + proRowCount + "' name='_pack_" + proRowCount + "' placeholder='0' onkeyup='calculateRow(" + proRowCount + ");'></td>"
             + "<td ><div class='d-flex align-items-center gap-1'><input type='text' class='form-control form-control-sm' id='_qtyperpack_" + proRowCount + "' name='_qtyperpack_" + proRowCount + "' placeholder='0' onkeyup='calculateRow(" + proRowCount + ");'><span class='text-muted small' id='_qtyunit_" + proRowCount + "'></span></div></td>"
-            + "<td ><div class='d-flex align-items-center gap-1'><input type='text' class='form-control form-control-sm' id='_totqty_" + proRowCount + "' name='_totqty_" + proRowCount + "' placeholder='qty' value='0' readonly><span class='text-muted small' id='_totunit_" + proRowCount + "'></span></div></td>"
+            + "<td ><div class='d-flex flex-column'><div class='d-flex align-items-center gap-1'><input type='text' class='form-control form-control-sm' id='_totqty_" + proRowCount + "' name='_totqty_" + proRowCount + "' placeholder='qty' value='0' readonly><span class='text-muted small' id='_totunit_" + proRowCount + "'></span></div><small class='text-primary' id='_convtotqty_" + proRowCount + "'></small></div></td>"
             + "<td ><input type='text' class='form-control form-control-sm' id='_freeqty_" + proRowCount + "' name='_freeqty_" + proRowCount + "' placeholder='Color' value='0' onkeyup='calculateRow(" + proRowCount + ");'></td>"
-            + "<td ><input type='text' class='form-control form-control-sm' id='_cost_" + proRowCount + "' name='_cost_" + proRowCount + "' placeholder='Cost' value='0.00' onkeyup='calculateRow(" + proRowCount + ");'></td>"
-            + "<td ><input type='text' class='form-control form-control-sm' id='_mrp_" + proRowCount + "' name='_mrp_" + proRowCount + "' placeholder='Mrp' value='0.00' onkeyup='calculateRow(" + proRowCount + ");'></td>"
+            + "<td ><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_cost_" + proRowCount + "' name='_cost_" + proRowCount + "' placeholder='Cost' value='0.00' onkeyup='calculateRow(" + proRowCount + ");'><small class='text-info' id='_costperconv_" + proRowCount + "'></small></div></td>"
+            + "<td ><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_mrp_" + proRowCount + "' name='_mrp_" + proRowCount + "' placeholder='Mrp' value='0.00' onkeyup='calculateRow(" + proRowCount + ");'><small class='text-info' id='_mrpperconv_" + proRowCount + "'></small></div></td>"
             + "<td ><input type='text' class='form-control form-control-sm' id='_disc_" + proRowCount + "' name='_disc_" + proRowCount + "' placeholder='Disc' value='0' onkeyup='calculateRow(" + proRowCount + ");'></td>"
             + "<td ><input type='text' class='form-control form-control-sm' id='_tax_" + proRowCount + "' name='_tax_" + proRowCount + "' placeholder='Tax' value='0' onkeyup='calculateRow(" + proRowCount + ");'></td>"
             + "<td ><label id='_costtotal_" + proRowCount + "' name='costtotal" + proRowCount + "'>0.00</label></td>"
@@ -351,6 +356,20 @@ function calculateRow(rowIndex) {
     $('#_taxtotal_' + rowIndex).text(taxAmt.toFixed(3));
     $('#_nettotal_' + rowIndex).text(netTotal.toFixed(3));
     $('#_unitcost_' + rowIndex).text(unitPrice.toFixed(3));
+
+    // Conversion unit display
+    var convertionUnit = $('#_productName_' + rowIndex).data('convertionUnit') || '';
+    var convertionCalc = parseFloat($('#_productName_' + rowIndex).data('convertionCalc')) || 1;
+    if (convertionUnit && convertionCalc > 1) {
+        var convQty = qty * convertionCalc;
+        $('#_convtotqty_' + rowIndex).text('= ' + convQty.toFixed(2) + ' ' + convertionUnit);
+        $('#_costperconv_' + rowIndex).text('/' + convertionUnit + ':' + (cost / convertionCalc).toFixed(3));
+        $('#_mrpperconv_' + rowIndex).text('/' + convertionUnit + ':' + (mrp / convertionCalc).toFixed(3));
+    } else {
+        $('#_convtotqty_' + rowIndex).text('');
+        $('#_costperconv_' + rowIndex).text('');
+        $('#_mrpperconv_' + rowIndex).text('');
+    }
 
     // Recalculate grand total
     calculateGrandTotal();
@@ -612,7 +631,8 @@ function proceedWithPurchaseSave() {
                 }
 
                 // Add product to array
-                prodArr += _productName + '<#>' + _pack + '<#>' + _qtyperpack + '<#>' + _totqty + '<#>' + _freeqty + '<#>' + _cost + '<#>' + _mrp + '<#>' + _disc + '<#>' + _tax + '<#>' + _poDetailId + '<@>';
+                var _convertionCalc = parseFloat($('#_productName_' + i).data('convertionCalc')) || 1;
+                prodArr += _productName + '<#>' + _pack + '<#>' + _qtyperpack + '<#>' + _totqty + '<#>' + _freeqty + '<#>' + _cost + '<#>' + _mrp + '<#>' + _disc + '<#>' + _tax + '<#>' + _poDetailId + '<#>' + _convertionCalc + '<@>';
             }
         }
         

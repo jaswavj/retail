@@ -107,9 +107,9 @@
         <tr>
             <td><%=i+1%></td>
             <td ><%=row.elementAt(0)%></td>
-            <td <%=color%>><%=row.elementAt(1)%> <%=row.size() > 8 && row.elementAt(8) != null ? row.elementAt(8) : ""%></td>
-            <td <%=colors%>><%=row.elementAt(2)%> <%=row.size() > 8 && row.elementAt(8) != null ? row.elementAt(8) : ""%></td>
-            <td><%=row.elementAt(3)%> <%=row.size() > 8 && row.elementAt(8) != null ? row.elementAt(8) : ""%></td>
+            <td <%=color%>><%=row.elementAt(1)%> <%=(row.size() > 9 && row.elementAt(9) != null && !row.elementAt(9).toString().isEmpty()) ? row.elementAt(9) : (row.size() > 8 && row.elementAt(8) != null ? row.elementAt(8) : "")%></td>
+            <td <%=colors%>><%=row.elementAt(2)%> <%=(row.size() > 9 && row.elementAt(9) != null && !row.elementAt(9).toString().isEmpty()) ? row.elementAt(9) : (row.size() > 8 && row.elementAt(8) != null ? row.elementAt(8) : "")%></td>
+            <td><%=row.elementAt(3)%> <%=(row.size() > 9 && row.elementAt(9) != null && !row.elementAt(9).toString().isEmpty()) ? row.elementAt(9) : (row.size() > 8 && row.elementAt(8) != null ? row.elementAt(8) : "")%></td>
             <td><%=row.elementAt(4)%></td>
             <td><%=row.elementAt(5)%></td>
             <td <%=adjColors%> ><%=adjText%></td> <!-- Adjustment type -->

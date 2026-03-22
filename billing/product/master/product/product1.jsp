@@ -19,6 +19,12 @@ double cost = Double.parseDouble(request.getParameter("cost"));
 double mrp = Double.parseDouble(request.getParameter("mrp"));
 int gst = Integer.parseInt(request.getParameter("gst"));
 
+String commissionParam = request.getParameter("commission");
+double commission = 0.0;
+if (commissionParam != null && !commissionParam.trim().isEmpty()) {
+    try { commission = Double.parseDouble(commissionParam); } catch (NumberFormatException e) { commission = 0.0; }
+}
+
 int discType = Integer.parseInt(request.getParameter("discType"));
 String discParam = request.getParameter("discValue");
 double discValue = 0.00;
@@ -32,6 +38,19 @@ if (discParam != null && !discParam.trim().isEmpty()) {
 }
 
 BigDecimal stock = new BigDecimal(request.getParameter("stock"));
+
+// Convert stock, cost, mrp, and commission when unit has conversion setup.
+Vector selectedUnit = prod.getUnitById(unitId);
+if (selectedUnit != null && selectedUnit.size() > 3 && selectedUnit.elementAt(3) != null) {
+    BigDecimal convertionCalculation = (BigDecimal) selectedUnit.elementAt(3);
+    if (convertionCalculation.compareTo(BigDecimal.ZERO) > 0) {
+        stock = stock.multiply(convertionCalculation);
+        BigDecimal calcBD = convertionCalculation;
+        cost = new BigDecimal(cost).divide(calcBD, 6, java.math.RoundingMode.HALF_UP).doubleValue();
+        mrp = new BigDecimal(mrp).divide(calcBD, 6, java.math.RoundingMode.HALF_UP).doubleValue();
+        commission = new BigDecimal(commission).divide(calcBD, 6, java.math.RoundingMode.HALF_UP).doubleValue();
+    }
+}
 
 try {
     int existingProdId = prod.checkTheProductNameExist(productName);
@@ -60,7 +79,8 @@ try {
         userId,
         gst,
         unitId,
-        hsn
+        hsn,
+        commission
     );
 
     response.sendRedirect(request.getContextPath() + "/product/master/product/product.jsp?msg=Product+added+successfully!&type=success");

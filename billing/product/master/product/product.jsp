@@ -132,9 +132,11 @@ String type = request.getParameter("type"); // success / warning / danger / info
                                                 if (unit != null && unit.elementAt(0) != null && unit.elementAt(1) != null) {
                                                     String unitName = unit.elementAt(0).toString();
                                                     String unitId = unit.elementAt(1).toString();
+                                                    String convertionUnit = (unit.size() > 2 && unit.elementAt(2) != null) ? unit.elementAt(2).toString() : "";
+                                                    String convertionCalculation = (unit.size() > 3 && unit.elementAt(3) != null) ? unit.elementAt(3).toString() : "";
                                                     String selected = (unitName.equalsIgnoreCase("Nos") || unitName.equalsIgnoreCase("NOS") || unitName.equalsIgnoreCase("PCS")) ? "selected" : "";
                                     %>
-                                        <option value="<%=unitId%>" <%=selected%>><%=unitName%></option>
+                                        <option value="<%=unitId%>" data-convertion-unit="<%=convertionUnit%>" data-convertion-calculation="<%=convertionCalculation%>" <%=selected%>><%=unitName%></option>
                                     <%      }
                                             }
                                         }
@@ -143,17 +145,23 @@ String type = request.getParameter("type"); // success / warning / danger / info
                             </div>
                             
                             <div class="col-md-6 ">
-                                <label style="font-size: 0.85rem;">Stock</label><input type="number" name="stock" class="form-control" placeholder="" style="padding: 7px 10px; font-size: 0.9rem;" min="0" step="0.01" value="0" required>
+                                <label style="font-size: 0.85rem;">Stock</label><input type="number" name="stock" id="stockInput" class="form-control" placeholder="" style="padding: 7px 10px; font-size: 0.9rem;" min="0" step="0.01" value="0" required>
+                                <small id="stockConversionNote" class="text-muted d-block mt-1"></small>
                             </div>
                             
                             <div class="col-md-6 ">
-                                <label id="costPriceLabel" style="font-size: 0.85rem;">Cost Price <span style="color:red">*</span></label><input type="number" step="0.001" name="cost" class="form-control" placeholder=" " style="padding: 7px 10px; font-size: 0.9rem;" required>
+                                <label id="costPriceLabel" style="font-size: 0.85rem;">Cost Price <span style="color:red">*</span></label><input type="number" step="0.001" name="cost" id="costInput" class="form-control" placeholder=" " style="padding: 7px 10px; font-size: 0.9rem;" required>
+                                <small id="costConversionNote" class="text-muted d-block mt-1"></small>
                             </div>
                             <div class="col-md-6 ">
-                                <label id="mrpLabel" style="font-size: 0.85rem;">MRP <span style="color:red">*</span></label><input type="number" step="0.001" name="mrp" class="form-control" placeholder=" " style="padding: 7px 10px; font-size: 0.9rem;" required>
+                                <label id="mrpLabel" style="font-size: 0.85rem;">MRP <span style="color:red">*</span></label><input type="number" step="0.001" name="mrp" id="mrpInput" class="form-control" placeholder=" " style="padding: 7px 10px; font-size: 0.9rem;" required>
+                                <small id="mrpConversionNote" class="text-muted d-block mt-1"></small>
                             </div>
-                            
-                            <div class="col-md-6">
+                            <div class="col-md-6 ">
+                                <label style="font-size: 0.85rem;">Commission (Rs)</label><input type="number" step="0.01" name="commission" id="commissionInput" class="form-control" placeholder="0.00" style="padding: 7px 10px; font-size: 0.9rem;" value="0.00">
+                                <small id="commissionConversionNote" class="text-muted d-block mt-1"></small>
+                            </div>
+                            <div class="col-md-6 ">
                                 <label style="font-size: 0.85rem;">Discount Type</label>
                                 <select class="form-select" id="discType" name="discType" onchange="handleDiscTypeChange(this)" style="padding: 7px 10px; font-size: 0.9rem;" required>
                                     <option value="0">Select Type</option>
@@ -192,31 +200,32 @@ String type = request.getParameter("type"); // success / warning / danger / info
             <!-- Right Column - Product List Table -->
             <div class="col-md-7">
                 <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07); border-radius: 8px;">
-                    <div class="card-header" style="background: white; border-bottom: 1px solid #f7fafc; border-radius: 8px 8px 0 0; padding: 0.5rem 0.75rem;">
+                    <div class="card-header" style="background: white; border-bottom: 1px solid #f7fafc; border-radius: 8px 8px 0 0; padding: 0.75rem 1rem;">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0" style="color: #2d3748; font-weight: 600; font-size: 0.85rem;"><i class="fas fa-list me-1"></i><%=head3%> List</h6>
-                            <div class="input-group" style="width: 250px;">
-                                <span class="input-group-text" style="background: #f8f9fa; border: 1px solid #dee2e6; padding: 0.25rem 0.5rem;"><i class="fas fa-search" style="font-size: 0.75rem;"></i></span>
-                                <input type="text" id="productSearch" class="form-control" placeholder="Search..." style="border-left: none; font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                            <h6 class="mb-0" style="color: #2d3748; font-weight: 600; font-size: 0.95rem;"><i class="fas fa-list me-2"></i><%=head3%> List</h6>
+                            <div class="input-group" style="width: 300px;">
+                                <span class="input-group-text" style="background: #f8f9fa; border: 1px solid #dee2e6;"><i class="fas fa-search"></i></span>
+                                <input type="text" id="productSearch" class="form-control" placeholder="Search products..." style="border-left: none; font-size: 0.85rem;">
                             </div>
                         </div>
                     </div>
-                    <div class="card-body" style="padding: 0; max-height: 400px; overflow-y: auto; overflow-x: auto;">
+                    <div class="card-body" style="padding: 0; max-height: 380px; overflow-y: auto; overflow-x: auto;">
                         <div class="table-responsive">
-                        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; font-size: 0.8rem; table-layout: fixed; width: 100%; min-width: 600px;">
+                        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; font-size: 0.85rem; table-layout: fixed; width: 100%; min-width: 600px;">
                             <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); position: sticky; top: 0; z-index: 10;">
                                 <tr>
-                                    <th style="padding: 0.3rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.75rem; width: 5%;">#</th>
-                                    <th style="padding: 0.3rem; font-weight: 600; color: #4a5568; text-align: center; border: none; font-size: 0.75rem; width: 8%;">Action</th>
-                                    <th style="padding: 0.3rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.75rem; width: 25%;">Name</th>
-                                    <th style="padding: 0.3rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.75rem; width: 12%;">Code</th>
-                                    <th style="padding: 0.3rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.75rem; width: 20%;"><%=head1%></th>
-                                    <th style="padding: 0.3rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.75rem; width: 15%;">MRP</th>
+                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 5%;">#</th>
+                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; text-align: center; border: none; font-size: 0.8rem; width: 10%;">Action</th>
+                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 18%;">Name</th>
+                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 10%;">Code</th>
+                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 12%;"><%=head1%></th>
+                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 10%;">MRP</th>
+                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 10%;">Stock</th>
                                 </tr>
                             </thead>
                             <tbody id="productTableBody">
                                 <tr>
-                                    <td colspan="6" class="text-center" style="padding: 2rem;">
+                                    <td colspan="7" class="text-center" style="padding: 2rem;">
                                         <div class="spinner-border text-primary" role="status">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
@@ -226,13 +235,13 @@ String type = request.getParameter("type"); // success / warning / danger / info
                         </table>
                         </div>
                     </div>
-                    <div class="card-footer" style="background: white; border-top: 1px solid #f7fafc; padding: 0.5rem 0.75rem;">
+                    <div class="card-footer" style="background: white; border-top: 1px solid #f7fafc; padding: 0.75rem 1rem;">
                         <div class="d-flex justify-content-between align-items-center">
-                            <div id="productInfo" style="font-size: 0.75rem; color: #718096;">
+                            <div id="productInfo" style="font-size: 0.85rem; color: #718096;">
                                 Loading...
                             </div>
                             <nav>
-                                <ul class="pagination pagination-sm mb-0" id="pagination" style="font-size: 0.75rem;">
+                                <ul class="pagination pagination-sm mb-0" id="pagination" style="font-size: 0.8rem;">
                                     <!-- Pagination buttons will be inserted here -->
                                 </ul>
                             </nav>
@@ -247,6 +256,90 @@ String type = request.getParameter("type"); // success / warning / danger / info
 
     <script>
     const contextPath = '<%=contextPath%>';
+
+    function updateStockConversionNote() {
+        const unitSelect = document.getElementById('unitSelect');
+        const stockInput = document.getElementById('stockInput');
+        const note = document.getElementById('stockConversionNote');
+        if (!unitSelect || !stockInput || !note) return;
+
+        const selectedOption = unitSelect.options[unitSelect.selectedIndex];
+        if (!selectedOption || unitSelect.value === '') {
+            note.textContent = '';
+            return;
+        }
+
+        const baseUnitName = selectedOption.text || '';
+        const convertionUnit = selectedOption.getAttribute('data-convertion-unit') || '';
+        const convertionCalculation = parseFloat(selectedOption.getAttribute('data-convertion-calculation') || '0');
+        const stockValue = parseFloat(stockInput.value || '0');
+
+        if (convertionUnit.trim() === '' || isNaN(convertionCalculation) || convertionCalculation <= 0) {
+            note.textContent = '';
+            return;
+        }
+
+        if (!isNaN(stockValue) && stockValue > 0) {
+            const convertedStock = stockValue * convertionCalculation;
+            note.textContent = 'Converted: ' + convertedStock.toFixed(3) + ' ' + convertionUnit + ' (' + stockValue + ' x ' + convertionCalculation + ')';
+        } else {
+            note.textContent = 'Enter stock: how many ' + convertionUnit + ' per ' + baseUnitName + '.';
+        }
+    }
+
+    function updateConvertedPriceNotes() {
+        const unitSelect = document.getElementById('unitSelect');
+        const costInput = document.getElementById('costInput');
+        const mrpInput = document.getElementById('mrpInput');
+        const commissionInput = document.getElementById('commissionInput');
+        const costNote = document.getElementById('costConversionNote');
+        const mrpNote = document.getElementById('mrpConversionNote');
+        const commissionNote = document.getElementById('commissionConversionNote');
+        if (!unitSelect || !costInput || !mrpInput || !commissionInput || !costNote || !mrpNote || !commissionNote) return;
+
+        const selectedOption = unitSelect.options[unitSelect.selectedIndex];
+        if (!selectedOption || unitSelect.value === '') {
+            costNote.textContent = '';
+            mrpNote.textContent = '';
+            commissionNote.textContent = '';
+            return;
+        }
+
+        const convertionUnit = selectedOption.getAttribute('data-convertion-unit') || '';
+        const convertionCalculation = parseFloat(selectedOption.getAttribute('data-convertion-calculation') || '0');
+        const costValue = parseFloat(costInput.value || '0');
+        const mrpValue = parseFloat(mrpInput.value || '0');
+        const commissionValue = parseFloat(commissionInput.value || '0');
+
+        if (convertionUnit.trim() === '' || isNaN(convertionCalculation) || convertionCalculation <= 0) {
+            costNote.textContent = '';
+            mrpNote.textContent = '';
+            commissionNote.textContent = '';
+            return;
+        }
+
+        if (!isNaN(costValue) && costValue > 0) {
+            const convertedCost = costValue / convertionCalculation;
+            costNote.textContent = 'Converted Cost per ' + convertionUnit + ': ' + convertedCost.toFixed(3);
+        } else {
+            costNote.textContent = '';
+        }
+
+        if (!isNaN(mrpValue) && mrpValue > 0) {
+            const convertedMrp = mrpValue / convertionCalculation;
+            mrpNote.textContent = 'Converted MRP per ' + convertionUnit + ': ' + convertedMrp.toFixed(3);
+        } else {
+            mrpNote.textContent = '';
+        }
+
+        if (!isNaN(commissionValue) && commissionValue > 0) {
+            const convertedCommission = commissionValue / convertionCalculation;
+            commissionNote.textContent = 'Converted Commission per ' + convertionUnit + ': ' + convertedCommission.toFixed(3);
+        } else {
+            commissionNote.textContent = '';
+        }
+    }
+
     function handleUnitChange(select) {
         const selectedText = select.options[select.selectedIndex].text;
         const costPriceLabel = document.getElementById('costPriceLabel');
@@ -262,6 +355,9 @@ String type = request.getParameter("type"); // success / warning / danger / info
             mrpLabel.textContent = "MRP per " + selectedText;
             discountLabel.textContent = "Discount per " + selectedText;
         }
+
+        updateStockConversionNote();
+        updateConvertedPriceNotes();
     }
     
     function handleDiscTypeChange(select) {
@@ -288,7 +384,7 @@ String type = request.getParameter("type"); // success / warning / danger / info
         const tbody = document.getElementById('productTableBody');
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center" style="padding: 2rem;">
+                <td colspan="7" class="text-center" style="padding: 2rem;">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -305,7 +401,7 @@ String type = request.getParameter("type"); // success / warning / danger / info
                 } else {
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="6" class="text-center text-danger" style="padding: 2rem;">
+                            <td colspan="7" class="text-center text-danger" style="padding: 2rem;">
                                 Error: ${data.error || 'Failed to load products'}
                             </td>
                         </tr>
@@ -316,7 +412,7 @@ String type = request.getParameter("type"); // success / warning / danger / info
                 console.error('Error loading products:', error);
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center text-danger" style="padding: 2rem;">
+                        <td colspan="7" class="text-center text-danger" style="padding: 2rem;">
                             Error loading products. Please try again.
                         </td>
                     </tr>
@@ -331,7 +427,7 @@ String type = request.getParameter("type"); // success / warning / danger / info
         if (data.products.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center" style="padding: 2rem; color: #718096;">
+                    <td colspan="7" class="text-center" style="padding: 2rem; color: #718096;">
                         <i class="fas fa-inbox fa-3x mb-3" style="opacity: 0.3;"></i>
                         <p class="mb-0">No products found. ${currentSearch ? 'Try a different search term.' : 'Add your first product above.'}</p>
                     </td>
@@ -346,15 +442,16 @@ String type = request.getParameter("type"); // success / warning / danger / info
             html += `
                 <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
                     <td style="padding: 0.4rem; color: #718096; border: none; width: 5%;">${product.index}</td>
-                    <td style="padding: 0.4rem; text-align: center; border: none; width: 8%;">
-                        <button onclick="populateForm(${JSON.stringify(product).replace(/"/g, '&quot;')})" class="btn btn-sm" style="background: var(--primary-gradient); color: white; padding: 3px 8px; border-radius: 5px; border: none; font-weight: 500; font-size: 0.75rem;">
-                            <i class="fas fa-edit"></i>
+                    <td style="padding: 0.4rem; text-align: center; border: none; width: 10%;">
+                        <button onclick="populateForm(${JSON.stringify(product).replace(/"/g, '&quot;')})" class="btn btn-sm" style="background: var(--primary-gradient); color: white; padding: 3px 10px; border-radius: 5px; border: none; font-weight: 500; font-size: 0.8rem;">
+                            <i class="fas fa-edit me-1"></i>Edit
                         </button>
                     </td>
-                    <td style="padding: 0.4rem; color: #2d3748; font-weight: 500; border: none; width: 25%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${product.productName}">${product.productName}</td>
-                    <td style="padding: 0.4rem; color: #718096; border: none; width: 12%;"><span class="badge bg-secondary">${product.prodCode || '-'}</span></td>
-                    <td style="padding: 0.4rem; color: #718096; border: none; width: 20%;">${product.categ}</td>
-                    <td style="padding: 0.4rem; color: #718096; border: none; width: 15%;">${product.mrp}</td>
+                    <td style="padding: 0.4rem; color: #2d3748; font-weight: 500; border: none; width: 18%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${product.productName}">${product.productName}</td>
+                    <td style="padding: 0.4rem; color: #718096; border: none; width: 10%;"><span class="badge bg-secondary">${product.prodCode || '-'}</span></td>
+                    <td style="padding: 0.4rem; color: #718096; border: none; width: 12%;">${product.categ}</td>
+                    <td style="padding: 0.4rem; color: #718096; border: none; width: 10%;">${product.mrp}</td>
+                    <td style="padding: 0.4rem; color: #718096; border: none; width: 10%;">${product.stock}${product.convertionUnit ? ' <small class="text-muted">' + product.convertionUnit + '</small>' : ' ' + (product.unit || '')}</td>
                 </tr>
             `;
         });
@@ -461,6 +558,11 @@ String type = request.getParameter("type"); // success / warning / danger / info
     }
 
     // Product search functionality with debouncing
+    document.getElementById('stockInput').addEventListener('input', updateStockConversionNote);
+    document.getElementById('costInput').addEventListener('input', updateConvertedPriceNotes);
+    document.getElementById('mrpInput').addEventListener('input', updateConvertedPriceNotes);
+    document.getElementById('commissionInput').addEventListener('input', updateConvertedPriceNotes);
+
     document.getElementById('productSearch').addEventListener('input', function() {
         const searchTerm = this.value.trim();
         
@@ -487,6 +589,7 @@ String type = request.getParameter("type"); // success / warning / danger / info
         form.querySelector('[name="hsn"]').value = product.hsn || '';
         form.querySelector('[name="cost"]').value = product.cost || '';
         form.querySelector('[name="mrp"]').value = product.mrp || '';
+        form.querySelector('[name="commission"]').value = product.commission || '0.00';
         form.querySelector('[name="discValue"]').value = product.discount || '0.00';
         form.querySelector('[name="stock"]').value = '';
         form.querySelector('[name="stock"]').removeAttribute('required');
@@ -549,6 +652,7 @@ String type = request.getParameter("type"); // success / warning / danger / info
         const stockInput = document.querySelector('[name="stock"]');
         stockInput.disabled = false;
         stockInput.setAttribute('required', 'required');
+        stockInput.value = '0';
 
         // Reset button
         document.getElementById('submitBtnText').textContent = 'Add';
@@ -564,10 +668,15 @@ String type = request.getParameter("type"); // success / warning / danger / info
         document.getElementById('discValue').value = '0.00';
         document.getElementById('discValue').readOnly = true;
 
+        // Reset commission
+        document.getElementById('commissionInput').value = '0.00';
+
         // Reset labels
         document.getElementById('costPriceLabel').textContent = 'Cost Price';
         document.getElementById('mrpLabel').textContent = 'MRP';
         document.getElementById('discountLabel').textContent = 'Discount';
+        document.getElementById('costConversionNote').textContent = '';
+        document.getElementById('mrpConversionNote').textContent = '';
 
         // Re-select defaults (NOS unit, Others brand, 0% GST)
         const unitSelect = document.querySelector('[name="unitId"]');
@@ -582,11 +691,18 @@ String type = request.getParameter("type"); // success / warning / danger / info
         for (let opt of gstSelect.options) {
             if (opt.value === '0') { opt.selected = true; break; }
         }
+
+        handleUnitChange(unitSelect);
+        updateStockConversionNote();
+        updateConvertedPriceNotes();
     }
 
     // Load products on page load
     document.addEventListener('DOMContentLoaded', function() {
         loadProducts(1, '');
+        handleUnitChange(document.getElementById('unitSelect'));
+        updateStockConversionNote();
+        updateConvertedPriceNotes();
     });
 </script>
 </body>

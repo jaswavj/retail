@@ -33,7 +33,7 @@
                                     <div class="col-2 input-outline"><input type="text" id="customerPhn" placeholder=""
                                             class="form-control"><label> Customer ph no </label>
                                     </div>
-                                    <div class="col-2">
+                                    <!--div class="col-2">
                                         <select id="attenderId" class="form-select">
                                             <option value="0">Select Attender</option>
                                             <%
@@ -60,7 +60,7 @@
                                         <button class="btn btn-outline-success btn-sm" onclick="showOrderList()" title="Order List">
                                             <i class="fa-solid fa-utensils"></i>
                                         </button>
-                                    </div>
+                                    </div-->
                                     <div class="col-2">
                                         <button class="btn btn-outline-violet btn-sm w-100" data-bs-toggle="modal" data-bs-target="#quotationListModal">
                                             <i class="fa-solid fa-file-invoice"></i> QUOTATION
@@ -71,6 +71,14 @@
                                             <input class="form-check-input" type="checkbox" id="isTaxBill" checked style="cursor: pointer;">
                                             <label class="form-check-label" for="isTaxBill" style="cursor: pointer; font-weight: 500;">
                                                 <i class="fa-solid fa-receipt"></i> Tax Bill
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="form-check form-switch" style="padding-top: 8px; background: none;">
+                                            <input class="form-check-input" type="checkbox" id="isCommission" style="cursor: pointer;">
+                                            <label class="form-check-label" for="isCommission" style="cursor: pointer; font-weight: 500;">
+                                                <i class="fa-solid fa-percent"></i> Commission
                                             </label>
                                         </div>
                                     </div>
@@ -92,6 +100,7 @@
                                         </select>
                                         <input type="hidden" id="productUnitId" value="">
                                         <input type="hidden" id="productUnitName" value="">
+                                        <input type="hidden" id="productConvertionUnit" value="">
                                     </div>
                                     <div class="col-2 input-outline"><input type="number" id="productQty"
                                             class="form-control" placeholder="" value="1" min="1"><label id="qtyLabel"> Qty </label>
@@ -119,24 +128,25 @@
                                     <tr style="display: table; width: 100%; table-layout: fixed;">
                                         <th style="width: 5%;">#</th>
                                         <th style="width: 10%;">Code</th>
-                                        <th style="width: 25%;">
+                                        <th style="width: 22%;">
                                             Item Name<%//=head3%>
                                         </th>
                                         <th style="width: 8%;">Qty</th>
-                                        <th style="width: 12%;">Price</th>
-                                        <th style="width: 12%;">Discount</th>
-                                        <th style="width: 13%;">Total</th>
+                                        <th style="width: 10%;">Price</th>
+                                        <th style="width: 10%;">Discount</th>
+                                        <th style="width: 10%;">Commission</th>
+                                        <th style="width: 10%;">Total</th>
                                         <th style="width: 15%;">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="billBody" style="display: block; overflow-y: auto; flex-grow: 1;">
                                     <!-- Rows go here -->
                                     <!-- Empty rows to maintain minimum 5 row height -->
-                                    <tr class="empty-row" style="display: table; width: 100%; table-layout: fixed;"><td style="width: 5%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 25%;">&nbsp;</td><td style="width: 8%;">&nbsp;</td><td style="width: 12%;">&nbsp;</td><td style="width: 12%;">&nbsp;</td><td style="width: 13%;">&nbsp;</td><td style="width: 15%;">&nbsp;</td></tr>
-                                    <tr class="empty-row" style="display: table; width: 100%; table-layout: fixed;"><td style="width: 5%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 25%;">&nbsp;</td><td style="width: 8%;">&nbsp;</td><td style="width: 12%;">&nbsp;</td><td style="width: 12%;">&nbsp;</td><td style="width: 13%;">&nbsp;</td><td style="width: 15%;">&nbsp;</td></tr>
-                                    <tr class="empty-row" style="display: table; width: 100%; table-layout: fixed;"><td style="width: 5%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 25%;">&nbsp;</td><td style="width: 8%;">&nbsp;</td><td style="width: 12%;">&nbsp;</td><td style="width: 12%;">&nbsp;</td><td style="width: 13%;">&nbsp;</td><td style="width: 15%;">&nbsp;</td></tr>
-                                    <tr class="empty-row" style="display: table; width: 100%; table-layout: fixed;"><td style="width: 5%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 25%;">&nbsp;</td><td style="width: 8%;">&nbsp;</td><td style="width: 12%;">&nbsp;</td><td style="width: 12%;">&nbsp;</td><td style="width: 13%;">&nbsp;</td><td style="width: 15%;">&nbsp;</td></tr>
-                                    <tr class="empty-row" style="display: table; width: 100%; table-layout: fixed;"><td style="width: 5%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 25%;">&nbsp;</td><td style="width: 8%;">&nbsp;</td><td style="width: 12%;">&nbsp;</td><td style="width: 12%;">&nbsp;</td><td style="width: 13%;">&nbsp;</td><td style="width: 15%;">&nbsp;</td></tr>
+                                    <tr class="empty-row" style="display: table; width: 100%; table-layout: fixed;"><td style="width: 5%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 22%;">&nbsp;</td><td style="width: 8%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 15%;">&nbsp;</td></tr>
+                                    <tr class="empty-row" style="display: table; width: 100%; table-layout: fixed;"><td style="width: 5%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 22%;">&nbsp;</td><td style="width: 8%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 15%;">&nbsp;</td></tr>
+                                    <tr class="empty-row" style="display: table; width: 100%; table-layout: fixed;"><td style="width: 5%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 22%;">&nbsp;</td><td style="width: 8%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 15%;">&nbsp;</td></tr>
+                                    <tr class="empty-row" style="display: table; width: 100%; table-layout: fixed;"><td style="width: 5%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 22%;">&nbsp;</td><td style="width: 8%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 15%;">&nbsp;</td></tr>
+                                    <tr class="empty-row" style="display: table; width: 100%; table-layout: fixed;"><td style="width: 5%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 22%;">&nbsp;</td><td style="width: 8%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 10%;">&nbsp;</td><td style="width: 15%;">&nbsp;</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -158,6 +168,13 @@
                                             <input type="text" class="form-control only-numbers red-text"
                                                 id="discountTotal" value="0" readonly>
                                             <label>Discount</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-4 col-lg">
+                                        <div class="input-outline">
+                                            <input type="text" class="form-control only-numbers red-text"
+                                                id="commissionTotal" value="0" readonly>
+                                            <label>Commission</label>
                                         </div>
                                     </div>
                                     <div class="col-6 col-md-4 col-lg">

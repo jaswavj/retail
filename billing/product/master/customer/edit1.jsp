@@ -8,13 +8,12 @@ String contextPath = request.getContextPath();
 	String custAddress = request.getParameter("custAddress");
 	String gstin = request.getParameter("gstin");
 	String isGstParam = request.getParameter("isGst");
-	int id = Integer.parseInt(request.getParameter("id"));
+	String isEligibleForCommissionParam = request.getParameter("isEligibleForCommission");
+	int id = Integer.parseInt(request.getParameter("customerId"));
 	String block = request.getParameter("block");
 	
 	int isGst = (isGstParam != null && isGstParam.equals("1")) ? 1 : 0;
-	int salesman = 0;
-	int area = 0;
-	double creditLimit = 0.0;
+	int isEligibleForCommission = (isEligibleForCommissionParam != null && isEligibleForCommissionParam.equals("1")) ? 1 : 0;
 	
 	if (gstin == null) gstin = "";
 	if (custAddress == null) custAddress = "";
@@ -36,7 +35,7 @@ String contextPath = request.getContextPath();
 			}
 			else
 			{
-				prod.editCustomer(id, custName, custPhn, custAddress, gstin, isGst, salesman, area, creditLimit);	
+				prod.editCustomer(id, custName, custPhn, custAddress, gstin, isGst, isEligibleForCommission);	
 				response.sendRedirect(request.getContextPath() + "/product/master/customer/page.jsp?msg=Customer+updated+successfully&type=success");
 			}
 		}

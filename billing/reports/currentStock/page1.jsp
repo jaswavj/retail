@@ -111,7 +111,7 @@
                     <% } %>
                 </td>
                 <td><%=row.elementAt(1)%></td>
-                <td style="text-align: center;"><%=row.elementAt(2)%> <%=row.size() > 9 && row.elementAt(9) != null ? row.elementAt(9) : ""%></td>
+                <td style="text-align: center;"><%=row.elementAt(2)%> <%=(row.size() > 12 && row.elementAt(12) != null && !row.elementAt(12).toString().isEmpty()) ? row.elementAt(12) : (row.size() > 9 && row.elementAt(9) != null ? row.elementAt(9) : "")%></td>
                 <td style="text-align: right;"><%=row.elementAt(3)%></td>
                 <td style="text-align: right;"><%=row.elementAt(4)%></td>
                 <td style="text-align: right;"><%=String.format("%.3f", itemTotalCost)%></td>

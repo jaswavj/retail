@@ -16,6 +16,12 @@ String discTypeParam = request.getParameter("discType");
 String gstParam = request.getParameter("gst");
 String unitIdParam = request.getParameter("unitId");
 
+String commissionParam = request.getParameter("commission");
+double commission = 0.0;
+if (commissionParam != null && !commissionParam.trim().isEmpty()) {
+    try { commission = Double.parseDouble(commissionParam); } catch (NumberFormatException e) { commission = 0.0; }
+}
+
 // Validate required parameters
 if (productIdParam == null || productIdParam.trim().isEmpty()) {
     response.sendRedirect(request.getContextPath() + "/product/master/product/product.jsp?msg=Product+ID+is+missing&type=danger");
@@ -56,7 +62,7 @@ try {
     }*/
 
     prod.editProduct(productId, newProduct, prodCode, categoryId, brandId,
-                     mrp, cost, discValue, discType, gst, userId, unitId, hsn);
+                     mrp, cost, discValue, discType, gst, userId, unitId, hsn, commission);
 
     response.sendRedirect(request.getContextPath() + "/product/master/product/product.jsp?msg=Object+updated+successfully!&type=success");
 

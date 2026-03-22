@@ -56,16 +56,15 @@ String type = request.getParameter("type");
         <!-- Add Category Form -->
         <div class="card mb-4">
             <div class="card-body">
-                <form id="supplierForm" action="<%=contextPath%>/product/master/supplier/page1.jsp" method="post" class="row g-3">
-                    <input type="hidden" name="id" id="supplierId" value="0">
+                <form action="<%=contextPath%>/product/master/supplier/page1.jsp" method="post" class="row g-3">
                     <div class="col-md-6 input-outline">
-                        <input type="text" name="supName" id="supName" class="form-control" placeholder="" required><label >Supplier Name</label>
+                        <input type="text" name="supName" class="form-control" placeholder="" required><label >Supplier Name</label>
                     </div>
                     <div class="col-md-6 input-outline">
-                        <input type="number" name="supPhn" id="supPhn" class="form-control" placeholder="" ><label >Phone Number</label>
+                        <input type="number" name="supPhn" class="form-control" placeholder="" ><label >Phone Number</label>
                     </div>
                     <div class="col-md-6 input-outline">
-                        <textarea name="supDesc" id="supDesc" placeholder="Address"></textarea>
+                        <textarea name="supDesc" placeholder="Address"></textarea>
                     </div>
                     <div class="col-md-6">
                         <div class="form-check mb-2">
@@ -81,8 +80,7 @@ String type = request.getParameter("type");
                     </div>
                     
                     <div class="col-md-12">
-                        <button type="submit" id="submitBtn" class="btn btn-primary">Add Supplier</button>
-                        <button type="button" id="cancelBtn" class="btn btn-secondary" onclick="resetForm()" style="display:none;">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Supplier</button>
                     </div>
                 </form>
             </div>
@@ -95,16 +93,16 @@ String type = request.getParameter("type");
                 <h5>Supplier List</h5>
                 
                 <div class="table-responsive">
-                <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; min-width: 700px; table-layout: fixed;">
+                <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; min-width: 700px;">
                     <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
                         <tr>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem; width: 5%;">#</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem; width: 8%;">Action</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem; width: 20%;">Name</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem; width: 12%;">Phone Number</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem; width: 12%;">GST Status</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem; width: 18%;">GSTIN</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem; width: 25%;">Description</th>
+                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">#</th>
+                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Name</th>
+                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Phone Number</th>
+                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">GST Status</th>
+                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">GSTIN</th>
+                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Description</th>
+                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Functions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -124,29 +122,22 @@ String type = request.getParameter("type");
 
                         %>
                         <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem; width: 5%;"><%=i+1%></td>
-                            <td style="padding: 0.4rem; border: none; font-size: 0.9rem; width: 8%;">
-                                <button class="btn btn-sm edit-supplier-btn" style="background: var(--primary-gradient); color: white; border: none;" title="Edit"
-                                    data-id="<%=id%>" 
-                                    data-name="<%=Name%>" 
-                                    data-phone="<%=phn%>" 
-                                    data-gstin="<%=gstin%>"
-                                    data-isgst="<%=isGst%>"
-                                    data-desc="<%=desc%>">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem; width: 20%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%=Name%>"><%=Name%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem; width: 12%;"><%=vec1.elementAt(3)%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem; width: 12%;">
+                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=i+1%></td>
+                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=Name%></td>
+                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=vec1.elementAt(3)%></td>
+                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;">
                                 <% if (isGst == 1) { %>
                                     <span class="badge bg-success">Registered</span>
                                 <% } else { %>
                                     <span class="badge bg-secondary">Not Registered</span>
                                 <% } %>
                             </td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem; width: 18%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%=gstin%>"><%=gstin%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem; width: 25%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%=desc%>"><%=vec1.elementAt(2)%></td>
+                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=gstin%></td>
+                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=vec1.elementAt(2)%></td>
+                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;">
+                                <a href="<%=contextPath%>/product/master/supplier/edit.jsp?Name=<%=Name%>&id=<%=id%>&desc=<%=desc%>&phn=<%=phn%>&gstin=<%=gstin%>&isGst=<%=isGst%>" class="btn btn-warning btn-sm btn-edit">Edit</a>
+                                 
+                            </td>
                         </tr>
                         <%
                     }
@@ -222,64 +213,6 @@ String type = request.getParameter("type");
       }
     });
   });
-  
-  // Edit supplier function using event delegation
-  document.addEventListener('DOMContentLoaded', function() {
-    document.addEventListener('click', function(e) {
-      if (e.target.closest('.edit-supplier-btn')) {
-        const btn = e.target.closest('.edit-supplier-btn');
-        const id = btn.getAttribute('data-id');
-        const name = btn.getAttribute('data-name');
-        const phone = btn.getAttribute('data-phone');
-        const gstin = btn.getAttribute('data-gstin');
-        const isGst = btn.getAttribute('data-isgst');
-        const desc = btn.getAttribute('data-desc');
-        editSupplier(id, name, phone, gstin, isGst, desc);
-      }
-    });
-  });
-  
-  // Edit supplier function
-  function editSupplier(id, name, phone, gstin, isGst, desc) {
-    document.getElementById('supplierId').value = id;
-    document.getElementById('supName').value = name;
-    document.getElementById('supPhn').value = phone;
-    document.getElementById('gstin').value = gstin;
-    document.getElementById('supDesc').value = desc;
-    
-    // Check if GST registered (ignore "-" as it means no GSTIN)
-    const isGstCheckbox = document.getElementById('isGst');
-    if (isGst === '1' && gstin && gstin.trim() !== '' && gstin.trim() !== '-') {
-      isGstCheckbox.checked = true;
-      document.getElementById('gstin').disabled = false;
-      document.getElementById('gstinRequired').style.display = 'inline';
-    } else {
-      isGstCheckbox.checked = false;
-      document.getElementById('gstin').disabled = true;
-      document.getElementById('gstinRequired').style.display = 'none';
-    }
-    
-    // Change form action and button text
-    document.getElementById('supplierForm').action = '<%=contextPath%>/product/master/supplier/edit1.jsp';
-    document.getElementById('submitBtn').textContent = 'Update Supplier';
-    document.getElementById('submitBtn').className = 'btn btn-success';
-    document.getElementById('cancelBtn').style.display = 'inline-block';
-    
-    // Scroll to form
-    document.getElementById('supplierForm').scrollIntoView({ behavior: 'smooth' });
-  }
-  
-  // Reset form function
-  function resetForm() {
-    document.getElementById('supplierForm').reset();
-    document.getElementById('supplierId').value = '0';
-    document.getElementById('supplierForm').action = '<%=contextPath%>/product/master/supplier/page1.jsp';
-    document.getElementById('submitBtn').textContent = 'Add Supplier';
-    document.getElementById('submitBtn').className = 'btn btn-primary';
-    document.getElementById('cancelBtn').style.display = 'none';
-    document.getElementById('gstin').disabled = true;
-    document.getElementById('gstinRequired').style.display = 'none';
-  }
   
   // Disable right click for the whole document
   document.addEventListener('contextmenu', function (e) {

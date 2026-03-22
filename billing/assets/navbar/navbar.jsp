@@ -220,6 +220,9 @@ for (int i = 0; i < vecPer.size(); i++) {
         <a href="<%=request.getContextPath()%>/reports/profitAnalysis/page.jsp" class="sidebar-subitem">
           <i class="fas fa-chart-pie me-2"></i>Profit Analysis Report
         </a>
+         <a href="<%=request.getContextPath()%>/reports/commissionReport/page.jsp" class="sidebar-subitem">
+          <i class="fas fa-percent me-2"></i>Commission Report
+        </a>
       </div>
     </div>
     <% } %>

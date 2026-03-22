@@ -65,13 +65,13 @@ String type = request.getParameter("type");
         <!-- Add Customer Form -->
         <div class="card mb-4">
             <div class="card-body">
+                <h5 id="formCardTitle" class="mb-3">Add Customer</h5>
                 <form id="customerForm" action="<%=contextPath%>/product/master/customer/page1.jsp" method="post" class="row g-3">
-                    <input type="hidden" name="id" id="customerId" value="0">
                     <div class="col-md-6 input-outline">
-                        <input type="text" name="custName" id="custName" class="form-control" placeholder="" required><label >Customer Name</label>
+                        <input type="text" name="custName" id="custnameInput" class="form-control" placeholder="" required><label >Customer Name</label>
                     </div>
                     <div class="col-md-6 input-outline">
-                        <input type="number" name="custPhn" id="custPhn" class="form-control" placeholder="" ><label >Phone Number</label>
+                        <input type="number" name="custPhn" id="custPhnInput" class="form-control" placeholder="" ><label >Phone Number</label>
                     </div>
                     
                     <div class="col-md-6">
@@ -89,19 +89,66 @@ String type = request.getParameter("type");
                         <small id="gstinError" class="text-danger" style="display:none;">GSTIN must be exactly 15 characters</small>
                     </div>
                     
-                    <div class="col-md-12 input-outline">
-                        <textarea name="custAddress" id="custAddress" class="form-control" placeholder="Address" rows="3"></textarea>
+                    <div class="col-md-6 input-outline">
+                        <textarea name="custAddress" id="custAddressArea" class="form-control" placeholder="Address" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label style="font-size: 0.85rem; display: block; margin-bottom: 6px;">Eligible for Commission</label>
+                        <div class="form-check form-switch mt-1">
+                            <input class="form-check-input" type="checkbox" id="isEligibleForCommission" name="isEligibleForCommission" value="1" role="switch" style="width: 3em; height: 1.5em; cursor: pointer;">
+                            <label class="form-check-label ms-2" for="isEligibleForCommission" id="commissionToggleLabel">No</label>
+                        </div>
                     </div>
                     
                     <div class="col-md-12">
+                        <input type="hidden" name="customerId" id="customerId" value="">
                         <button type="submit" id="submitBtn" class="btn btn-primary">Add Customer</button>
-                        <button type="button" id="cancelBtn" class="btn btn-secondary" onclick="resetForm()" style="display:none;">Cancel</button>
+                        <button type="button" id="cancelBtn" class="btn btn-secondary ms-2" style="display:none;" onclick="resetFormToAdd()">Cancel</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <script>
+        var contextPath = "<%=contextPath%>";
+
+        function populateForm(id, name, phn, address, gstin, isGst, isEligibleForCommission) {
+            document.getElementById('customerForm').action = contextPath + '/product/master/customer/edit1.jsp';
+            document.getElementById('custnameInput').value = name;
+            document.getElementById('custPhnInput').value = (phn === '-') ? '' : phn;
+            document.getElementById('custAddressArea').value = (address === '-') ? '' : address;
+            var isGstCheckbox = document.getElementById('isGstRegistered');
+            isGstCheckbox.checked = (isGst == 1);
+            toggleGstinField();
+            if (isGst == 1 && gstin !== '-') {
+                document.getElementById('gstinField').value = gstin;
+            }
+            var commissionToggle = document.getElementById('isEligibleForCommission');
+            commissionToggle.checked = (isEligibleForCommission == 1);
+            document.getElementById('commissionToggleLabel').textContent = commissionToggle.checked ? 'Yes' : 'No';
+            document.getElementById('customerId').value = id;
+            document.getElementById('submitBtn').textContent = 'Update Customer';
+            document.getElementById('cancelBtn').style.display = 'inline-block';
+            document.getElementById('formCardTitle').textContent = 'Edit Customer';
+            document.getElementById('customerForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetFormToAdd() {
+            document.getElementById('customerForm').action = contextPath + '/product/master/customer/page1.jsp';
+            document.getElementById('customerForm').reset();
+            document.getElementById('customerId').value = '';
+            document.getElementById('submitBtn').textContent = 'Add Customer';
+            document.getElementById('cancelBtn').style.display = 'none';
+            document.getElementById('formCardTitle').textContent = 'Add Customer';
+            document.getElementById('commissionToggleLabel').textContent = 'No';
+            document.getElementById('gstinField').disabled = true;
+            document.getElementById('gstinField').required = false;
+            document.getElementById('gstinRequired').style.display = 'none';
+            document.getElementById('gstinError').style.display = 'none';
+            document.getElementById('gstinField').style.borderColor = '';
+        }
+
         function toggleGstinField() {
             const checkbox = document.getElementById('isGstRegistered');
             const gstinField = document.getElementById('gstinField');
@@ -123,6 +170,11 @@ String type = request.getParameter("type");
             }
         }
         
+        // Commission toggle label
+        document.getElementById('isEligibleForCommission').addEventListener('change', function() {
+            document.getElementById('commissionToggleLabel').textContent = this.checked ? 'Yes' : 'No';
+        });
+
         // Real-time GSTIN validation
         document.addEventListener('DOMContentLoaded', function() {
             const gstinField = document.getElementById('gstinField');
@@ -162,63 +214,6 @@ String type = request.getParameter("type");
                 }
             });
         });
-        
-        // Edit customer function using event delegation
-        document.addEventListener('DOMContentLoaded', function() {
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('.edit-customer-btn')) {
-                    const btn = e.target.closest('.edit-customer-btn');
-                    const id = btn.getAttribute('data-id');
-                    const name = btn.getAttribute('data-name');
-                    const phone = btn.getAttribute('data-phone');
-                    const gstin = btn.getAttribute('data-gstin');
-                    const address = btn.getAttribute('data-address');
-                    editCustomer(id, name, phone, gstin, address);
-                }
-            });
-        });
-        
-        // Edit customer function
-        function editCustomer(id, name, phone, gstin, address) {
-            document.getElementById('customerId').value = id;
-            document.getElementById('custName').value = name;
-            document.getElementById('custPhn').value = phone;
-            document.getElementById('gstinField').value = gstin;
-            document.getElementById('custAddress').value = address;
-            
-            // Check if GST registered (ignore "-" as it means no GSTIN)
-            const isGstCheckbox = document.getElementById('isGstRegistered');
-            if (gstin && gstin.trim() !== '' && gstin.trim() !== '-') {
-                isGstCheckbox.checked = true;
-                document.getElementById('gstinField').disabled = false;
-                document.getElementById('gstinRequired').style.display = 'inline';
-            } else {
-                isGstCheckbox.checked = false;
-                document.getElementById('gstinField').disabled = true;
-                document.getElementById('gstinRequired').style.display = 'none';
-            }
-            
-            // Change form action and button text
-            document.getElementById('customerForm').action = '<%=contextPath%>/product/master/customer/edit1.jsp';
-            document.getElementById('submitBtn').textContent = 'Update Customer';
-            document.getElementById('submitBtn').className = 'btn btn-success';
-            document.getElementById('cancelBtn').style.display = 'inline-block';
-            
-            // Scroll to form
-            document.getElementById('customerForm').scrollIntoView({ behavior: 'smooth' });
-        }
-        
-        // Reset form function
-        function resetForm() {
-            document.getElementById('customerForm').reset();
-            document.getElementById('customerId').value = '0';
-            document.getElementById('customerForm').action = '<%=contextPath%>/product/master/customer/page1.jsp';
-            document.getElementById('submitBtn').textContent = 'Add Customer';
-            document.getElementById('submitBtn').className = 'btn btn-primary';
-            document.getElementById('cancelBtn').style.display = 'none';
-            document.getElementById('gstinField').disabled = true;
-            document.getElementById('gstinRequired').style.display = 'none';
-        }
         </script>
 
         <!-- Customer List Table -->
@@ -227,15 +222,15 @@ String type = request.getParameter("type");
             <div class="card-body">
                 <h5>Customer List</h5>
                 <div class="table-responsive">
-                <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; min-width: 600px; table-layout: fixed;">
+                <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; min-width: 600px;">
                     <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
                         <tr>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem; width: 5%;">#</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem; width: 8%;">Action</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem; width: 20%;">Name</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem; width: 15%;">Phone Number</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem; width: 18%;">GSTIN</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem; width: 34%;">Address</th>
+                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">#</th>
+                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Name</th>
+                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Phone Number</th>
+                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">GSTIN</th>
+                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Address</th>
+                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Functions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -250,25 +245,25 @@ String type = request.getParameter("type");
                                 String address =vec1.elementAt(2).toString();
                                 String phn =vec1.elementAt(3).toString();
                                 String gstin =vec1.elementAt(4).toString();
+                                String isGstStr =vec1.elementAt(5).toString();
+                                String isEligibleStr =vec1.elementAt(6).toString();
+                                String safeName = Name.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ");
+                                String safeAddress = address.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", "");
+                                String safeGstin = gstin.replace("'", "\\'");
+                                String safePhn = phn.replace("'", "\\'");
 
 
                         %>
                         <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem; width: 5%;"><%=i+1%></td>
-                            <td style="padding: 0.4rem; border: none; font-size: 0.9rem; width: 8%;">
-                                <button class="btn btn-sm edit-customer-btn" style="background: var(--primary-gradient); color: white; border: none;" title="Edit"
-                                    data-id="<%=id%>" 
-                                    data-name="<%=Name%>" 
-                                    data-phone="<%=phn%>" 
-                                    data-gstin="<%=gstin%>"
-                                    data-address="<%=address%>">
-                                    <i class="fas fa-edit"></i>
-                                </button>
+                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=i+1%></td>
+                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=Name%></td>
+                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=phn%></td>
+                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=gstin%></td>
+                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=address%></td>
+                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;">
+                                <button type="button" class="btn btn-warning btn-sm btn-edit" onclick="populateForm(<%=id%>, '<%=safeName%>', '<%=safePhn%>', '<%=safeAddress%>', '<%=safeGstin%>', <%=isGstStr%>, <%=isEligibleStr%>)">Edit</button>
+                                 
                             </td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem; width: 20%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%=Name%>"><%=Name%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem; width: 15%;"><%=phn%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem; width: 18%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%=gstin%>"><%=gstin%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem; width: 34%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%=address%>"><%=address%></td>
                         </tr>
                         <%
                     }

@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page language="java" import= "java.util.*"%>
 <%@ page errorPage="" %>
 <jsp:useBean id="prod" class="product.productBean" />
@@ -53,6 +53,13 @@ $(function () {
 });
 
 $(document).ready(function(){
+    // Click row to select product
+    window.selectProduct = function(el) {
+        document.getElementById('catId').value = el.getAttribute('data-id');
+        document.getElementById('catName').value = el.getAttribute('data-name');
+        document.getElementById('stockSearchForm').submit();
+    };
+
     // Product search functionality
     document.getElementById('searchInput').addEventListener('input', function() {
         const searchTerm = this.value.toLowerCase();
@@ -92,33 +99,12 @@ $(document).ready(function(){
 
     <div class="container-fluid mt-2" style="max-width: 1400px;">
         <div class="row g-2">
-            <!-- Left Column - Search Product -->
-            <div class="col-md-4">
-                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07); border-radius: 8px; height: 100%;">
-                    <div class="card-header" style="background: var(--page-header-card-bg); color: white; border-radius: 8px 8px 0 0; padding: 0.75rem 1rem;">
-                        <h6 class="mb-0" style="font-weight: 600; font-size: 0.95rem;"><i class="fas fa-search me-2"></i>Search <%=head3%></h6>
-                    </div>
-                    <div class="card-body" style="padding: 1rem;">
-                        <form action="<%=contextPath%>/product/master/stock/stock1.jsp" method="post">
-                            <input type="hidden" id="catId" name="catId">
-                            <div class="mb-3">
-                                <div class="input-outline">
-                                    <input type="text" id="catName" name="catName" class="form-control" placeholder="" style="padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem;" required>
-                                    <label style="background: white; padding: 0 6px; font-size: 0.85rem;">Search <%=head3%></label>
-                                </div>
-                                <small class="text-muted" style="font-size: 0.75rem; display: block; margin-top: 4px;">Type at least 2 characters to search</small>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary w-100" style="padding: 8px 10px; font-size: 0.9rem;">
-                                <i class="fas fa-search me-1"></i>Search
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column - Product List -->
-            <div class="col-md-8">
+            <!-- Product List -->
+            <div class="col-md-12">
+                <form id="stockSearchForm" action="<%=contextPath%>/product/master/stock/stock1.jsp" method="post" style="display:none;">
+                    <input type="hidden" id="catId" name="catId">
+                    <input type="hidden" id="catName" name="catName">
+                </form>
                 <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07); border-radius: 8px;">
                     <div class="card-header" style="background: white; border-bottom: 1px solid #f7fafc; border-radius: 8px 8px 0 0; padding: 0.75rem 1rem;">
                         <div class="d-flex justify-content-between align-items-center">
@@ -154,8 +140,9 @@ $(document).ready(function(){
                                                 String brandName = row.elementAt(2).toString();
                                                 int productId = Integer.parseInt(row.elementAt(3).toString());
                                                 String prodCode = row.elementAt(4).toString();
+                                                String safeProductName = productName.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;");
                                 %>
-                                <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
+                                <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s; cursor: pointer;" data-id="<%=productId%>" data-name="<%=safeProductName%>" onclick="selectProduct(this)">
                                     <td style="padding: 0.4rem; color: #718096; border: none; width: 5%;"><%=i+1%></td>
                                     <td style="padding: 0.4rem; color: #2d3748; font-weight: 500; border: none; width: 25%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%=productName%>"><%=productName%></td>
                                     <td style="padding: 0.4rem; color: #718096; border: none; width: 15%;"><%=prodCode%></td>

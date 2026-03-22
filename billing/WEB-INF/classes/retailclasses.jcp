@@ -7,7 +7,7 @@
 		<output_path>\</output_path>
 		<source_path>\</source_path>
 		<jdkprofile_ref>JDK version -21</jdkprofile_ref>
-		<compiler_ref/>
+		<compiler_ref>&lt;Default&gt;</compiler_ref>
 		<ant_ref/>
 	</settings>
 	<ant_events/>
@@ -23,9 +23,7 @@
 			<verify>true</verify>
 		</runtime>
 	</runtimes>
-	<libraries>
-		<library_ref>libr</library_ref>
-	</libraries>
+	<libraries/>
 	<files>
 		<include>
 			<folderitem>
