@@ -102,29 +102,7 @@ function checkOverdueDues(customerId) {
         return;
     }
     
-    $.ajax({
-        url: contextPath + '/billing/checkOverdueDues.jsp',
-        type: 'GET',
-        data: { customerId: customerId },
-        dataType: 'json',
-        success: function(response) {
-            if (response.hasOverdue) {
-                disableSaveButton();
-                Swal.fire({
-                    title: 'Overdue Payment Alert!',
-                    html: response.message,
-                    icon: 'warning',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#d33'
-                });
-            } else {
-                enableSaveButton();
-            }
-        },
-        error: function() {
-            enableSaveButton();
-        }
-    });
+    
 }
 
 function disableSaveButton() {
@@ -187,6 +165,20 @@ function addProduct() {
     if (code === "" || name === "" || isNaN(qtyInput) || isNaN(price) || isNaN(discount)) {
         alert("Please enter valid product details!");
         return;
+    }
+
+    // Validate per-product discount does not exceed user's allowed percentage
+    if (price > 0 && userMaxDiscPer < 100) {
+        const discPct = (discount / price) * 100;
+        if (discPct > userMaxDiscPer) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Discount Exceeded',
+                html: `Product discount <b>${discPct.toFixed(2)}%</b> exceeds your allowed limit of <b>${userMaxDiscPer}%</b>.`,
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
     }
 
     const productId = parseInt(document.getElementById("productCode").dataset.id || 0);
@@ -455,6 +447,26 @@ function updateTotals() {
 
 
 function updatePayableAmount() {
+    const extraDisc = parseFloat(document.getElementById("finalDiscount").value) || 0;
+
+    // Validate total (item discounts + extra discount) does not exceed user's allowed percentage
+    if (subtotal > 0 && userMaxDiscPer < 100) {
+        const maxAllowedDisc = (subtotal * userMaxDiscPer) / 100;
+        if (totalDiscount + extraDisc > maxAllowedDisc) {
+            const maxExtra = Math.max(0, Math.floor(maxAllowedDisc - totalDiscount));
+            // Set the capped integer value directly (field is only-numbers so no decimals)
+            document.getElementById("finalDiscount").value = maxExtra;
+            Swal.fire({
+                icon: 'warning',
+                title: 'Extra Discount Exceeded',
+                html: `Max allowed discount: <b>${userMaxDiscPer}%</b> of ₹${subtotal.toFixed(2)} = ₹${maxAllowedDisc.toFixed(2)}<br>`+
+                      `Item discounts: ₹${totalDiscount.toFixed(2)}<br>`+
+                      `Max extra discount allowed: ₹${maxExtra.toFixed(2)}`,
+                confirmButtonText: 'OK'
+            });
+        }
+    }
+
     const discount = parseFloat(document.getElementById("finalDiscount").value) || 0;
     const payable = grandTotal - discount;
     document.getElementById("payableAmount").value = payable.toFixed(3);
@@ -1920,7 +1932,7 @@ function addProductToBillTable(product) {
     
     // Create new row with proper styling and structure
     const row = `
-        <tr id="row${count}" class="bill-item-row" style="display: table; width: 100%; table-layout: fixed; cursor: pointer;" data-commission="${productCommissionPerUnit}">
+        <tr id="row${count}" class="bill-item-row" style="display: table; width: 100%; table-layout: fixed; cursor: pointer;" data-batch-id="${product.batchId || 0}" data-commission="${productCommissionPerUnit}">
             <td style="width: 5%;">${count}</td>
             <td style="width: 10%;" data-id="${product.productId}">${product.code}</td>
             <td style="width: 22%;" data-name="${product.productName}">${product.productName}</td>

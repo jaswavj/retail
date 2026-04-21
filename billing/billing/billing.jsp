@@ -1,10 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
     <%@ page import="java.util.*, javax.servlet.http.*" %>
         <jsp:useBean id="prod" class="product.productBean" />
+        <jsp:useBean id="userBn" class="user.userBean" />
         <% 
         String contextPaths = request.getContextPath();
         Integer uid=(Integer) session.getAttribute("userId"); //out.print(uid);
         Vector attenderList = prod.getActiveAttenders();
+        int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
         %>
             <!DOCTYPE html>
             <html lang="en">
@@ -63,7 +65,7 @@
                                     </div-->
                                     <div class="col-2">
                                         <button class="btn btn-outline-violet btn-sm w-100" data-bs-toggle="modal" data-bs-target="#quotationListModal">
-                                            <i class="fa-solid fa-file-invoice"></i> QUOTATION
+                                            <i class="fa-solid fa-clock"></i> HOLD LIST
                                         </button>
                                     </div>
                                     <div class="col-2">
@@ -258,13 +260,13 @@
                                             </div>
                                             <div class="col-12 col-md-6 col-lg" id="quotationBtnDiv">
                                                 <button class="btn btn-outline-violet btn-sm w-100" onclick="saveQuotation()">
-                                                    <i class="fa-solid fa-file-invoice"></i> QUOTATION
+                                                    <i class="fa-solid fa-clock"></i> HOLD
                                                 </button>
                                             </div>
 
                                             <div class="col-12 col-md-6 col-lg" id="quotationPrintBtnDiv" style="display: none;">
                                                 <button class="btn btn-outline-violet btn-sm w-100" onclick="printSavedQuotation()">
-                                                    <i class="fa-solid fa-print"></i> PRINT QUOTATION
+                                                    <i class="fa-solid fa-print"></i> PRINT HOLD
                                                 </button>
                                             </div>
 
@@ -436,6 +438,7 @@
                                 <!--modals-->
                                 <script>
                                     var contextPath = '<%=contextPaths%>';
+                                    var userMaxDiscPer = <%=userDiscPer%>;
                                 </script>
                                 <script src="bluetoothPrinter.js"></script>
                                 <script src="billing.js"></script>

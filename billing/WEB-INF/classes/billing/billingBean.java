@@ -4894,4 +4894,217 @@ public Vector getAttenderWiseSalesReport(String from, String to, int attenderId)
 }
 
 //////////////////////////////////////////////////////
+
+/**
+ * Fetch payment details of a bill by its display number.
+ * Returns a Vector with the following elements (all Strings/doubles):
+ *   0 - bill id (int)
+ *   1 - bill_display (String)
+ *   2 - date (String)
+ *   3 - cusName (String)
+ *   4 - payable (double)
+ *   5 - paymentMode (int)
+ *   6 - paymentType (int)
+ *   7 - cash (double)
+ *   8 - bank (double)
+ * Returns empty Vector if not found or cancelled.
+ */
+public Vector getBillPaymentInfo(String billNo) throws Exception {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql =
+            "SELECT a.id, a.bill_display, a.date, IFNULL(a.cusName,'') AS cusName, " +
+            "       a.payable, a.paymentMode, a.paymentType, " +
+            "       IFNULL(b.cash, 0) AS cash, IFNULL(b.bank, 0) AS bank " +
+            "FROM prod_bill a " +
+            "LEFT JOIN prod_bill_payment b ON b.bill_id = a.id " +
+            "WHERE a.bill_display = ? AND a.is_cancelled = 0 " +
+            "LIMIT 1";
+        ps = con.prepareStatement(sql);
+        ps.setString(1, billNo);
+        rs = ps.executeQuery();
+        if (rs.next()) {
+            vec.addElement(rs.getInt("id"));             // 0
+            vec.addElement(rs.getString("bill_display")); // 1
+            vec.addElement(rs.getString("date"));         // 2
+            vec.addElement(rs.getString("cusName"));      // 3
+            vec.addElement(rs.getDouble("payable"));      // 4
+            vec.addElement(rs.getInt("paymentMode"));     // 5
+            vec.addElement(rs.getInt("paymentType"));     // 6
+            vec.addElement(rs.getDouble("cash"));         // 7
+            vec.addElement(rs.getDouble("bank"));         // 8
+        }
+        return vec;
+    } finally {
+        if (rs  != null) try { rs.close();  } catch (SQLException e) { ; }
+        if (ps  != null) try { ps.close();  } catch (SQLException e) { ; }
+        if (con != null) try { con.close(); } catch (Exception e)   { ; }
+    }
+}
+
+/**
+ * Update the payment type / amounts for a bill.
+ * - Updates prod_bill_payment (cash, bank, paymentType)
+ * - Updates prod_bill (paymentMode, paymentType, paid)
+ * - Inserts audit row into prod_bill_payment_type_change
+ *
+ * @param billId   internal bill id
+ * @param cash     new cash amount
+ * @param bank     new bank amount
+ * @param bankMode payment type id (1=UPI, 2=Debit, 3=Credit, 4=Net Banking, 5=Wallet)
+ * @param uid      logged-in user id
+ * @throws Exception on any DB error (caller should handle rollback messaging)
+ */
+public void updateBillPaymentType(int billId, double cash, double bank, int bankMode, int uid) throws Exception {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        con.setAutoCommit(false);
+
+        // Fetch old values for audit
+        ps = con.prepareStatement(
+            "SELECT IFNULL(b.cash,0), IFNULL(b.bank,0) " +
+            "FROM prod_bill a " +
+            "LEFT JOIN prod_bill_payment b ON b.bill_id = a.id " +
+            "WHERE a.id = ? AND a.is_cancelled = 0 LIMIT 1");
+        ps.setInt(1, billId);
+        rs = ps.executeQuery();
+        if (!rs.next()) {
+            throw new Exception("Bill not found or has been cancelled.");
+        }
+        double oldCash = rs.getDouble(1);
+        double oldBank = rs.getDouble(2);
+        rs.close(); ps.close();
+
+        // Determine payment mode: 1=Cash, 2=Bank, 3=Mixed
+        int paymentMode;
+        if (cash > 0 && bank > 0) {
+            paymentMode = 3;
+        } else if (bank > 0) {
+            paymentMode = 2;
+        } else {
+            paymentMode = 1;
+        }
+        int paymentType = (bank > 0) ? bankMode : 0;
+
+        // Update prod_bill_payment
+        ps = con.prepareStatement(
+            "UPDATE prod_bill_payment " +
+            "SET cash = ?, bank = ?, paymentType = ? " +
+            "WHERE bill_id = ?");
+        ps.setDouble(1, cash);
+        ps.setDouble(2, bank);
+        ps.setInt(3,    paymentType);
+        ps.setInt(4,    billId);
+        ps.executeUpdate();
+        ps.close();
+
+        // Update prod_bill
+        ps = con.prepareStatement(
+            "UPDATE prod_bill " +
+            "SET paymentMode = ?, paymentType = ?, paid = ? " +
+            "WHERE id = ?");
+        ps.setInt(1,    paymentMode);
+        ps.setInt(2,    paymentType);
+        ps.setDouble(3, cash + bank);
+        ps.setInt(4,    billId);
+        ps.executeUpdate();
+        ps.close();
+
+        // Audit insert
+        ps = con.prepareStatement(
+            "INSERT INTO prod_bill_payment_type_change " +
+            "(bill_id, old_cash_amount, cash_amount, old_bank_amount, bank_amount, bank_mode, uid, date_time) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+        ps.setInt(1,    billId);
+        ps.setDouble(2, oldCash);
+        ps.setDouble(3, cash);
+        ps.setDouble(4, oldBank);
+        ps.setDouble(5, bank);
+        if (bank > 0) {
+            ps.setInt(6, bankMode);
+        } else {
+            ps.setNull(6, java.sql.Types.INTEGER);
+        }
+        ps.setInt(7, uid);
+        ps.executeUpdate();
+        ps.close();
+
+        con.commit();
+    } catch (Exception e) {
+        if (con != null) try { con.rollback(); } catch (Exception ignored) { ; }
+        throw e;
+    } finally {
+        if (rs  != null) try { rs.close();  } catch (SQLException e) { ; }
+        if (ps  != null) try { ps.close();  } catch (SQLException e) { ; }
+        if (con != null) try { con.close(); } catch (Exception e)   { ; }
+    }
+}
+
+/**
+ * Fetch payment type change audit report for a date range.
+ * Returns a Vector of row Vectors, each containing:
+ *   0  - id (int)
+ *   1  - bill_id (int)
+ *   2  - bill_display (String)
+ *   3  - old_cash_amount (double)
+ *   4  - cash_amount (double)
+ *   5  - old_bank_amount (double)
+ *   6  - bank_amount (double)
+ *   7  - bank_mode_name (String)  -- type label from prod_bill_payment_type, or "Cash" if null
+ *   8  - user_name (String)
+ *   9  - date_time (String)
+ */
+public Vector getPaymentTypeChangeReport(String fromDate, String toDate) throws Exception {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql =
+            "SELECT c.id, c.bill_id, b.bill_display, " +
+            "       c.old_cash_amount, c.cash_amount, " +
+            "       c.old_bank_amount, c.bank_amount, " +
+            "       IFNULL(pt.type, 'Cash') AS bank_mode_name, " +
+            "       IFNULL(u.user_name, '') AS user_name, " +
+            "       c.date_time " +
+            "FROM prod_bill_payment_type_change c " +
+            "JOIN prod_bill b ON b.id = c.bill_id " +
+            "LEFT JOIN prod_bill_payment_type pt ON pt.id = c.bank_mode " +
+            "LEFT JOIN users u ON u.id = c.uid " +
+            "WHERE DATE(c.date_time) BETWEEN ? AND ? " +
+            "ORDER BY c.date_time DESC";
+        ps = con.prepareStatement(sql);
+        ps.setString(1, fromDate);
+        ps.setString(2, toDate);
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getInt("id"));                 // 0
+            row.addElement(rs.getInt("bill_id"));            // 1
+            row.addElement(rs.getString("bill_display"));    // 2
+            row.addElement(rs.getDouble("old_cash_amount")); // 3
+            row.addElement(rs.getDouble("cash_amount"));     // 4
+            row.addElement(rs.getDouble("old_bank_amount")); // 5
+            row.addElement(rs.getDouble("bank_amount"));     // 6
+            row.addElement(rs.getString("bank_mode_name"));  // 7
+            row.addElement(rs.getString("user_name"));       // 8
+            row.addElement(rs.getString("date_time"));       // 9
+            vec.add(row);
+        }
+        return vec;
+    } finally {
+        if (rs  != null) try { rs.close();  } catch (SQLException e) { ; }
+        if (ps  != null) try { ps.close();  } catch (SQLException e) { ; }
+        if (con != null) try { con.close(); } catch (Exception e)   { ; }
+    }
+}
+
 }
