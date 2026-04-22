@@ -31,9 +31,11 @@
                                             class="form-control" placeholder="" autocomplete="off"><label> Customer Name </label>
                                             <input type="hidden" id="customerId" value="0">
                                             <input type="hidden" id="customerCreditLimit" value="0">
+                                            <input type="hidden" id="customerExchangePoint" value="0">
+                                            <input type="hidden" id="exchangePointUsed" value="0">
                                     </div>
                                     <div class="col-2 input-outline"><input type="text" id="customerPhn" placeholder=""
-                                            class="form-control"><label> Customer ph no </label>
+                                            class="form-control" autocomplete="off"><label> Customer ph no </label>
                                     </div>
                                     <!--div class="col-2">
                                         <select id="attenderId" class="form-select">
@@ -87,6 +89,16 @@
 
                                     
                                     
+                                </div>
+                                <!-- Exchange Point Banner -->
+                                <div id="exchangePointBanner" class="alert alert-success alert-dismissible d-none py-1 px-3 mb-1" role="alert" style="font-size:0.85rem;">
+                                    <i class="fas fa-coins me-1"></i>
+                                    <strong>Exchange Points Available: ₹<span id="exchangePointValue">0</span></strong>
+                                    &nbsp;
+                                    <button type="button" class="btn btn-sm btn-success py-0 px-2" onclick="applyExchangePointDiscount()" style="font-size:0.8rem;">
+                                        <i class="fas fa-tag me-1"></i>Use as Discount
+                                    </button>
+                                    <button type="button" class="btn-close py-2" onclick="dismissExchangePointBanner()" aria-label="Close"></button>
                                 </div>
                                 <div class="row g-1">
                                     <div class="col-2 input-outline"><input type="text" id="productCode"

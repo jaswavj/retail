@@ -258,7 +258,10 @@ for (int i = 0; i < vecPer.size(); i++) {
       </a>
       <div class="collapse sidebar-submenu" id="inventoryMenu">
         <a href="<%=request.getContextPath()%>/product/master/supplier/page.jsp" class="sidebar-subitem">Supplier</a>
-        <a href="<%=request.getContextPath()%>/product/purchase/page.jsp" class="sidebar-subitem"> Purchase Entry</a>
+        <a href="<%=request.getContextPath()%>/product/purchase/page.jsp" class="sidebar-subitem">Purchase Entry</a>
+        <a href="<%=request.getContextPath()%>/product/purchase/report/purchaseRegister/page.jsp" class="sidebar-subitem">Purchase Report</a>
+        <a href="<%=request.getContextPath()%>/product/purchase/purchaseReturn/page.jsp" class="sidebar-subitem">Purchase Return</a>
+        <a href="<%=request.getContextPath()%>/product/purchase/purchaseReturn/report.jsp" class="sidebar-subitem">Purchase Return Report</a>
       </div>
     </div>
     <% } %>
@@ -299,8 +302,10 @@ for (int i = 0; i < vecPer.size(); i++) {
         <a href="<%=request.getContextPath()%>/admin/report/billDateChange/page.jsp" class="sidebar-subitem">Bill Date Change Report</a>
         <a href="<%=request.getContextPath()%>/admin/changePaymentType/page.jsp" class="sidebar-subitem">Change Payment Type</a>
         <a href="<%=request.getContextPath()%>/admin/report/paymentTypeChange/page.jsp" class="sidebar-subitem">Payment Type Change Report</a>
+        <a href="<%=request.getContextPath()%>/admin/Exchange/page.jsp" class="sidebar-subitem">Exchange</a>
+        <a href="<%=request.getContextPath()%>/admin/Exchange/report.jsp" class="sidebar-subitem">Exchange &amp; Return Report</a>
       </div>
-    </div>
+        </div>
     <% } %>
 
     <% if (permissions.contains(12)) { %>
