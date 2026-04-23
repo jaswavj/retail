@@ -355,7 +355,7 @@
         if (!arr || arr.length === 0) { list.classList.add('d-none'); return; }
         arr.forEach(item => {
             const li = document.createElement('li');
-            li.textContent = item.name + ' — ₹' + item.price;
+            li.textContent = (item.code ? item.name + ' (' + item.code + ')' : item.name) + ' — ₹' + item.price;
             li.addEventListener('click', () => {
                 document.getElementById('newProdSearch').value = item.name;
                 document.getElementById('newProdId').value = item.id;

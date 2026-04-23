@@ -304,6 +304,8 @@ for (int i = 0; i < vecPer.size(); i++) {
         <a href="<%=request.getContextPath()%>/admin/report/paymentTypeChange/page.jsp" class="sidebar-subitem">Payment Type Change Report</a>
         <a href="<%=request.getContextPath()%>/admin/Exchange/page.jsp" class="sidebar-subitem">Exchange</a>
         <a href="<%=request.getContextPath()%>/admin/Exchange/report.jsp" class="sidebar-subitem">Exchange &amp; Return Report</a>
+        <a href="<%=request.getContextPath()%>/admin/productReport/page.jsp" class="sidebar-subitem"><i class="fas fa-cube me-1"></i>Product Analysis Report</a>
+        <a href="<%=request.getContextPath()%>/admin/customerReport/page.jsp" class="sidebar-subitem"><i class="fas fa-user me-1"></i>Customer Analysis Report</a>
       </div>
         </div>
     <% } %>

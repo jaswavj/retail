@@ -5195,20 +5195,22 @@ public Vector searchProductsForExchange(String term) throws Exception {
     Vector vec = new Vector();
     try {
         con = util.DBConnectionManager.getConnectionFromPool();
-        String sql = "SELECT p.id, p.name, IFNULL(b.mrp, 0) AS mrp "
+        String sql = "SELECT p.id, p.name, IFNULL(b.mrp, 0) AS mrp, COALESCE(p.code,'') AS code "
                    + "FROM prod_product p "
                    + "LEFT JOIN prod_batch b ON b.product_id = p.id "
-                   + "WHERE p.is_active = 1 AND p.name LIKE ? "
-                   + "GROUP BY p.id, p.name, b.mrp "
+                   + "WHERE p.is_active = 1 AND (p.name LIKE ? OR p.code LIKE ?) "
+                   + "GROUP BY p.id, p.name, b.mrp, p.code "
                    + "ORDER BY p.name LIMIT 20";
         ps = con.prepareStatement(sql);
         ps.setString(1, "%" + term + "%");
+        ps.setString(2, "%" + term + "%");
         rs = ps.executeQuery();
         while (rs.next()) {
             Vector row = new Vector();
             row.add(rs.getString(1)); // prod_id
             row.add(rs.getString(2)); // name
             row.add(rs.getString(3)); // mrp
+            row.add(rs.getString(4)); // code
             vec.add(row);
         }
         return vec;

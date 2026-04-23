@@ -24,11 +24,12 @@
         JSONArray arr = new JSONArray();
         for (int i = 0; i < results.size(); i++) {
             Vector row = (Vector) results.get(i);
-            // row: [prod_id, name, mrp]
+            // row: [prod_id, name, mrp, code]
             JSONObject obj = new JSONObject();
             obj.put("id",    row.get(0) != null ? row.get(0).toString() : "");
             obj.put("name",  row.get(1) != null ? row.get(1).toString() : "");
             obj.put("price", row.get(2) != null ? row.get(2).toString() : "0");
+            obj.put("code",  row.size() > 3 && row.get(3) != null ? row.get(3).toString() : "");
             arr.add(obj);
         }
         out.print(arr.toJSONString());
