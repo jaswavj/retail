@@ -2861,6 +2861,162 @@ public Vector getStockAdjReport(String from, String to, int productId) throws Ex
     return getStockAdjReport(from, to, productId, 0);
 }
 
+/**
+ * Returns one summary row per active category for the given date range.
+ * Row layout:
+ *   0  category_id       (int)
+ *   1  category_name     (String)
+ *   2  total_qty         (double) – sum of qty sold
+ *   3  total_amount      (double) – sum of bill-detail totals
+ *   4  bill_count        (int)    – distinct bills containing this category
+ *   5  product_count     (int)    – distinct products sold
+ *   6  top_product       (String) – product with highest qty in period
+ *   7  top_product_qty   (double)
+ */
+public Vector getCategorySalesStats(String fromDate, String toDate) throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector vec = new Vector();
+
+        // Category summary
+        String sql =
+            "SELECT c.id, c.name," +
+            "  COALESCE(SUM(bd.qty), 0)      AS total_qty," +
+            "  COALESCE(SUM(bd.total), 0)    AS total_amount," +
+            "  COUNT(DISTINCT b.id)          AS bill_count," +
+            "  COUNT(DISTINCT p.id)          AS product_count" +
+            " FROM prod_category c" +
+            " LEFT JOIN prod_product p ON p.category_id = c.id" +
+            " LEFT JOIN prod_bill_details bd ON bd.prod_id = p.id" +
+            " LEFT JOIN prod_bill b ON b.id = bd.bill_id AND b.is_cancelled = 0" +
+            "   AND b.date BETWEEN ? AND ?" +
+            " WHERE c.is_active = 1" +
+            " GROUP BY c.id, c.name" +
+            " ORDER BY total_amount DESC";
+
+        pt = con.prepareStatement(sql);
+        pt.setString(1, fromDate);
+        pt.setString(2, toDate);
+        rs = pt.executeQuery();
+
+        while (rs.next()) {
+            int catId = rs.getInt(1);
+            Vector row = new Vector();
+            row.addElement(catId);                      // 0 category_id
+            row.addElement(rs.getString(2));            // 1 category_name
+            row.addElement(rs.getDouble(3));            // 2 total_qty
+            row.addElement(rs.getDouble(4));            // 3 total_amount
+            row.addElement(rs.getInt(5));               // 4 bill_count
+            row.addElement(rs.getInt(6));               // 5 product_count
+            row.addElement("");                         // 6 top_product (filled below)
+            row.addElement(0.0);                        // 7 top_product_qty
+            vec.addElement(row);
+        }
+        rs.close(); pt.close();
+
+        // Top product per category
+        String topSql =
+            "SELECT p.category_id, p.name, SUM(bd.qty) AS tq" +
+            " FROM prod_bill_details bd" +
+            " JOIN prod_product p ON p.id = bd.prod_id" +
+            " JOIN prod_bill b ON b.id = bd.bill_id AND b.is_cancelled = 0" +
+            "   AND b.date BETWEEN ? AND ?" +
+            " GROUP BY p.category_id, p.id, p.name";
+
+        pt = con.prepareStatement(topSql);
+        pt.setString(1, fromDate);
+        pt.setString(2, toDate);
+        rs = pt.executeQuery();
+
+        // Build map: catId -> (topName, topQty)
+        java.util.HashMap<Integer,Object[]> topMap = new java.util.HashMap<>();
+        while (rs.next()) {
+            int cid  = rs.getInt(1);
+            String nm = rs.getString(2);
+            double tq = rs.getDouble(3);
+            if (!topMap.containsKey(cid) || tq > (Double) topMap.get(cid)[1]) {
+                topMap.put(cid, new Object[]{nm, tq});
+            }
+        }
+        rs.close(); pt.close();
+
+        // Merge top product into summary rows
+        for (int i = 0; i < vec.size(); i++) {
+            Vector row = (Vector) vec.get(i);
+            int cid = (Integer) row.get(0);
+            if (topMap.containsKey(cid)) {
+                row.set(6, topMap.get(cid)[0]);
+                row.set(7, topMap.get(cid)[1]);
+            }
+        }
+
+        return vec;
+    } finally {
+        if (rs  != null) try { rs.close();  } catch (SQLException e) {}
+        if (pt  != null) try { pt.close();  } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception   e) {}
+    }
+}
+
+/**
+ * Returns product-level detail rows for a single category in the date range.
+ * Row layout:
+ *   0  product_id   (int)
+ *   1  product_name (String)
+ *   2  total_qty    (double)
+ *   3  total_amount (double)
+ *   4  bill_count   (int)
+ *   5  avg_price    (double)
+ */
+public Vector getCategoryProductDetails(int categoryId, String fromDate, String toDate) throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector vec = new Vector();
+
+        String sql =
+            "SELECT p.id, p.name," +
+            "  COALESCE(SUM(bd.qty), 0)           AS total_qty," +
+            "  COALESCE(SUM(bd.total), 0)          AS total_amount," +
+            "  COUNT(DISTINCT b.id)                AS bill_count," +
+            "  COALESCE(AVG(bd.price), 0)          AS avg_price" +
+            " FROM prod_product p" +
+            " LEFT JOIN prod_bill_details bd ON bd.prod_id = p.id" +
+            " LEFT JOIN prod_bill b ON b.id = bd.bill_id AND b.is_cancelled = 0" +
+            "   AND b.date BETWEEN ? AND ?" +
+            " WHERE p.category_id = ?" +
+            " GROUP BY p.id, p.name" +
+            " ORDER BY total_amount DESC";
+
+        pt = con.prepareStatement(sql);
+        pt.setString(1, fromDate);
+        pt.setString(2, toDate);
+        pt.setInt(3, categoryId);
+        rs = pt.executeQuery();
+
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getInt(1));      // 0 product_id
+            row.addElement(rs.getString(2));   // 1 product_name
+            row.addElement(rs.getDouble(3));   // 2 total_qty
+            row.addElement(rs.getDouble(4));   // 3 total_amount
+            row.addElement(rs.getInt(5));      // 4 bill_count
+            row.addElement(rs.getDouble(6));   // 5 avg_price
+            vec.addElement(row);
+        }
+        return vec;
+    } finally {
+        if (rs  != null) try { rs.close();  } catch (SQLException e) {}
+        if (pt  != null) try { pt.close();  } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception   e) {}
+    }
+}
+
 public Vector getAllProduct()throws Exception
 {
 		Connection con 			= null;
@@ -3808,7 +3964,7 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
         pt = con.prepareStatement("SELECT COUNT(id)+1 FROM prod_purchase");
         rs = pt.executeQuery();
         if (rs.next())
-            purchaseNo = "PR" + rs.getString(1);
+            purchaseNo = "GRN-" + rs.getString(1);
 
         pt = con.prepareStatement("INSERT INTO prod_purchase(prno,invno,invdate,total,paid,balance,discount,net,ent_uid,pay_type,bank_id,deal_id,offer,offer_date,lr_no,lr_date,lr_name,ent_date,ent_time) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW())");
         pt.setString(1, purchaseNo);
@@ -4009,7 +4165,7 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
             }
         }
         
-        return bill + "";
+        return purchaseNo;
 
     } catch (Exception e) {
         // Rollback on error
@@ -4096,7 +4252,7 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
         pt.close();
         
         lastPrNo++;
-        purchaseNo = "PR" + lastPrNo;
+        purchaseNo = "GRN-" + lastPrNo;
         
         pt = con.prepareStatement("UPDATE prod_purchase_counter SET last_pr_no = ? WHERE id = 1");
         pt.setInt(1, lastPrNo);

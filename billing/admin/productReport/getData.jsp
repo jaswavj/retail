@@ -216,6 +216,35 @@
         canObj.put("totalAmt", canTotalAmt);
         result.put("cancelled", canObj);
 
+        // ── 7. STOCK ADJUSTMENTS ─────────────────────────────────────────────
+        Vector adjRows = prod.getStockAdjReport(fromDate, toDate, prodId);
+        JSONArray adjArr = new JSONArray();
+        double adjTotalAdd = 0, adjTotalRemove = 0;
+        for (int i = 0; i < adjRows.size(); i++) {
+            Vector r = (Vector) adjRows.get(i);
+            JSONObject row = new JSONObject();
+            row.put("date",      r.get(6) != null ? r.get(6).toString() : "");
+            row.put("time",      r.get(7) != null ? r.get(7).toString() : "");
+            String sType = r.get(4) != null ? r.get(4).toString() : "2";
+            row.put("stockType", sType);
+            double stock = 0;
+            try { stock = Double.parseDouble(r.get(5).toString()); } catch(Exception ex) {}
+            String unit = r.get(11) != null ? r.get(11).toString() : "";
+            row.put("stock",     stock);
+            row.put("unit",      unit);
+            row.put("notes",     r.get(8) != null ? r.get(8).toString() : "");
+            row.put("user",      r.get(10) != null ? r.get(10).toString() : "");
+            if ("1".equals(sType)) adjTotalAdd += stock;
+            else adjTotalRemove += stock;
+            adjArr.add(row);
+        }
+        JSONObject adjObj = new JSONObject();
+        adjObj.put("rows", adjArr);
+        adjObj.put("count", adjRows.size());
+        adjObj.put("totalAdd", adjTotalAdd);
+        adjObj.put("totalRemove", adjTotalRemove);
+        result.put("stockAdj", adjObj);
+
         out.print(result.toJSONString());
 
     } catch (Exception e) {

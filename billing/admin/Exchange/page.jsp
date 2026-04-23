@@ -227,14 +227,6 @@
                 actionBtns = `<button class="btn btn-sm btn-secondary" disabled><i class="fas fa-ban me-1"></i>${exchanged ? 'Exchanged' : 'Returned'}</button>`;
             } else {
                 actionBtns = `
-                    <button class="btn btn-sm btn-primary open-exchange-btn me-1"
-                        data-detail-id="${item.detailId}"
-                        data-prod-name="${escHtml(item.productName)}"
-                        data-qty="${item.qty}"
-                        data-price="${item.price}"
-                        data-total="${item.total}">
-                        <i class="fas fa-exchange-alt me-1"></i>Exchange
-                    </button>
                     <button class="btn btn-sm btn-warning open-return-btn"
                         data-detail-id="${item.detailId}"
                         data-prod-name="${escHtml(item.productName)}"
@@ -291,42 +283,77 @@
             btn.addEventListener('click', function() {
                 const detailId  = this.dataset.detailId;
                 const prodName  = this.dataset.prodName;
-                const qty       = this.dataset.qty;
-                const total     = this.dataset.total;
+                const maxQty    = parseFloat(this.dataset.qty);
+                const total     = parseFloat(this.dataset.total);
                 const billNo    = document.getElementById('billNoInput').value.trim();
 
+                // Step 1 – ask how many to return
                 Swal.fire({
-                    title: 'Confirm Return?',
-                    html: `Return <strong>${escHtml(prodName)}</strong><br>Qty: ${qty} &nbsp;|&nbsp; Total: ₹${total}<br><br>
-                           <span class="text-success">Stock will be restored and customer earns ₹${total} exchange points.</span>`,
-                    icon: 'warning',
+                    title: 'Return Quantity',
+                    html: `<div class="mb-2 text-start">
+                               <strong>${escHtml(prodName)}</strong><br>
+                               <span class="text-muted small">Available qty: ${maxQty} &nbsp;|&nbsp; Total: ₹${total.toFixed(2)}</span>
+                           </div>
+                           <input id="swal-ret-qty" type="number" class="swal2-input"
+                               min="0.001" max="${maxQty}" step="0.001"
+                               placeholder="Enter qty to return" value="${maxQty}">`,
+                    icon: 'question',
                     showCancelButton: true,
-                    confirmButtonText: 'Yes, Return',
-                    confirmButtonColor: '#fd7e14',
-                    cancelButtonText: 'Cancel'
-                }).then(result => {
-                    if (!result.isConfirmed) return;
-
-                    const params = new URLSearchParams({ billNo, detailId });
-                    fetch(CTX + '/admin/Exchange/saveReturn.jsp', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: params.toString()
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Return Successful',
-                                html: data.message,
-                                confirmButtonText: 'OK'
-                            }).then(() => loadBill());
-                        } else {
-                            Swal.fire('Error', data.message || 'Return failed.', 'error');
+                    confirmButtonText: 'Next',
+                    cancelButtonText: 'Cancel',
+                    preConfirm: () => {
+                        const val = parseFloat(document.getElementById('swal-ret-qty').value);
+                        if (isNaN(val) || val <= 0) {
+                            Swal.showValidationMessage('Please enter a valid quantity greater than 0.');
+                            return false;
                         }
-                    })
-                    .catch(() => Swal.fire('Error', 'Network error.', 'error'));
+                        if (val > maxQty) {
+                            Swal.showValidationMessage('Qty cannot exceed available qty (' + maxQty + ').');
+                            return false;
+                        }
+                        return val;
+                    }
+                }).then(step1 => {
+                    if (!step1.isConfirmed) return;
+                    const returnQty  = step1.value;
+                    const retAmount  = parseFloat(((returnQty / maxQty) * total).toFixed(2));
+
+                    // Step 2 – confirm
+                    Swal.fire({
+                        title: 'Confirm Return?',
+                        html: `Return <strong>${escHtml(prodName)}</strong><br>
+                               Qty: <strong>${returnQty}</strong> of ${maxQty}
+                               &nbsp;|&nbsp; Amount: ₹<strong>${retAmount.toFixed(2)}</strong><br><br>
+                               <span class="text-success">Stock will be restored and customer earns ₹${retAmount.toFixed(2)} exchange points.</span>`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, Return',
+                        confirmButtonColor: '#fd7e14',
+                        cancelButtonText: 'Cancel'
+                    }).then(result => {
+                        if (!result.isConfirmed) return;
+
+                        const params = new URLSearchParams({ billNo, detailId, returnQty });
+                        fetch(CTX + '/admin/Exchange/saveReturn.jsp', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: params.toString()
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Return Successful',
+                                    html: data.message,
+                                    confirmButtonText: 'OK'
+                                }).then(() => loadBill());
+                            } else {
+                                Swal.fire('Error', data.message || 'Return failed.', 'error');
+                            }
+                        })
+                        .catch(() => Swal.fire('Error', 'Network error.', 'error'));
+                    });
                 });
             });
         });

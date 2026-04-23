@@ -699,7 +699,7 @@ function proceedWithPurchaseSave() {
                 } else if (_result && _result.trim() !== '' && _result.trim() !== '0') {
                     Swal.fire({
                         title: 'Purchase Saved!',
-                        text: 'Purchase bill has been saved successfully. ' ,
+                        text: 'Purchase bill saved successfully. Bill No: ' + _result.trim(),
                         icon: 'success',
                         confirmButtonText: 'OK'
                     }).then(function() {

@@ -5525,6 +5525,199 @@ public String saveExchange(String billNo, int detailId, int newProdId, double ne
  *
  * @return human-readable result message
  */
+public String saveReturn(String billNo, int detailId, double returnQty, int uid) throws Exception {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        con.setAutoCommit(false);
+
+        // ── 1. Fetch detail row ───────────────────────────────────────────────
+        ps = con.prepareStatement(
+            "SELECT bd.id, bd.bill_id, bd.prod_id, bd.qty, bd.total, "
+          + "IFNULL(bd.is_exchanged, 0) "
+          + "FROM prod_bill_details bd "
+          + "WHERE bd.id = ? AND bd.is_cancelled = 0");
+        ps.setInt(1, detailId);
+        rs = ps.executeQuery();
+        if (!rs.next()) {
+            throw new Exception("Bill detail not found or already cancelled.");
+        }
+        int        fetchedBillId  = rs.getInt(2);
+        int        prodId         = rs.getInt(3);
+        BigDecimal totalQty       = rs.getBigDecimal(4);
+        double     itemTotal      = rs.getDouble(5);
+        int        currentStatus  = rs.getInt(6);
+        rs.close(); ps.close();
+
+        if (currentStatus == 1) throw new Exception("This item has already been exchanged.");
+        if (currentStatus == 2) throw new Exception("This item has already been returned.");
+
+        BigDecimal retQty = new BigDecimal(returnQty).setScale(3, java.math.RoundingMode.HALF_UP);
+        if (retQty.compareTo(BigDecimal.ZERO) <= 0)
+            throw new Exception("Return quantity must be greater than zero.");
+        if (retQty.compareTo(totalQty) > 0)
+            throw new Exception("Return quantity (" + retQty + ") exceeds bill quantity (" + totalQty + ").");
+
+        // Proportional amount to return
+        double retAmount = new java.math.BigDecimal(itemTotal)
+            .multiply(retQty)
+            .divide(totalQty, 3, java.math.RoundingMode.HALF_UP)
+            .doubleValue();
+
+        boolean isFullReturn = retQty.compareTo(totalQty) == 0;
+
+        // ── 2. Fetch bill header ──────────────────────────────────────────────
+        ps = con.prepareStatement(
+            "SELECT id, customerId, total, payable FROM prod_bill "
+          + "WHERE bill_display = ? AND is_cancelled = 0");
+        ps.setString(1, billNo);
+        rs = ps.executeQuery();
+        if (!rs.next()) throw new Exception("Bill not found: " + billNo);
+        int     billId      = rs.getInt(1);
+        int     customerId  = rs.getInt(2);
+        boolean hasCustomer = !rs.wasNull() && customerId > 0;
+        double  billTotal   = rs.getDouble(3);
+        double  billPayable = rs.getDouble(4);
+        rs.close(); ps.close();
+
+        if (billId != fetchedBillId) throw new Exception("Bill / detail mismatch.");
+
+        // ── 3. Fetch batch_id ─────────────────────────────────────────────────
+        int batchId = 0;
+        ps = con.prepareStatement(
+            "SELECT id FROM prod_batch WHERE product_id = ? ORDER BY id DESC LIMIT 1");
+        ps.setInt(1, prodId);
+        rs = ps.executeQuery();
+        if (rs.next()) batchId = rs.getInt(1);
+        rs.close(); ps.close();
+
+        // ── 4. Restore stock ──────────────────────────────────────────────────
+        if (batchId > 0) {
+            ps = con.prepareStatement(
+                "UPDATE prod_batch SET stock = stock + ? WHERE id = ?");
+            ps.setBigDecimal(1, retQty);
+            ps.setInt(2, batchId);
+            ps.executeUpdate(); ps.close();
+
+            BigDecimal lastStockNow = BigDecimal.ZERO;
+            ps = con.prepareStatement(
+                "SELECT stock_now FROM prod_lifecycle WHERE product_id = ? ORDER BY id DESC LIMIT 1");
+            ps.setInt(1, prodId);
+            rs = ps.executeQuery();
+            if (rs.next()) lastStockNow = rs.getBigDecimal(1);
+            rs.close(); ps.close();
+
+            ps = con.prepareStatement(
+                "INSERT INTO prod_lifecycle "
+              + "(bill_id, batch_id, product_id, stock_in, stock_out, stock_now, "
+              + " notes, date, time, uid, stock_type, stockAdjType) "
+              + "VALUES (?, ?, ?, ?, 0, ?, 'PRODUCT RETURN', NOW(), NOW(), ?, 1, 1)");
+            ps.setInt(1, billId);
+            ps.setInt(2, batchId);
+            ps.setInt(3, prodId);
+            ps.setBigDecimal(4, retQty);
+            ps.setBigDecimal(5, lastStockNow.add(retQty));
+            ps.setInt(6, uid);
+            ps.executeUpdate(); ps.close();
+        }
+
+        // ── 5. Update bill total & payable ────────────────────────────────────
+        double newBillTotal   = new java.math.BigDecimal(billTotal   - retAmount)
+                                    .setScale(3, java.math.RoundingMode.HALF_UP).doubleValue();
+        double newBillPayable = new java.math.BigDecimal(billPayable - retAmount)
+                                    .setScale(3, java.math.RoundingMode.HALF_UP).doubleValue();
+        ps = con.prepareStatement(
+            "UPDATE prod_bill SET total = ?, payable = ? WHERE id = ?");
+        ps.setDouble(1, newBillTotal   < 0 ? 0 : newBillTotal);
+        ps.setDouble(2, newBillPayable < 0 ? 0 : newBillPayable);
+        ps.setInt(3, billId);
+        ps.executeUpdate(); ps.close();
+
+        // ── 6. Update or mark detail row ─────────────────────────────────────
+        if (isFullReturn) {
+            ps = con.prepareStatement(
+                "UPDATE prod_bill_details SET is_exchanged = 2 WHERE id = ?");
+            ps.setInt(1, detailId);
+        } else {
+            BigDecimal newQty = totalQty.subtract(retQty).setScale(3, java.math.RoundingMode.HALF_UP);
+            double newItemTotal = new java.math.BigDecimal(itemTotal - retAmount)
+                                      .setScale(3, java.math.RoundingMode.HALF_UP).doubleValue();
+            ps = con.prepareStatement(
+                "UPDATE prod_bill_details SET qty = ?, total = ? WHERE id = ?");
+            ps.setBigDecimal(1, newQty);
+            ps.setDouble(2, newItemTotal < 0 ? 0 : newItemTotal);
+            ps.setInt(3, detailId);
+        }
+        ps.executeUpdate(); ps.close();
+
+        // ── 7. Insert into pro_bill_exchange ──────────────────────────────────
+        ps = con.prepareStatement(
+            "INSERT INTO pro_bill_exchange (bill_id, customer_id, old_prod_id, new_prod_id, uid, date_time) "
+          + "VALUES (?, ?, ?, ?, ?, NOW())");
+        ps.setInt(1, billId);
+        if (hasCustomer) { ps.setInt(2, customerId); } else { ps.setNull(2, java.sql.Types.INTEGER); }
+        ps.setInt(3, prodId);
+        ps.setInt(4, prodId);
+        ps.setInt(5, uid);
+        ps.executeUpdate(); ps.close();
+
+        // ── 8. Credit exchange points ─────────────────────────────────────────
+        String resultMsg;
+        if (hasCustomer) {
+            ps = con.prepareStatement(
+                "SELECT IFNULL(exchange_point, 0) FROM customers WHERE id = ?");
+            ps.setInt(1, customerId);
+            rs = ps.executeQuery();
+            double oldPoint = rs.next() ? rs.getDouble(1) : 0;
+            rs.close(); ps.close();
+
+            double totalPoint = new java.math.BigDecimal(oldPoint + retAmount)
+                                    .setScale(3, java.math.RoundingMode.HALF_UP).doubleValue();
+            ps = con.prepareStatement(
+                "UPDATE customers SET exchange_point = ? WHERE id = ?");
+            ps.setDouble(1, totalPoint);
+            ps.setInt(2, customerId);
+            ps.executeUpdate(); ps.close();
+
+            ps = con.prepareStatement(
+                "INSERT INTO customers_exchange_point "
+              + "(customer_id, bill_id, old_point, exchange_point, total_point, uid, date_time, notes) "
+              + "VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)");
+            ps.setInt(1, customerId);
+            ps.setInt(2, billId);
+            ps.setDouble(3, oldPoint);
+            ps.setDouble(4, retAmount);
+            ps.setDouble(5, totalPoint);
+            ps.setInt(6, uid);
+            ps.setString(7, "Points earned on product return (Bill: " + billNo + ", Qty: " + returnQty + ")");
+            ps.executeUpdate(); ps.close();
+
+            resultMsg = "Return completed for qty " + returnQty + ". Bill reduced by \u20b9"
+                      + String.format("%.2f", retAmount)
+                      + ". Customer earned \u20b9" + String.format("%.2f", retAmount)
+                      + " exchange points. Total points: \u20b9" + String.format("%.2f", totalPoint);
+        } else {
+            resultMsg = "Return completed for qty " + returnQty + ". Bill reduced by \u20b9"
+                      + String.format("%.2f", retAmount)
+                      + ". No customer linked \u2014 exchange points not credited.";
+        }
+
+        con.commit();
+        return resultMsg;
+
+    } catch (Exception e) {
+        if (con != null) { try { con.rollback(); } catch (Exception ex) { ; } }
+        throw e;
+    } finally {
+        if (rs  != null) try { rs.close();  } catch (Exception e) { ; }
+        if (ps  != null) try { ps.close();  } catch (Exception e) { ; }
+        if (con != null) try { con.close(); } catch (Exception e) { ; }
+    }
+}
+
 public String saveReturn(String billNo, int detailId, int uid) throws Exception {
     Connection con = null;
     PreparedStatement ps = null;

@@ -22,6 +22,7 @@
             --purret-color:   #6f42c1;
             --exchange-color: #0dcaf0;
             --cancel-color:   #dc3545;
+            --stockadj-color: #6610f2;
         }
         @media print {
             .no-print { display: none !important; }
@@ -56,8 +57,13 @@
         .sc-purret   { border-color: var(--purret-color);   background: #f3e5f5; }
         .sc-exchange { border-color: var(--exchange-color); background: #e0f7fa; }
         .sc-cancel   { border-color: var(--cancel-color);   background: #fdecea; }
-        .sc-value { font-size: 1.5rem; font-weight: 700; }
-        .sc-label { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; opacity: .7; }
+        .sc-stockadj { border-color: var(--stockadj-color); background: #f0ebff; }
+        .sc-value { font-size: 1.2rem; font-weight: 700; }
+        .sc-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+        @media (min-width: 992px) {
+            #summaryCards { flex-wrap: nowrap; }
+            #summaryCards > .sum-col { flex: 0 0 auto; width: 14.2857%; min-width: 0; }
+        }
 
         /* ── Tabs ── */
         .nav-tabs .nav-link { font-weight: 600; font-size: .88rem; }
@@ -167,47 +173,54 @@
             </div>
 
             <!-- ── Summary Cards ── -->
-            <div class="row g-3 mb-4" id="summaryCards">
-                <div class="col-6 col-md-4 col-lg-2">
-                    <div class="card summary-card sc-sales p-3 h-100">
+            <div class="row g-2 mb-4" id="summaryCards">
+                <div class="col-6 col-md-4 sum-col">
+                    <div class="card summary-card sc-sales p-2 h-100">
                         <div class="sc-label" style="color:var(--sales-color)"><i class="fas fa-shopping-cart me-1"></i>Sales</div>
                         <div class="sc-value" style="color:var(--sales-color)" id="sc-sales-amt">₹0</div>
                         <div class="text-muted small"><span id="sc-sales-qty">0</span> units · <span id="sc-sales-count">0</span> bills</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <div class="card summary-card sc-salesret p-3 h-100">
+                <div class="col-6 col-md-4 sum-col">
+                    <div class="card summary-card sc-salesret p-2 h-100">
                         <div class="sc-label" style="color:var(--salesret-color)"><i class="fas fa-undo-alt me-1"></i>Sales Returns</div>
                         <div class="sc-value" style="color:var(--salesret-color)" id="sc-ret-amt">₹0</div>
                         <div class="text-muted small"><span id="sc-ret-qty">0</span> units · <span id="sc-ret-count">0</span> bills</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <div class="card summary-card sc-purchase p-3 h-100">
+                <div class="col-6 col-md-4 sum-col">
+                    <div class="card summary-card sc-purchase p-2 h-100">
                         <div class="sc-label" style="color:var(--purchase-color)"><i class="fas fa-truck me-1"></i>Purchase</div>
                         <div class="sc-value" style="color:var(--purchase-color)" id="sc-pur-amt">₹0</div>
                         <div class="text-muted small"><span id="sc-pur-qty">0</span> units · <span id="sc-pur-count">0</span> entries</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <div class="card summary-card sc-purret p-3 h-100">
+                <div class="col-6 col-md-4 sum-col">
+                    <div class="card summary-card sc-purret p-2 h-100">
                         <div class="sc-label" style="color:var(--purret-color)"><i class="fas fa-truck-loading me-1"></i>Pur. Returns</div>
                         <div class="sc-value" style="color:var(--purret-color)" id="sc-prret-amt">₹0</div>
                         <div class="text-muted small"><span id="sc-prret-qty">0</span> units · <span id="sc-prret-count">0</span> entries</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <div class="card summary-card sc-exchange p-3 h-100">
+                <div class="col-6 col-md-4 sum-col">
+                    <div class="card summary-card sc-exchange p-2 h-100">
                         <div class="sc-label" style="color:var(--exchange-color)"><i class="fas fa-exchange-alt me-1"></i>Exchanges</div>
                         <div class="sc-value" style="color:var(--exchange-color)" id="sc-exc-count">0</div>
                         <div class="text-muted small"><span id="sc-exc-out">0</span> out · <span id="sc-exc-in">0</span> in</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <div class="card summary-card sc-cancel p-3 h-100">
+                <div class="col-6 col-md-4 sum-col">
+                    <div class="card summary-card sc-cancel p-2 h-100">
                         <div class="sc-label" style="color:var(--cancel-color)"><i class="fas fa-ban me-1"></i>Cancelled</div>
                         <div class="sc-value" style="color:var(--cancel-color)" id="sc-can-amt">₹0</div>
                         <div class="text-muted small"><span id="sc-can-qty">0</span> units · <span id="sc-can-count">0</span> records</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 sum-col">
+                    <div class="card summary-card sc-stockadj p-2 h-100">
+                        <div class="sc-label" style="color:var(--stockadj-color)"><i class="fas fa-sliders-h me-1"></i>Stock Adj.</div>
+                        <div class="sc-value" style="color:var(--stockadj-color)" id="sc-adj-count">0</div>
+                        <div class="text-muted small">+<span id="sc-adj-add">0</span> / −<span id="sc-adj-remove">0</span></div>
                     </div>
                 </div>
             </div>
@@ -242,6 +255,12 @@
                     <a class="nav-link" data-bs-toggle="tab" href="#tabExchange">
                         <i class="fas fa-exchange-alt me-1" style="color:var(--exchange-color)"></i>Exchanges
                         <span class="badge ms-1" style="background:var(--exchange-color);color:#000" id="badge-exc">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#tabStockAdj">
+                        <i class="fas fa-sliders-h me-1" style="color:var(--stockadj-color)"></i>Stock Adj.
+                        <span class="badge ms-1" style="background:var(--stockadj-color)" id="badge-adj">0</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -367,6 +386,30 @@
                                         <th class="text-center">Direction</th><th>User</th>
                                     </tr></thead>
                                     <tbody id="excBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── STOCK ADJUSTMENT TAB ── -->
+                <div class="tab-pane fade" id="tabStockAdj">
+                    <div class="card shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center py-2">
+                            <span class="fw-semibold" style="color:var(--stockadj-color)"><i class="fas fa-sliders-h me-1"></i>Stock Adjustment Details</span>
+                            <small class="text-muted" id="adj-subtitle"></small>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 rpt-table" id="adjTable">
+                                    <thead><tr>
+                                        <th>#</th><th>Date</th><th>Time</th>
+                                        <th class="text-center">Action</th>
+                                        <th class="text-end">Stock</th>
+                                        <th>Notes</th><th>User</th>
+                                    </tr></thead>
+                                    <tbody id="adjBody"></tbody>
+                                    <tfoot id="adjFoot"></tfoot>
                                 </table>
                             </div>
                         </div>
@@ -724,6 +767,48 @@
              <td class="text-end">${fmt2(cTotQty)}</td><td></td>
              <td class="text-end">₹${fmt2(cTotAmt)}</td><td colspan="2"></td></tr>` : '';
         set('can-subtitle', ca.rows.length + ' record(s) | Total: ₹' + fmt2(ca.totalAmt));
+
+        // ── Stock Adj summary ───────────────────────────────────────────────
+        const sa = data.stockAdj;
+        set('sc-adj-count',  sa.count);
+        set('sc-adj-add',    fmt2(sa.totalAdd));
+        set('sc-adj-remove', fmt2(sa.totalRemove));
+        set('badge-adj',     sa.count);
+
+        // ── Stock Adjustment table ───────────────────────────────────────────
+        const adjTypeLabel = {
+            '1': ['badge-in',  'Added'],
+            '2': ['badge-out', 'Removed'],
+            '3': ['bg-warning text-dark badge', 'Damage'],
+            '4': ['bg-info text-dark badge', 'Internal Use']
+        };
+        let aHtml = '', aTotAdd = 0, aTotRemove = 0;
+        if (sa.rows.length === 0) {
+            aHtml = emptyRow(7, 'No stock adjustments found in this period');
+        } else {
+            sa.rows.forEach((r, i) => {
+                const [badgeCls, badgeLbl] = adjTypeLabel[r.stockType] || ['badge-out', 'Removed'];
+                const stockStr = fmt2(r.stock) + (r.unit ? ' ' + escHtml(r.unit) : '');
+                aHtml += `<tr>
+                    <td>${i+1}</td>
+                    <td>${r.date}</td>
+                    <td class="text-muted small">${escHtml(r.time)}</td>
+                    <td class="text-center"><span class="${badgeCls}">${badgeLbl}</span></td>
+                    <td class="text-end fw-semibold">${stockStr}</td>
+                    <td class="text-muted small">${escHtml(r.notes)}</td>
+                    <td>${escHtml(r.user)}</td>
+                </tr>`;
+                if (r.stockType === '1') aTotAdd += r.stock;
+                else aTotRemove += r.stock;
+            });
+        }
+        document.getElementById('adjBody').innerHTML = aHtml;
+        document.getElementById('adjFoot').innerHTML = sa.rows.length > 0 ?
+            `<tr><td colspan="3"><strong>Total</strong></td>
+             <td></td>
+             <td class="text-end">+${fmt2(aTotAdd)} / &minus;${fmt2(aTotRemove)}</td>
+             <td colspan="2"></td></tr>` : '';
+        set('adj-subtitle', sa.rows.length + ' record(s) | Added: ' + fmt2(sa.totalAdd) + '  Removed: ' + fmt2(sa.totalRemove));
 
         document.getElementById('reportArea').classList.remove('d-none');
         document.getElementById('reportArea').scrollIntoView({ behavior: 'smooth', block: 'start' });

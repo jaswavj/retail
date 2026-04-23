@@ -13,6 +13,7 @@
 
     String billNo    = request.getParameter("billNo");
     String detailIdS = request.getParameter("detailId");
+    String returnQtyS = request.getParameter("returnQty");
 
     if (billNo == null || billNo.trim().isEmpty()
         || detailIdS == null || detailIdS.trim().isEmpty()) {
@@ -24,7 +25,13 @@
         billNo         = billNo.trim();
         int detailId   = Integer.parseInt(detailIdS.trim());
 
-        String resultMsg = bill.saveReturn(billNo, detailId, uid);
+        String resultMsg;
+        if (returnQtyS != null && !returnQtyS.trim().isEmpty()) {
+            double returnQty = Double.parseDouble(returnQtyS.trim());
+            resultMsg = bill.saveReturn(billNo, detailId, returnQty, uid);
+        } else {
+            resultMsg = bill.saveReturn(billNo, detailId, uid);
+        }
         out.print("{\"success\":true,\"message\":\"" + resultMsg.replace("\"","'") + "\"}");
 
     } catch (NumberFormatException e) {
