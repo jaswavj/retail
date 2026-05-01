@@ -1,4 +1,4 @@
-<%@page language="java" import="java.util.*" %>
+<%@page language="java" import="java.util.*, java.math.BigDecimal" %>
 <jsp:useBean id="prod" class="product.productBean" />
 
 <%
@@ -41,6 +41,18 @@ int unitId         = Integer.parseInt(unitIdParam != null ? unitIdParam : "0");
 String hsn         = request.getParameter("hsn");
 if (hsn != null && hsn.trim().isEmpty()) {
     hsn = null;
+}
+
+// In edit mode UI, cost/mrp are shown in selected unit when conversion exists.
+// Convert them back to base values before saving.
+Vector selectedUnit = prod.getUnitById(unitId);
+if (selectedUnit != null && selectedUnit.size() > 3 && selectedUnit.elementAt(3) != null) {
+    BigDecimal convertionCalculation = (BigDecimal) selectedUnit.elementAt(3);
+    if (convertionCalculation.compareTo(BigDecimal.ZERO) > 0) {
+        cost = new BigDecimal(cost).divide(convertionCalculation, 6, java.math.RoundingMode.HALF_UP).doubleValue();
+        mrp = new BigDecimal(mrp).divide(convertionCalculation, 6, java.math.RoundingMode.HALF_UP).doubleValue();
+        commission = new BigDecimal(commission).divide(convertionCalculation, 6, java.math.RoundingMode.HALF_UP).doubleValue();
+    }
 }
 
 try {

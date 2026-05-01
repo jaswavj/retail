@@ -587,8 +587,6 @@ String type = request.getParameter("type"); // success / warning / danger / info
         form.querySelector('[name="productName"]').value = product.productName || '';
         form.querySelector('[name="productCode"]').value = product.prodCode || '';
         form.querySelector('[name="hsn"]').value = product.hsn || '';
-        form.querySelector('[name="cost"]').value = product.cost || '';
-        form.querySelector('[name="mrp"]').value = product.mrp || '';
         form.querySelector('[name="commission"]').value = product.commission || '0.00';
         form.querySelector('[name="discValue"]').value = product.discount || '0.00';
         form.querySelector('[name="stock"]').value = '';
@@ -612,6 +610,17 @@ String type = request.getParameter("type"); // success / warning / danger / info
         for (let opt of unitSelect.options) {
             if (opt.value == product.unitId) { opt.selected = true; break; }
         }
+
+        // In edit mode, show values in selected unit if conversion exists.
+        const selectedUnitOption = unitSelect.options[unitSelect.selectedIndex];
+        const convertionCalculation = selectedUnitOption ? parseFloat(selectedUnitOption.getAttribute('data-convertion-calculation') || '0') : 0;
+        const parsedCost = parseFloat(product.cost || '0');
+        const parsedMrp = parseFloat(product.mrp || '0');
+        const editCost = (!isNaN(convertionCalculation) && convertionCalculation > 0 && !isNaN(parsedCost)) ? (parsedCost * convertionCalculation) : parsedCost;
+        const editMrp = (!isNaN(convertionCalculation) && convertionCalculation > 0 && !isNaN(parsedMrp)) ? (parsedMrp * convertionCalculation) : parsedMrp;
+        form.querySelector('[name="cost"]').value = !isNaN(editCost) ? editCost : '';
+        form.querySelector('[name="mrp"]').value = !isNaN(editMrp) ? editMrp : '';
+
         handleUnitChange(unitSelect);
 
         // Set GST dropdown

@@ -191,9 +191,19 @@ function getProductDetails(str, str1) {
         success: function (_result) {
             var resArr = _result.trim().split("<#>");
             if (resArr.length > 1) {		        
-                $('#_productName_' + str).val(resArr[0]);       
-                $('#_cost_' + str).val(resArr[4]);
-                $('#_mrp_' + str).val(resArr[5]);
+                $('#_productName_' + str).val(resArr[0]);
+                // Store conversion data first (needed for cost/mrp display)
+                var convertionUnit = (resArr.length > 11) ? resArr[11].trim() : '';
+                var convertionCalc = (resArr.length > 12) ? parseFloat(resArr[12]) || 1 : 1;
+                $('#_productName_' + str).data('convertionUnit', convertionUnit);
+                $('#_productName_' + str).data('convertionCalc', convertionCalc);
+
+                // Show cost and mrp per purchase unit (multiply by conversionCalc)
+                var rawCost = parseFloat(resArr[4]) || 0;
+                var rawMrp = parseFloat(resArr[5]) || 0;
+                $('#_cost_' + str).val(convertionCalc > 1 ? (rawCost * convertionCalc).toFixed(3) : rawCost);
+                $('#_mrp_' + str).val(convertionCalc > 1 ? (rawMrp * convertionCalc).toFixed(3) : rawMrp);
+
                 if (resArr.length > 13 && resArr[13].trim() !== '') {
                     $('#_tax_' + str).val(resArr[13].trim());
                 }
@@ -207,11 +217,6 @@ function getProductDetails(str, str1) {
                     $('#_qtyunit_' + str).text('');
                     $('#_totunit_' + str).text('');
                 }
-                // Store conversion data
-                var convertionUnit = (resArr.length > 11) ? resArr[11].trim() : '';
-                var convertionCalc = (resArr.length > 12) ? parseFloat(resArr[12]) || 1 : 1;
-                $('#_productName_' + str).data('convertionUnit', convertionUnit);
-                $('#_productName_' + str).data('convertionCalc', convertionCalc);
                 calculateRow(str);
             }
         }

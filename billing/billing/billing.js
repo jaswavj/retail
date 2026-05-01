@@ -670,6 +670,7 @@ function saveBill() {
     let customerName = document.getElementById("customerName").value.trim();
     let customerPhn = document.getElementById("customerPhn").value.trim();
     let customerId = document.getElementById("customerId").value;
+    if (!customerId || customerId === "0") customerId = "1";
     let attenderId = document.getElementById("attenderId") ? document.getElementById("attenderId").value : "";
     
     // Get tax bill checkbox value

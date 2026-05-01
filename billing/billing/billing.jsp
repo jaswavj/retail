@@ -195,7 +195,7 @@
                                         <div class="input-outline">
                                             <input type="text" class="form-control only-numbers red-text"
                                                 id="grandTotal" value="0" readonly>
-                                            <label>Grand Total</label>
+                                            <label>Total</label>
                                         </div>
                                     </div>
                                     <div class="col-6 col-md-4 col-lg">
@@ -209,8 +209,9 @@
                                     <div class="col-6 col-md-4 col-lg">
                                         <div class="input-outline">
                                             <input type="text" class="form-control only-numbers red-text"
-                                                id="payableAmount" value="0" readonly>
-                                            <label>Payable</label>
+                                                id="payableAmount" value="0" readonly
+                                                style="font-size: 1.35rem; font-weight: 700;">
+                                            <label style="font-weight: 700;">Payable</label>
                                         </div>
                                     </div>
                                     <div class="col-6 col-md-4 col-lg">
