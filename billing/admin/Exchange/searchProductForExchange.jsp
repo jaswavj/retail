@@ -2,7 +2,7 @@
 <%@ page import="java.util.*" %>
 <%@ page import="org.json.simple.JSONObject" %>
 <%@ page import="org.json.simple.JSONArray" %>
-<jsp:useBean id="bill" class="billing.billingBean" />
+<jsp:useBean id="bill" class="billing.salesReturnBean" />
 <%
     response.setContentType("application/json");
     response.setCharacterEncoding("UTF-8");

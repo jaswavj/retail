@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="application/json; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
-<jsp:useBean id="bill" class="billing.billingBean" />
+<jsp:useBean id="bill" class="billing.salesReturnBean" />
 <%
     response.setContentType("application/json");
     response.setCharacterEncoding("UTF-8");

@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.*, java.text.SimpleDateFormat, java.util.Date" %>
-<jsp:useBean id="prod" class="product.productBean" />
+<jsp:useBean id="prod" class="product.purchaseReturnBean" />
 <%
     Integer uid = (Integer) session.getAttribute("userId");
     if (uid == null) { response.sendRedirect(request.getContextPath() + "/index.jsp"); return; }

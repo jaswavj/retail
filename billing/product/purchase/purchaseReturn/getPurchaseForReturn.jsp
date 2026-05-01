@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="application/json; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.*,org.json.*" %>
-<jsp:useBean id="prod" class="product.productBean" />
+<jsp:useBean id="prod" class="product.purchaseReturnBean" />
 <%
     response.setContentType("application/json");
     Integer uid = (Integer) session.getAttribute("userId");

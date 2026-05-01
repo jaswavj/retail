@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/plain; charset=UTF-8" pageEncoding="UTF-8"%>
-<jsp:useBean id="bill" class="billing.billingBean" />
+<jsp:useBean id="bill" class="billing.salesReturnBean" />
 <%
 response.setContentType("text/plain");
 response.setCharacterEncoding("UTF-8");

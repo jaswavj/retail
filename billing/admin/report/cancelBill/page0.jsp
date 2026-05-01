@@ -5,7 +5,7 @@
 String fromDate = request.getParameter("fromDate");
 String toDate = request.getParameter("toDate");
 %>
-<jsp:useBean id="bill" class="billing.billingBean" />
+<jsp:useBean id="bill" class="billing.salesReturnBean" />
 <!DOCTYPE html>
 <html lang="en">
 <head>

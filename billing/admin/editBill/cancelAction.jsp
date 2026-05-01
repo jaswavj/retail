@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page language="java" import= "java.util.*, java.math.BigDecimal"%>
 <%@ page import="java.text.SimpleDateFormat, java.util.Date" %>
-<jsp:useBean id="bill" class="billing.billingBean" />
+<jsp:useBean id="bill" class="billing.salesReturnBean" />
 <%
 int uid = (Integer)session.getAttribute("userId");
 int billId = 0;
