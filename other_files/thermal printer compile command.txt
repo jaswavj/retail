@@ -1,0 +1,1 @@
+cd "d:\JASXBILL\CLIENTS\14 jangel1\cli14\billing\WEB-INF\classes"; javac -cp ".;../lib/itextpdf-5.2.0.jar;../lib/*" print/POSPrinter.java 2>&1

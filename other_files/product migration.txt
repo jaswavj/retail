@@ -1,0 +1,14 @@
+-- 1. Insert into prod_product
+INSERT INTO prod_product (name, code, category_id, brand_id, unit_id, uid, date, time, gst)
+SELECT MAX(category), CODE, 1, 1, 1, 1, CURDATE(), CURTIME(), 5 FROM trans_product GROUP BY CODE;
+
+
+-- 2. Insert into prod_batch
+INSERT INTO prod_batch (name, product_id, cost, mrp, stock, added_stock, uid, date, time)
+SELECT t.CODE, p.id, t.cost, t.mrp, t.stock, t.stock, 1, CURDATE(), CURTIME()
+FROM trans_product t JOIN prod_product p ON p.code = t.CODE;
+
+-- 3. Insert into prod_lifecycle
+INSERT INTO prod_lifecycle (batch_id, product_id, stock_in, stock_now, notes, date, time, uid)
+SELECT b.id, b.product_id, b.stock, b.stock, 'stock added through data transfer', CURDATE(), CURTIME(), 1
+FROM prod_batch b;
