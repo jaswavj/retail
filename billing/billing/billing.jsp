@@ -517,11 +517,7 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
                 <span class="fg-lbl">Price</span>
                 <input type="number" id="productPrice" class="fg-inp" placeholder="0.00" min="0">
             </div>
-            <div class="fg" style="flex:.6;min-width:62px;">
-                <span class="fg-lbl">Disc %</span>
-                <input type="text" id="productDiscount" class="fg-inp only-numbers" placeholder="0" value="0"
-                       oninput="setDefaultValue(this);">
-            </div>
+            <input type="hidden" id="productDiscount" value="0">
             <div style="display:flex;align-items:flex-end;">
                 <button class="bb bb-primary" onclick="addProduct()">
                     <i class="fa-solid fa-circle-plus"></i> ADD
