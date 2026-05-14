@@ -11,7 +11,8 @@
 		Vector vec1	= (Vector)vec.elementAt(i); 
 		String name	= vec1.elementAt(0).toString();
 		String code	= vec1.elementAt(1).toString();
+		String id	= vec1.elementAt(2) != null ? vec1.elementAt(2).toString() : "0";
 		
-		out.print(name+"<#>"+code+"\n"); 
+		out.print(name+"<#>"+code+"<#>"+id+"\n"); 
 		}  
 	%>

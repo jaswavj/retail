@@ -1061,6 +1061,30 @@ public void addProduct(String productName, int categoryId, int brandId, String c
 }
 
 //////////////////////////---------------------------
+public int getProductIdByNameAndCode(String name, String code) throws Exception {
+	Connection con = null;
+	PreparedStatement pt = null;
+	ResultSet rs = null;
+	try {
+		con = util.DBConnectionManager.getConnectionFromPool();
+		if (code != null && !code.trim().isEmpty() && !code.equals("0")) {
+			pt = con.prepareStatement("SELECT id FROM prod_product WHERE name=? AND code=? ORDER BY id DESC LIMIT 1");
+			pt.setString(1, name);
+			pt.setString(2, code);
+		} else {
+			pt = con.prepareStatement("SELECT id FROM prod_product WHERE name=? ORDER BY id DESC LIMIT 1");
+			pt.setString(1, name);
+		}
+		rs = pt.executeQuery();
+		return rs.next() ? rs.getInt(1) : 0;
+	} finally {
+		if (rs != null) try { rs.close(); } catch (Exception e) {}
+		if (pt != null) try { pt.close(); } catch (Exception e) {}
+		if (con != null) try { con.close(); } catch (Exception e) {}
+	}
+}
+
+//////////////////////////---------------------------
 public Vector getAllProducts() throws Exception
 	{
 	Connection con 			= null;
@@ -3394,7 +3418,7 @@ public Vector getAutoLoadDetails(String name,int typeId) throws Exception
 	
 		Vector vec			= new Vector();
 		
-		pt = con.prepareStatement("SELECT a.name, a.code FROM `prod_product` a WHERE (a.NAME LIKE ? OR a.code LIKE ?) AND a.is_active=1 ORDER BY a.NAME ASC LIMIT 50");
+		pt = con.prepareStatement("SELECT a.name, a.code, a.id FROM `prod_product` a WHERE (a.NAME LIKE ? OR a.code LIKE ?) AND a.is_active=1 ORDER BY a.NAME ASC LIMIT 50");
 		pt.setString(1,"%"+name+"%");
 		pt.setString(2,"%"+name+"%");
 		rs = pt.executeQuery();
@@ -3403,6 +3427,7 @@ public Vector getAutoLoadDetails(String name,int typeId) throws Exception
 			Vector vec1		= new Vector();
 			vec1.addElement(rs.getString(1));
 			vec1.addElement(rs.getString(2) != null ? rs.getString(2) : "");
+			vec1.addElement(rs.getString(3));
 			vec.addElement(vec1);
 			}
 		return vec;
@@ -3443,7 +3468,7 @@ public String getProductFullDetails(String productName) throws Exception
 		String Qry				= "";
 		
 
-		pt = con.prepareStatement("SELECT a.name AS prodsName,b.name AS catName,c.name AS brandName,d.name AS batchNo,d.cost,d.mrp,a.id AS prodsId,b.id AS catId,c.id AS brandId,d.id AS batchId,COALESCE(u.name,'') AS unitName,COALESCE(u.convertion_unit,'') AS convertion_unit,COALESCE(u.convertion_calculation,1) AS convertion_calculation,COALESCE(a.gst,0) AS gst FROM prod_product a JOIN prod_category b ON a.category_id=b.id JOIN prod_brands c ON a.brand_id=c.id JOIN prod_batch d ON a.id=d.product_id LEFT JOIN prod_units u ON u.id=a.unit_id WHERE a.name=?");
+		pt = con.prepareStatement("SELECT a.name AS prodsName,b.name AS catName,c.name AS brandName,d.name AS batchNo,d.cost,d.mrp,a.id AS prodsId,b.id AS catId,c.id AS brandId,d.id AS batchId,COALESCE(u.name,'') AS unitName,COALESCE(u.convertion_unit,'') AS convertion_unit,COALESCE(u.convertion_calculation,1) AS convertion_calculation,COALESCE(a.gst,0) AS gst,COALESCE(a.code,'') AS code FROM prod_product a JOIN prod_category b ON a.category_id=b.id JOIN prod_brands c ON a.brand_id=c.id JOIN prod_batch d ON a.id=d.product_id LEFT JOIN prod_units u ON u.id=a.unit_id WHERE a.name=?");
 		pt.setString(1,productName);									  
 		rs = pt.executeQuery();
 		if(rs.next())
@@ -3463,7 +3488,8 @@ public String getProductFullDetails(String productName) throws Exception
 			String convertionUnit	= rs.getString(12);
 			String convertionCalc	= rs.getString(13);
 			String gst				= rs.getString(14);
-			productDetails		= prodName+"<#>"+catName+"<#>"+brandName+"<#>"+batchNo+"<#>"+cost+"<#>"+mrp+"<#>"+prodsId+"<#>"+catId+"<#>"+brandId+"<#>"+batchId+"<#>"+unitName+"<#>"+convertionUnit+"<#>"+convertionCalc+"<#>"+gst+"<#>";
+			String code				= rs.getString(15) != null ? rs.getString(15) : "";
+			productDetails		= prodName+"<#>"+catName+"<#>"+brandName+"<#>"+batchNo+"<#>"+cost+"<#>"+mrp+"<#>"+prodsId+"<#>"+catId+"<#>"+brandId+"<#>"+batchId+"<#>"+unitName+"<#>"+convertionUnit+"<#>"+convertionCalc+"<#>"+gst+"<#>"+code+"<#>";
 			}
 		else
 			productDetails		= "Invalid Input";
@@ -3490,6 +3516,62 @@ public String getProductFullDetails(String productName) throws Exception
 	  		pt = null;
 			}
 			    		
+		if(con!= null)			
+			{
+			try{con.close();}catch(Exception e){}
+			con = null;	
+			}
+		}	
+	}
+///////////////////////-----------------------------
+public String getProductFullDetailsById(int productId) throws Exception
+	{
+	Connection con 			= null;
+	PreparedStatement pt 	= null; 
+	ResultSet rs			= null;
+	try
+		{	
+		con					= util.DBConnectionManager.getConnectionFromPool();
+		String productDetails	= "";
+		pt = con.prepareStatement("SELECT a.name AS prodsName,b.name AS catName,c.name AS brandName,d.name AS batchNo,d.cost,d.mrp,a.id AS prodsId,b.id AS catId,c.id AS brandId,d.id AS batchId,COALESCE(u.name,'') AS unitName,COALESCE(u.convertion_unit,'') AS convertion_unit,COALESCE(u.convertion_calculation,1) AS convertion_calculation,COALESCE(a.gst,0) AS gst,COALESCE(a.code,'') AS code FROM prod_product a JOIN prod_category b ON a.category_id=b.id JOIN prod_brands c ON a.brand_id=c.id JOIN prod_batch d ON a.id=d.product_id LEFT JOIN prod_units u ON u.id=a.unit_id WHERE a.id=?");
+		pt.setInt(1, productId);									  
+		rs = pt.executeQuery();
+		if(rs.next())
+			{	
+			String prodName		= rs.getString(1);
+			String catName		= rs.getString(2);
+			String brandName	= rs.getString(3);
+			String batchNo		= rs.getString(4);
+			String cost			= rs.getString(5);
+			String mrp			= rs.getString(6);
+			String prodsId		= rs.getString(7);
+			String catId		= rs.getString(8);
+			String brandId		= rs.getString(9);
+			String batchId		= rs.getString(10);
+			String unitName		= rs.getString(11);
+			String convertionUnit	= rs.getString(12);
+			String convertionCalc	= rs.getString(13);
+			String gst				= rs.getString(14);
+			String code				= rs.getString(15) != null ? rs.getString(15) : "";
+			productDetails		= prodName+"<#>"+catName+"<#>"+brandName+"<#>"+batchNo+"<#>"+cost+"<#>"+mrp+"<#>"+prodsId+"<#>"+catId+"<#>"+brandId+"<#>"+batchId+"<#>"+unitName+"<#>"+convertionUnit+"<#>"+convertionCalc+"<#>"+gst+"<#>"+code+"<#>";
+			}
+		else
+			productDetails		= "Invalid Input";
+				
+		return productDetails;
+		}
+	finally
+		{
+		if (rs != null)
+			{
+	  		try	 { rs.close(); } catch (SQLException e) { ; }
+	  		rs = null;
+			}
+		if (pt != null)
+			{
+	  		try	 { pt.close(); } catch (SQLException e) { ; }
+	  		pt = null;
+			}
 		if(con!= null)			
 			{
 			try{con.close();}catch(Exception e){}
@@ -3786,6 +3868,7 @@ finally
 					double mrp = Double.parseDouble(fields[6]);
 					double disc = Double.parseDouble(fields[7]);
 					double tax = Double.parseDouble(fields[8]);
+					int productId = fields.length > 11 ? Integer.parseInt(fields[11].trim()) : 0;
 					int purid = 0;
 					int prodsid = 0;
 					double totalamt	= totQty*cost;
@@ -3807,13 +3890,17 @@ finally
 					rs.close();
 					pt.close();
 					
-					pt = con.prepareStatement("SELECT id FROM prod_product WHERE NAME =?");
-					pt.setString(1,productName);
-					rs = pt.executeQuery();
-					if(rs.next())
-						prodsid	= rs.getInt(1);
-					rs.close();
-					pt.close();
+					if (productId > 0) {
+						prodsid = productId;
+					} else {
+						pt = con.prepareStatement("SELECT id FROM prod_product WHERE NAME =?");
+						pt.setString(1,productName);
+						rs = pt.executeQuery();
+						if(rs.next())
+							prodsid	= rs.getInt(1);
+						rs.close();
+						pt.close();
+					}
 					
 					// Validate product ID - never insert with product ID 0
 					if (prodsid == 0) {
@@ -4036,6 +4123,7 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
                 double tax = Double.parseDouble(fields[8]);
                 double convertionCalc = fields.length > 10 ? Double.parseDouble(fields[10]) : 1.0;
                 if (convertionCalc <= 0) convertionCalc = 1.0;
+                int productId = fields.length > 11 ? Integer.parseInt(fields[11].trim()) : 0;
                 int purid = 0;
                 int prodsid = 0;
                 double totalamt = totQty * cost;
@@ -4053,10 +4141,14 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
                 rs = pt.executeQuery();
                 if (rs.next()) purid = rs.getInt(1);
 
-                pt = con.prepareStatement("SELECT id FROM prod_product WHERE NAME =?");
-                pt.setString(1, productName);
-                rs = pt.executeQuery();
-                if (rs.next()) prodsid = rs.getInt(1);
+                if (productId > 0) {
+                    prodsid = productId;
+                } else {
+                    pt = con.prepareStatement("SELECT id FROM prod_product WHERE NAME =?");
+                    pt.setString(1, productName);
+                    rs = pt.executeQuery();
+                    if (rs.next()) prodsid = rs.getInt(1);
+                }
 
                 pt = con.prepareStatement("INSERT INTO prod_purchase_details(prid,prods_id,pack,qtypack,quantity,free,rate,mrp,totalamt,tax,tax_amt,disc_per,disc,netamt,isinvoicereceived,sgst_per,cgst_per,sgst_amt,cgst_amt,unitrate,unitmrp) "
                         + "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
@@ -4395,6 +4487,7 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
                 int poDetailId = fields.length > 9 ? Integer.parseInt(fields[9]) : 0;
                 double convertionCalc = fields.length > 10 ? Double.parseDouble(fields[10]) : 1.0;
                 if (convertionCalc <= 0) convertionCalc = 1.0;
+                int productId = fields.length > 11 ? Integer.parseInt(fields[11].trim()) : 0;
                 
                 int purid = 0;
                 int prodsid = 0;
@@ -4415,12 +4508,16 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
                 rs.close();
                 pt.close();
 
-                pt = con.prepareStatement("SELECT id FROM prod_product WHERE NAME =?");
-                pt.setString(1, productName);
-                rs = pt.executeQuery();
-                if (rs.next()) prodsid = rs.getInt(1);
-                rs.close();
-                pt.close();
+                if (productId > 0) {
+                    prodsid = productId;
+                } else {
+                    pt = con.prepareStatement("SELECT id FROM prod_product WHERE NAME =?");
+                    pt.setString(1, productName);
+                    rs = pt.executeQuery();
+                    if (rs.next()) prodsid = rs.getInt(1);
+                    rs.close();
+                    pt.close();
+                }
                 
                 // Validate product ID - never insert with product ID 0
                 if (prodsid == 0) {

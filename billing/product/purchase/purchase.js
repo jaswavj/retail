@@ -91,6 +91,115 @@ function Load() {
     ///////////////////////    
 }
 /////////////////////////////
+function disableProductInputs(rowIndex) {
+    $('#_cost_' + rowIndex).prop('readonly', true).val('');
+    $('#_mrp_' + rowIndex).prop('readonly', true).val('');
+}
+function enableProductInputs(rowIndex) {
+    $('#_cost_' + rowIndex).prop('readonly', false);
+    $('#_mrp_' + rowIndex).prop('readonly', false);
+}
+/////////////////////////////
+function openAddProductModal() {
+    // Pre-fill product name from the currently active row if it has a typed value
+    var activeRow = (typeof window._activeProductRow !== 'undefined') ? window._activeProductRow : -1;
+    var typedName = '';
+    if (activeRow >= 0) {
+        var raw = $('#_productName_' + activeRow).val().trim();
+        // Strip "Name (Code)" format back to just name
+        var storedName = $('#_productName_' + activeRow).data('productName');
+        typedName = storedName || raw.replace(/\s*\([^)]*\)\s*$/, '');
+    }
+    $('#modal_productName').val(typedName);
+    $('#modal_productCode').val('');
+    $('#modal_hsn').val('');
+    $('#modal_stock').val('0');
+    $('#modal_cost').val('');
+    $('#modal_mrp').val('');
+    $('#modal_gst').val('0');
+    $('#modal_discType').val('0');
+    $('#modal_discValue').val('0.00').prop('readonly', true);
+    $('#modal_commission').val('0.00');
+    $('#modal_categoryId').val('');
+    $('#modal_brandId').val('');
+    var modal = new bootstrap.Modal(document.getElementById('addProductModal'));
+    modal.show();
+    setTimeout(function() { $('#modal_productName').focus(); }, 400);
+}
+/////////////////////////////
+function handleModalDiscTypeChange(sel) {
+    if (sel.value === '0') {
+        $('#modal_discValue').val('0.00').prop('readonly', true);
+    } else {
+        $('#modal_discValue').val('').prop('readonly', false).focus();
+    }
+}
+/////////////////////////////
+function saveNewProductModal() {
+    var form = document.getElementById('addProductModalForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    var btn = $('#saveNewProductBtn');
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...');
+
+    var data = {
+        productName  : $('#modal_productName').val().trim(),
+        categoryId   : $('#modal_categoryId').val(),
+        brandId      : $('#modal_brandId').val(),
+        productCode  : $('#modal_productCode').val().trim(),
+        hsn          : $('#modal_hsn').val().trim(),
+        unitId       : $('#modal_unitId').val(),
+        stock        : $('#modal_stock').val() || '0',
+        cost         : $('#modal_cost').val(),
+        mrp          : $('#modal_mrp').val(),
+        gst          : $('#modal_gst').val(),
+        discType     : $('#modal_discType').val(),
+        discValue    : $('#modal_discValue').val() || '0',
+        commission   : $('#modal_commission').val() || '0'
+    };
+
+    $.ajax({
+        type   : 'POST',
+        url    : contextPath + '/product/purchase/saveProductAjax.jsp',
+        data   : data,
+        dataType: 'json',
+        success: function(res) {
+            if (res.success) {
+                bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+                Swal.fire({
+                    title: 'Product Added!',
+                    text : res.productName + (res.productCode && res.productCode !== '0' ? ' (' + res.productCode + ')' : '') + ' added successfully.',
+                    icon : 'success',
+                    timer: 1800,
+                    showConfirmButton: false
+                });
+                // Auto-select the new product into the active row
+                var targetRow = (typeof window._activeProductRow !== 'undefined') ? window._activeProductRow : -1;
+                if (targetRow >= 0 && res.productId > 0) {
+                    var displayVal = res.productCode && res.productCode !== '0'
+                        ? res.productName + ' (' + res.productCode + ')'
+                        : res.productName;
+                    $('#_productName_' + targetRow).val(displayVal);
+                    $('#_productName_' + targetRow).data('productId',   res.productId);
+                    $('#_productName_' + targetRow).data('productName', res.productName);
+                    $('#_productName_' + targetRow).data('productCode', res.productCode);
+                    getProductDetailsById(targetRow, res.productId);
+                }
+            } else {
+                Swal.fire({ title: 'Error', text: res.message || 'Failed to add product.', icon: 'error', confirmButtonText: 'OK' });
+            }
+        },
+        error: function() {
+            Swal.fire({ title: 'Error', text: 'Server error. Please try again.', icon: 'error', confirmButtonText: 'OK' });
+        },
+        complete: function() {
+            btn.prop('disabled', false).html('<i class="fas fa-save me-1"></i>Save Product');
+        }
+    });
+}
+/////////////////////////////
 function autoComplete(event, str, str1) {
 	var unicode = event.keyCode ? event.keyCode : event.charCode;
 
@@ -113,9 +222,13 @@ function autoComplete(event, str, str1) {
 									var parts = trimmed.split("<#>");
 									var name = parts[0] || trimmed;
 									var code = parts[1] || "";
+									var id   = parts[2] || "0";
 									return {
 										label: code ? name + " (" + code + ")" : name,
-										value: name
+										value: name,
+										productCode: code,
+										productId: id,
+										productName: name
 									};
 								}).filter(function (item) {
 									return item !== null;
@@ -139,19 +252,33 @@ function autoComplete(event, str, str1) {
 				},
 				minLength: 1,
 				select: function(event, ui) {
-					// Set the input to just the product name (without code in brackets)
-					$(this).val(ui.item.value);
+					var rowIdx = str;
+					var displayVal = ui.item.productCode
+						? ui.item.productName + ' (' + ui.item.productCode + ')'
+						: ui.item.productName;
+					$(this).val(displayVal);
+					$(this).data('productId',   ui.item.productId);
+					$(this).data('productCode', ui.item.productCode);
+					$(this).data('productName', ui.item.productName);
+					// Fetch details by ID so same-name products resolve correctly
+					getProductDetailsById(rowIdx, parseInt(ui.item.productId));
 					return false;
 				},
 				change: function(event, ui) {
-					if (!ui.item && $(this).val().trim() !== '') {
-						Swal.fire({
-							title: 'Invalid Product',
-							text: 'Please select a valid product from the list.',
-							icon: 'warning',
-							confirmButtonText: 'OK'
-						});
+					if (!ui.item) {
+						if ($(this).val().trim() !== '') {
+							Swal.fire({
+								title: 'Invalid Product',
+								text: 'Please select a valid product from the list.',
+								icon: 'warning',
+								confirmButtonText: 'OK'
+							});
+						}
 						$(this).val('');
+						$(this).data('productId', 0);
+						$(this).data('productCode', '');
+						$(this).data('productName', '');
+						disableProductInputs(str);
 					}
 				}
 			});
@@ -178,46 +305,82 @@ function autoComplete(event, str, str1) {
 }
 
 /////////////////////////////
-function getProductDetails(str, str1) {
-    var productName = $('#_productName_' + str).val();
+function applyProductDetails(str, resArr) {
+    var productName = resArr[0] || '';
+    var code        = (resArr.length > 14) ? resArr[14].trim() : '';
+    var displayVal  = code ? productName + ' (' + code + ')' : productName;
+    $('#_productName_' + str).val(displayVal);
+    $('#_productName_' + str).data('productName', productName);
+    $('#_productName_' + str).data('productCode', code);
+    $('#_productName_' + str).data('productId',   parseInt(resArr[6]) || 0);
 
-    var status = 1;
-    var param = 'status=' + status + '&productName=' + encodeURIComponent(productName.trim());
+    var convertionUnit = (resArr.length > 11) ? resArr[11].trim() : '';
+    var convertionCalc = (resArr.length > 12) ? parseFloat(resArr[12]) || 1 : 1;
+    $('#_productName_' + str).data('convertionUnit', convertionUnit);
+    $('#_productName_' + str).data('convertionCalc', convertionCalc);
+
+    var rawCost = parseFloat(resArr[4]) || 0;
+    var rawMrp  = parseFloat(resArr[5]) || 0;
+    enableProductInputs(str);
+    $('#_cost_' + str).val(convertionCalc > 1 ? (rawCost * convertionCalc).toFixed(3) : rawCost);
+    $('#_mrp_' + str).val(convertionCalc > 1 ? (rawMrp * convertionCalc).toFixed(3) : rawMrp);
+
+    if (resArr.length > 13 && resArr[13].trim() !== '') {
+        $('#_tax_' + str).val(resArr[13].trim());
+    }
+    var unitName = (resArr.length > 10) ? resArr[10] : '';
+    $('#_productName_' + str).data('unitName', unitName);
+    if (unitName) {
+        $('#_totunit_' + str).text(unitName);
+    } else {
+        $('#_totunit_' + str).text('');
+    }
+    calculateRow(str);
+}
+/////////////////////////////
+function getProductDetailsById(str, productId) {
+    if (!productId || productId <= 0) {
+        disableProductInputs(str);
+        return;
+    }
+    $.ajax({
+        type: "POST",
+        url: contextPath + "/product/purchase/details.jsp",
+        data: { status: 8, productId: productId },
+        success: function (_result) {
+            var resArr = _result.trim().split("<#>");
+            if (resArr.length > 1 && resArr[0] !== 'Invalid Input') {
+                applyProductDetails(str, resArr);
+            } else {
+                disableProductInputs(str);
+            }
+        }
+    });
+}
+/////////////////////////////
+function getProductDetails(str, str1) {
+    // If product was selected via autocomplete, details already loaded by ID
+    var productId = parseInt($('#_productName_' + str).data('productId')) || 0;
+    if (productId > 0) {
+        return; // already fetched correctly by ID during select
+    }
+
+    var productName = $('#_productName_' + str).val().trim();
+    if (!productName) {
+        disableProductInputs(str);
+        return;
+    }
 
     $.ajax({
         type: "POST",
         url: contextPath + "/product/purchase/details.jsp",
-        data: param,
+        data: { status: 1, productName: productName },
         success: function (_result) {
             var resArr = _result.trim().split("<#>");
-            if (resArr.length > 1) {		        
-                $('#_productName_' + str).val(resArr[0]);
-                // Store conversion data first (needed for cost/mrp display)
-                var convertionUnit = (resArr.length > 11) ? resArr[11].trim() : '';
-                var convertionCalc = (resArr.length > 12) ? parseFloat(resArr[12]) || 1 : 1;
-                $('#_productName_' + str).data('convertionUnit', convertionUnit);
-                $('#_productName_' + str).data('convertionCalc', convertionCalc);
-
-                // Show cost and mrp per purchase unit (multiply by conversionCalc)
-                var rawCost = parseFloat(resArr[4]) || 0;
-                var rawMrp = parseFloat(resArr[5]) || 0;
-                $('#_cost_' + str).val(convertionCalc > 1 ? (rawCost * convertionCalc).toFixed(3) : rawCost);
-                $('#_mrp_' + str).val(convertionCalc > 1 ? (rawMrp * convertionCalc).toFixed(3) : rawMrp);
-
-                if (resArr.length > 13 && resArr[13].trim() !== '') {
-                    $('#_tax_' + str).val(resArr[13].trim());
-                }
-                var unitName = (resArr.length > 10) ? resArr[10] : '';
-                $('#_productName_' + str).data('unitName', unitName);
-                // Show unit next to Qty/Pk and Total fields
-                if (unitName) {
-                    $('#_qtyunit_' + str).text(unitName);
-                    $('#_totunit_' + str).text(unitName);
-                } else {
-                    $('#_qtyunit_' + str).text('');
-                    $('#_totunit_' + str).text('');
-                }
-                calculateRow(str);
+            if (resArr.length > 1 && resArr[0] !== 'Invalid Input') {
+                applyProductDetails(str, resArr);
+            } else {
+                disableProductInputs(str);
             }
         }
     });
@@ -263,14 +426,14 @@ function addProductRow(event, str) {
         $("#productTable").append("<tr id='_productTableRow_" + proRowCount + "'>"
             + "<td class='text-center'><button type='button' class='btn btn-sm btn-success' id='_addProcRow_" + proRowCount + "' name='_addProcRow_" + proRowCount + "'  onclick='addProductRow();' disabled><i class='fas fa-plus'></i></button></td>"
             + "<td class='text-center'><button type='button' class='btn btn-sm btn-danger' id='_delProcRow_" + proRowCount + "' name='_delProcRow_" + proRowCount + "' onclick='deleteProductRow(this);'><i class='fas fa-trash'></i></button></td>"
-            + "<td ><input type='text' class='form-control form-control-sm' id='_productName_" + proRowCount + "' name='_productName_" + proRowCount + "' placeholder='Product' onfocus='autoComplete(event," + proRowCount + ",1);' onblur='getProductDetails(" + proRowCount + ",1);calculateRow(" + proRowCount + ");enableAddButton(" + proRowCount + ");'></td>"            + "<td class='text-center'><button type='button' class='btn btn-sm btn-info' id='_historyBtn_" + proRowCount + "' onclick='viewPurchaseHistory(" + proRowCount + ");'><i class='fas fa-history'></i></button></td>"            + "<td ><input type='text' class='form-control form-control-sm' id='_pack_" + proRowCount + "' name='_pack_" + proRowCount + "' placeholder='0' onkeyup='calculateRow(" + proRowCount + ");'></td>"
-            + "<td ><div class='d-flex align-items-center gap-1'><input type='text' class='form-control form-control-sm' id='_qtyperpack_" + proRowCount + "' name='_qtyperpack_" + proRowCount + "' placeholder='0' onkeyup='calculateRow(" + proRowCount + ");'><span class='text-muted small' id='_qtyunit_" + proRowCount + "'></span></div></td>"
-            + "<td ><div class='d-flex flex-column'><div class='d-flex align-items-center gap-1'><input type='text' class='form-control form-control-sm' id='_totqty_" + proRowCount + "' name='_totqty_" + proRowCount + "' placeholder='qty' value='0' readonly><span class='text-muted small' id='_totunit_" + proRowCount + "'></span></div><small class='text-primary' id='_convtotqty_" + proRowCount + "'></small></div></td>"
-            + "<td ><input type='text' class='form-control form-control-sm' id='_freeqty_" + proRowCount + "' name='_freeqty_" + proRowCount + "' placeholder='Color' value='0' onkeyup='calculateRow(" + proRowCount + ");'></td>"
-            + "<td ><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_cost_" + proRowCount + "' name='_cost_" + proRowCount + "' placeholder='Cost' value='0.00' onkeyup='calculateRow(" + proRowCount + ");'><small class='text-info' id='_costperconv_" + proRowCount + "'></small></div></td>"
-            + "<td ><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_mrp_" + proRowCount + "' name='_mrp_" + proRowCount + "' placeholder='Mrp' value='0.00' onkeyup='calculateRow(" + proRowCount + ");'><small class='text-info' id='_mrpperconv_" + proRowCount + "'></small></div></td>"
-            + "<td ><input type='text' class='form-control form-control-sm' id='_disc_" + proRowCount + "' name='_disc_" + proRowCount + "' placeholder='Disc' value='0' onkeyup='calculateRow(" + proRowCount + ");'></td>"
-            + "<td ><input type='text' class='form-control form-control-sm' id='_tax_" + proRowCount + "' name='_tax_" + proRowCount + "' placeholder='Tax' value='0' onkeyup='calculateRow(" + proRowCount + ");'></td>"
+            + "<td ><input type='text' class='form-control form-control-sm' id='_productName_" + proRowCount + "' name='_productName_" + proRowCount + "' placeholder='Product' onfocus='window._activeProductRow=" + proRowCount + ";autoComplete(event," + proRowCount + ",1);' onblur='getProductDetails(" + proRowCount + ",1);calculateRow(" + proRowCount + ");enableAddButton(" + proRowCount + ");'></td>"
+            + "<td ><div class='d-flex flex-column'><div class='d-flex align-items-center gap-1'><input type='text' class='form-control form-control-sm' id='_totqty_" + proRowCount + "' name='_totqty_" + proRowCount + "' placeholder='Qty' value='0' style='min-width:65px;' onkeyup='calculateRow(" + proRowCount + ");tryAddProductRow(event," + proRowCount + ");'><span class='text-muted small' id='_totunit_" + proRowCount + "'></span></div><small class='text-primary' id='_convtotqty_" + proRowCount + "'></small><input type='hidden' id='_pack_" + proRowCount + "' name='_pack_" + proRowCount + "' value='1'><input type='hidden' id='_qtyperpack_" + proRowCount + "' name='_qtyperpack_" + proRowCount + "' value='0'></div></td>"
+            + "<td ><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_cost_" + proRowCount + "' name='_cost_" + proRowCount + "' placeholder='Cost' value='0.00' onkeyup='calculateRow(" + proRowCount + ");tryAddProductRow(event," + proRowCount + ");'><small class='text-info' id='_costperconv_" + proRowCount + "'></small></div></td>"
+            + "<td ><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_mrp_" + proRowCount + "' name='_mrp_" + proRowCount + "' placeholder='Mrp' value='0.00' onkeyup='calculateRow(" + proRowCount + ");tryAddProductRow(event," + proRowCount + ");'><small class='text-info' id='_mrpperconv_" + proRowCount + "'></small></div></td>"
+            + "<td ><input type='text' class='form-control form-control-sm' id='_disc_" + proRowCount + "' name='_disc_" + proRowCount + "' placeholder='Disc' value='0' onkeyup='calculateRow(" + proRowCount + ");tryAddProductRow(event," + proRowCount + ");'></td>"
+            + "<td ><input type='text' class='form-control form-control-sm' id='_tax_" + proRowCount + "' name='_tax_" + proRowCount + "' placeholder='Tax' value='0' onkeyup='calculateRow(" + proRowCount + ");tryAddProductRow(event," + proRowCount + ");'></td>"
+            + "<td ><input type='text' class='form-control form-control-sm' id='_freeqty_" + proRowCount + "' name='_freeqty_" + proRowCount + "' placeholder='Free' value='0' onkeyup='calculateRow(" + proRowCount + ");tryAddProductRow(event," + proRowCount + ");'></td>"
+            + "<td class='text-center'><button type='button' class='btn btn-sm btn-info' id='_historyBtn_" + proRowCount + "' onclick='viewPurchaseHistory(" + proRowCount + ");'><i class='fas fa-history'></i></button></td>"
             + "<td ><label id='_costtotal_" + proRowCount + "' name='costtotal" + proRowCount + "'>0.00</label></td>"
             + "<td ><label id='_mrptotal_" + proRowCount + "' name='_mrptotal_" + proRowCount + "'>0.00</label></td>"
             + "<td ><label id='_taxtotal_" + proRowCount + "' name='_taxtotal_" + proRowCount + "'>0.00</label></td>"
@@ -279,6 +442,7 @@ function addProductRow(event, str) {
             + "</tr>");
             
         $('#_productTableRow_' + proRowCount).removeAttr('style'); // Remove any inline styles
+        disableProductInputs(proRowCount);
         $('#_productName_' + proRowCount).focus();
         $('#_proAddRowCount').val(proRowCount);
         $('#_proDelRowCount').val(proDelRowCount);
@@ -321,6 +485,12 @@ function viewPurchaseHistory(rowIndex) {
     });
 }
 ///////////////////////////////
+function tryAddProductRow(event, rowIndex) {
+    if ((event.keyCode || event.charCode) !== 13) return;
+    var productId = parseInt($('#_productName_' + rowIndex).data('productId') || 0);
+    if (productId > 0) addProductRow();
+}
+///////////////////////////////
 function enableAddButton(rowIndex) {
     var productName = $('#_productName_' + rowIndex).val();
     if (productName && productName.trim() !== '') {
@@ -332,12 +502,13 @@ function enableAddButton(rowIndex) {
 ///////////////////////////////
 function deleteProductRow(str) {
 
-	var proDelRowCount= parseFloat($('#_proDelRowCount').val());
+	var proDelRowCount = parseFloat($('#_proDelRowCount').val());
 
 	if (proDelRowCount > 1) {
 		$(str).closest('tr').remove();
-		invDelRowCount--;
+		proDelRowCount--;
 		$('#_proDelRowCount').val(proDelRowCount);
+		calculateGrandTotal();
 	}
 }
 
@@ -345,17 +516,18 @@ function deleteProductRow(str) {
 // Calculate totals for a single product row
 function calculateRow(rowIndex) {
     // Get values from inputs
-    var pack = parseFloat($('#_pack_' + rowIndex).val()) || 0;
-    var qtyPerPack = parseFloat($('#_qtyperpack_' + rowIndex).val()) || 0;
+    var totalQty = parseFloat($('#_totqty_' + rowIndex).val()) || 0;
     var free = parseFloat($('#_freeqty_' + rowIndex).val()) || 0;
     var cost = parseFloat($('#_cost_' + rowIndex).val()) || 0;
     var mrp = parseFloat($('#_mrp_' + rowIndex).val()) || 0;
     var disc = parseFloat($('#_disc_' + rowIndex).val()) || 0;
     var tax = parseFloat($('#_tax_' + rowIndex).val()) || 0;
 
-    var qty = (pack * qtyPerPack) - free;
+    if (totalQty < 0) totalQty = 0;
+    var qty = totalQty - free;
     if (qty < 0) qty = 0;
-    $('#_totqty_' + rowIndex).val(qty);
+    $('#_pack_' + rowIndex).val(1);
+    $('#_qtyperpack_' + rowIndex).val(totalQty.toFixed(3));
 
     // Calculate cost total
     var costTotal = qty * cost;
@@ -601,7 +773,7 @@ function proceedWithPurchaseSave() {
     if(proRowCount >=0) { 
         for (var i = 0; i <= proRowCount; i++) {
             if ($('#_productTableRow_' + i).length) {
-                var _productName = $('#_productName_' + i).val().trim();
+                var _productName = $('#_productName_' + i).data('productName') || $('#_productName_' + i).val().trim();
                 var _pack = parseFloat($('#_pack_' + i).val()) || 0;
                 var _qtyperpack = parseFloat($('#_qtyperpack_' + i).val()) || 0;
                 var _totqty = parseFloat($('#_totqty_' + i).val()) || 0;
@@ -652,7 +824,8 @@ function proceedWithPurchaseSave() {
 
                 // Add product to array
                 var _convertionCalc = parseFloat($('#_productName_' + i).data('convertionCalc')) || 1;
-                prodArr += _productName + '<#>' + _pack + '<#>' + _qtyperpack + '<#>' + _totqty + '<#>' + _freeqty + '<#>' + _cost + '<#>' + _mrp + '<#>' + _disc + '<#>' + _tax + '<#>' + _poDetailId + '<#>' + _convertionCalc + '<@>';
+                var _productId = parseInt($('#_productName_' + i).data('productId')) || 0;
+                prodArr += _productName + '<#>' + _pack + '<#>' + _qtyperpack + '<#>' + _totqty + '<#>' + _freeqty + '<#>' + _cost + '<#>' + _mrp + '<#>' + _disc + '<#>' + _tax + '<#>' + _poDetailId + '<#>' + _convertionCalc + '<#>' + _productId + '<@>';
             }
         }
         

@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.*, javax.servlet.http.*" %>
 <jsp:useBean id="poBean" class="product.purchaseOrderBean" />
+<jsp:useBean id="prodMasterBean" class="product.productBean" />
 <%
     // Check if receiving goods from PO
     int poId = 0;
@@ -63,7 +64,7 @@
     
     /* Fixed Table Layout */
     .table-fixed-layout {
-        min-width: 1400px;
+        min-width: 1240px;
         table-layout: fixed;
         width: 100%;
     }
@@ -73,19 +74,17 @@
     .table-fixed-layout th:nth-child(2), .table-fixed-layout td:nth-child(2) { width: 50px; }
     .table-fixed-layout th:nth-child(3), .table-fixed-layout td:nth-child(3) { width: 240px; }
     .table-fixed-layout th:nth-child(4), .table-fixed-layout td:nth-child(4) { width: 60px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .table-fixed-layout th:nth-child(5), .table-fixed-layout td:nth-child(5) { width: 60px; }
-    .table-fixed-layout th:nth-child(6), .table-fixed-layout td:nth-child(6) { width: 100px; }
-    .table-fixed-layout th:nth-child(7), .table-fixed-layout td:nth-child(7) { width: 100px; }
-    .table-fixed-layout th:nth-child(8), .table-fixed-layout td:nth-child(8) { width: 60px; }
-    .table-fixed-layout th:nth-child(9), .table-fixed-layout td:nth-child(9) { width: 80px; }
-    .table-fixed-layout th:nth-child(10), .table-fixed-layout td:nth-child(10) { width: 80px; }
-    .table-fixed-layout th:nth-child(11), .table-fixed-layout td:nth-child(11) { width: 60px; }
-    .table-fixed-layout th:nth-child(12), .table-fixed-layout td:nth-child(12) { width: 60px; }
+    .table-fixed-layout th:nth-child(5), .table-fixed-layout td:nth-child(5) { width: 100px; }
+    .table-fixed-layout th:nth-child(6), .table-fixed-layout td:nth-child(6) { width: 60px; }
+    .table-fixed-layout th:nth-child(7), .table-fixed-layout td:nth-child(7) { width: 80px; }
+    .table-fixed-layout th:nth-child(8), .table-fixed-layout td:nth-child(8) { width: 80px; }
+    .table-fixed-layout th:nth-child(9), .table-fixed-layout td:nth-child(9) { width: 60px; }
+    .table-fixed-layout th:nth-child(10), .table-fixed-layout td:nth-child(10) { width: 60px; }
+    .table-fixed-layout th:nth-child(11), .table-fixed-layout td:nth-child(11) { width: 90px; }
+    .table-fixed-layout th:nth-child(12), .table-fixed-layout td:nth-child(12) { width: 90px; }
     .table-fixed-layout th:nth-child(13), .table-fixed-layout td:nth-child(13) { width: 90px; }
-    .table-fixed-layout th:nth-child(14), .table-fixed-layout td:nth-child(14) { width: 90px; }
+    .table-fixed-layout th:nth-child(14), .table-fixed-layout td:nth-child(14) { width: 100px; }
     .table-fixed-layout th:nth-child(15), .table-fixed-layout td:nth-child(15) { width: 90px; }
-    .table-fixed-layout th:nth-child(16), .table-fixed-layout td:nth-child(16) { width: 100px; }
-    .table-fixed-layout th:nth-child(17), .table-fixed-layout td:nth-child(17) { width: 90px; }
 </style>
 <body style="height: 100vh; overflow: hidden;" onload="Load();loadPOItems()">
 
@@ -144,16 +143,14 @@
                     <tr>
                         <th>Add</th>
                         <th>Del</th>
-                        <th>Item Name</th>
-                        <th>History</th>
-                        <th>Pack</th>
-                        <th>Qty/Pk</th>
-                        <th>Total</th>
-                        <th>Free</th>
+                        <th>Item Name <button type="button" class="btn btn-success py-0 px-1 ms-1" style="font-size:0.68rem;line-height:1.4;" onclick="openAddProductModal()" title="Add New Product"><i class="fas fa-plus"></i></button></th>
+                        <th>Qty</th>
                         <th>Cost</th>
                         <th>MRP</th>
                         <th>Disc%</th>
                         <th>Tax%</th>
+                        <th>Free</th>
+                        <th>History</th>
                         <th>Cost Tot</th>
                         <th>MRP Tot</th>
                         <th>Tax Tot</th>
@@ -166,12 +163,12 @@
                 </tbody>
                 <tfoot style="background-color: #f8f9fa;">
                     <tr>
-                        <td colspan="12" class="text-end fw-bold pe-2">Summary Total:</td>
+                        <td colspan="10" class="text-end fw-bold pe-2">Summary Total:</td>
                         <td id="sumCostTotal" class="fw-bold">0.00</td>
                         <td id="sumMrpTotal" class="fw-bold">0.00</td>
                         <td id="sumTaxTotal" class="fw-bold">0.00</td>
                         <td id="sumNetTotal" class="fw-bold">0.00</td>
-                        <td colspan="3"></td>
+                        <td></td>
                     </tr>
                 </tfoot>
             </table>
@@ -265,7 +262,7 @@
     <script>
         var contextPath = '<%=contextPath%>';
     </script>
-    <script src="<%=contextPath%>/product/purchase/purchase.js"></script>
+    <script src="<%=contextPath%>/product/purchase/purchase.js?v=<%= System.currentTimeMillis() %>"></script>
     <script>
         // Set payment type based on supplier GST status
         function setPaymentTypeBasedOnGst() {
@@ -362,15 +359,13 @@
                 + "<td class='text-center'><button type='button' class='btn btn-sm btn-success' id='_addProcRow_" + proRowCount + "' onclick='addProductRow();' disabled><i class='fas fa-plus'></i></button></td>"
                 + "<td class='text-center'><button type='button' class='btn btn-sm btn-danger' id='_delProcRow_" + proRowCount + "' onclick='deleteProductRow(this);'><i class='fas fa-trash'></i></button></td>"
                 + '<td><input type="text" class="form-control form-control-sm" id="_productName_' + proRowCount + '" name="_productName_' + proRowCount + '" value="' + escapedName + '" readonly></td>'
-                + "<td class='text-center'><button type='button' class='btn btn-sm btn-info' id='_historyBtn_" + proRowCount + "' onclick='viewPurchaseHistory(" + proRowCount + ");'><i class='fas fa-history'></i></button></td>"
-                + "<td><input type='text' class='form-control form-control-sm' id='_pack_" + proRowCount + "' name='_pack_" + proRowCount + "' value='" + itemData.pack + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
-                + "<td><input type='text' class='form-control form-control-sm' id='_qtyperpack_" + proRowCount + "' name='_qtyperpack_" + proRowCount + "' value='" + itemData.qtyperpack + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
-                + "<td><div class='d-flex flex-column'><div class='d-flex align-items-center gap-1'><input type='text' class='form-control form-control-sm' id='_totqty_" + proRowCount + "' name='_totqty_" + proRowCount + "' value='0' readonly><span class='text-muted small' id='_totunit_" + proRowCount + "'></span></div><small class='text-primary' id='_convtotqty_" + proRowCount + "'></small></div></td>"
-                + "<td><input type='text' class='form-control form-control-sm' id='_freeqty_" + proRowCount + "' name='_freeqty_" + proRowCount + "' value='" + itemData.free + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
+                + "<td><div class='d-flex flex-column'><div class='d-flex align-items-center gap-1'><input type='text' class='form-control form-control-sm' id='_totqty_" + proRowCount + "' name='_totqty_" + proRowCount + "' value='" + (((parseFloat(itemData.pack) || 0) * (parseFloat(itemData.qtyperpack) || 0)).toFixed(3)) + "' style='min-width:65px;' onkeyup='calculateRow(" + proRowCount + ");'><span class='text-muted small' id='_totunit_" + proRowCount + "'></span></div><small class='text-primary' id='_convtotqty_" + proRowCount + "'></small><input type='hidden' id='_pack_" + proRowCount + "' name='_pack_" + proRowCount + "' value='1'><input type='hidden' id='_qtyperpack_" + proRowCount + "' name='_qtyperpack_" + proRowCount + "' value='" + (((parseFloat(itemData.pack) || 0) * (parseFloat(itemData.qtyperpack) || 0)).toFixed(3)) + "'></div></td>"
                 + "<td><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_cost_" + proRowCount + "' name='_cost_" + proRowCount + "' value='" + itemData.cost + "' onkeyup='calculateRow(" + proRowCount + ");'><small class='text-info' id='_costperconv_" + proRowCount + "'></small></div></td>"
                 + "<td><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_mrp_" + proRowCount + "' name='_mrp_" + proRowCount + "' value='" + itemData.mrp + "' onkeyup='calculateRow(" + proRowCount + ");'><small class='text-info' id='_mrpperconv_" + proRowCount + "'></small></div></td>"
                 + "<td><input type='text' class='form-control form-control-sm' id='_disc_" + proRowCount + "' name='_disc_" + proRowCount + "' value='" + itemData.disc + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
                 + "<td><input type='text' class='form-control form-control-sm' id='_tax_" + proRowCount + "' name='_tax_" + proRowCount + "' value='" + itemData.tax + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
+                + "<td><input type='text' class='form-control form-control-sm' id='_freeqty_" + proRowCount + "' name='_freeqty_" + proRowCount + "' value='" + itemData.free + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
+                + "<td class='text-center'><button type='button' class='btn btn-sm btn-info' id='_historyBtn_" + proRowCount + "' onclick='viewPurchaseHistory(" + proRowCount + ");'><i class='fas fa-history'></i></button></td>"
                 + "<td><label id='_costtotal_" + proRowCount + "'>0.00</label></td>"
                 + "<td><label id='_mrptotal_" + proRowCount + "'>0.00</label></td>"
                 + "<td><label id='_taxtotal_" + proRowCount + "'>0.00</label></td>"
@@ -406,7 +401,6 @@
                         $('#_productName_' + rowIndex).data('convertionUnit', convertionUnit);
                         $('#_productName_' + rowIndex).data('convertionCalc', convertionCalc);
                         if (unitName) {
-                            $('#_qtyunit_' + rowIndex).text(unitName);
                             $('#_totunit_' + rowIndex).text(unitName);
                         }
                         calculateRow(rowIndex);
@@ -415,5 +409,126 @@
             });
         }
     </script>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2" style="background:var(--page-header-card-bg);color:white;">
+                <h6 class="modal-title mb-0" id="addProductModalLabel"><i class="fas fa-plus-circle me-2"></i>Add New Product</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-2">
+                <form id="addProductModalForm" class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">Category <span class="text-danger">*</span></label>
+                        <select name="categoryId" id="modal_categoryId" class="form-select form-select-sm" required>
+                            <option value="">Select Category</option>
+                            <%
+                                Vector modalCategories = prodMasterBean.getCategoryName();
+                                if (modalCategories != null) {
+                                    for (int mi = 0; mi < modalCategories.size(); mi++) {
+                                        Vector mcat = (Vector) modalCategories.get(mi);
+                                        if (mcat != null && mcat.size() >= 2) {
+                            %>
+                            <option value="<%=mcat.elementAt(1)%>"><%=mcat.elementAt(0)%></option>
+                            <% }}} %>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">Brand <span class="text-danger">*</span></label>
+                        <select name="brandId" id="modal_brandId" class="form-select form-select-sm" required>
+                            <option value="">Select Brand</option>
+                            <%
+                                Vector modalBrands = prodMasterBean.getBrandsName();
+                                if (modalBrands != null) {
+                                    for (int mi = 0; mi < modalBrands.size(); mi++) {
+                                        Vector mbrand = (Vector) modalBrands.get(mi);
+                                        if (mbrand != null && mbrand.size() >= 2) {
+                            %>
+                            <option value="<%=mbrand.elementAt(1)%>"><%=mbrand.elementAt(0)%></option>
+                            <% }}} %>
+                        </select>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">Product Name <span class="text-danger">*</span></label>
+                        <input type="text" id="modal_productName" name="productName" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">Product Code</label>
+                        <input type="text" id="modal_productCode" name="productCode" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">HSN Code</label>
+                        <input type="text" id="modal_hsn" name="hsn" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">Unit/Size</label>
+                        <select name="unitId" id="modal_unitId" class="form-select form-select-sm" required>
+                            <option value="">Select Unit</option>
+                            <%
+                                Vector modalUnits = prodMasterBean.getUnits();
+                                if (modalUnits != null) {
+                                    for (int mi = 0; mi < modalUnits.size(); mi++) {
+                                        Vector munit = (Vector) modalUnits.get(mi);
+                                        if (munit != null && munit.size() >= 2) {
+                                            String mUnitName = munit.elementAt(0).toString();
+                                            String mUnitId   = munit.elementAt(1).toString();
+                                            boolean mSelected = mUnitName.equalsIgnoreCase("Nos") || mUnitName.equalsIgnoreCase("NOS") || mUnitName.equalsIgnoreCase("PCS");
+                            %>
+                            <option value="<%=mUnitId%>" <%=mSelected?"selected":""%>><%=mUnitName%></option>
+                            <% }}} %>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">Stock</label>
+                        <input type="number" id="modal_stock" name="stock" class="form-control form-control-sm" value="0" min="0" step="0.01">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">Cost Price <span class="text-danger">*</span></label>
+                        <input type="number" id="modal_cost" name="cost" class="form-control form-control-sm" step="0.001" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">MRP <span class="text-danger">*</span></label>
+                        <input type="number" id="modal_mrp" name="mrp" class="form-control form-control-sm" step="0.001" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">GST %</label>
+                        <select id="modal_gst" name="gst" class="form-select form-select-sm" required>
+                            <option value="0" selected>0%</option>
+                            <option value="5">5%</option>
+                            <option value="12">12%</option>
+                            <option value="18">18%</option>
+                            <option value="28">28%</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">Discount Type</label>
+                        <select id="modal_discType" name="discType" class="form-select form-select-sm" onchange="handleModalDiscTypeChange(this)">
+                            <option value="0">None</option>
+                            <option value="1">Rs</option>
+                            <option value="2">%</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">Discount Value</label>
+                        <input type="text" id="modal_discValue" name="discValue" class="form-control form-control-sm" value="0.00" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1" style="font-size:0.85rem;">Commission (Rs)</label>
+                        <input type="number" id="modal_commission" name="commission" class="form-control form-control-sm" step="0.01" value="0.00">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" id="saveNewProductBtn" onclick="saveNewProductModal()">
+                    <i class="fas fa-save me-1"></i>Save Product
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

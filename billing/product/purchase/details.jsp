@@ -135,6 +135,14 @@ if(Status == 7)
 	}
 
 ////////////////////////
+if(Status == 8)
+	{
+		int productId = Integer.parseInt(request.getParameter("productId").toString());
+		String productDetails = ph.getProductFullDetailsById(productId);
+		out.print(productDetails);
+	}
+
+////////////////////////
 if(Status == 4)
 	{
 		String invArr	= request.getParameter("invArr");
