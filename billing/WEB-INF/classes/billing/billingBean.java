@@ -1299,7 +1299,7 @@ public Vector getDueBills()throws Exception
 		Vector vec = new Vector();
 	
 	
-			pt = con.prepareStatement("SELECT a.cusName,a.cusPhn,a.payable,a.paid,a.balance,a.date,a.time,b.user_name,a.bill_display,a.id,a.currentBalance FROM `prod_bill` a,users b WHERE a.`uid`=b.id AND a.currentBalance>0;");	
+			pt = con.prepareStatement("SELECT a.cusName,a.cusPhn,a.payable,a.paid,a.balance,a.date,a.time,b.user_name,a.bill_display,a.id,a.currentBalance FROM `prod_bill` a,users b WHERE a.`uid`=b.id AND a.currentBalance>0 AND a.is_cancelled=0;");	
 	
 
 		rs = pt.executeQuery();
@@ -1525,7 +1525,7 @@ public Vector getDuePaidList(String from, String to, int uid) throws Exception {
         sql.append("FROM prod_bill_due_collection a ");
         sql.append("JOIN prod_bill b ON a.bill_id = b.id ");
         sql.append("JOIN users c ON a.uid = c.id ");
-        sql.append("WHERE a.date BETWEEN ? AND ? ");
+        sql.append("WHERE a.date BETWEEN ? AND ? b.is_cancelled=0");
 
         if (uid != 0) {
             sql.append("AND a.uid = ? ");
