@@ -245,62 +245,87 @@ a:hover {
 
 /* Inputs */
 .form-control, .form-select {
-    border-radius: var(--border-radius);
-    border: 1px solid #ced4da;
-    padding: 0.3rem 0.4rem; /* Reduced spacing */
-    font-size: 0.75rem; /* Reduced font size */
+    border-radius: 8px;
+    border: 1.5px solid var(--bill-border);
+    padding: 0.52rem 0.85rem;
+    font-size: 0.875rem;
     background-color: #ffffff;
-    color: #333333;
+    color: var(--bill-text);
+    transition: border-color .18s ease, box-shadow .18s ease;
 }
 
 .form-control:focus, .form-select:focus {
-    border-color: #c9a227;
-    box-shadow: 0 0 0 0.25rem rgba(201, 162, 39, 0.25);
+    border-color: var(--bill-gold);
+    box-shadow: 0 0 0 3px rgba(201,162,39,.18);
     background-color: #ffffff;
-    color: #333333;
+    color: var(--bill-text);
     outline: none;
 }
 
-/* Floating Labels / Input Outline */
+.form-control::placeholder { color: var(--bill-muted); opacity: 0.75; }
+
+/* Static label above input (no floating) */
 .input-outline {
-    position: relative;
-    margin-bottom: 0.5rem; /* Reduced spacing */
-}
-
-.input-outline input {
-    width: 100%;
-    padding: 5px; /* Reduced spacing */
-    border: 1px solid #ccc;
-    border-radius: var(--border-radius);
-    outline: none;
-    background: transparent;
-    transition: border-color var(--transition-speed);
-}
-
-.input-outline input:focus {
-    border-color: #c9a227;
-    box-shadow: 0 0 0 0.25rem rgba(201, 162, 39, 0.25);
-    outline: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 0;
 }
 
 .input-outline label {
-    position: absolute;
-    top: 50%;
-    left: 10px;
-    transform: translateY(-50%);
-    background-color: var(--card-bg);
-    padding: 0 5px;
-    color: var(--text-muted);
-    font-size: 0.75rem; /* Reduced font size */
+    order: 0;
+    position: static;
+    transform: none;
+    background: transparent;
+    padding: 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--bill-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     pointer-events: none;
-    transition: all 0.2s ease;
+    transition: none;
 }
 
+.input-outline input,
+.input-outline textarea,
+.input-outline select,
+.input-outline .form-control,
+.input-outline .form-select {
+    order: 1;
+    width: 100%;
+    padding: 0.52rem 0.85rem;
+    border: 1.5px solid var(--bill-border);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--bill-text);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.input-outline small { order: 2; }
+
+.input-outline input:focus,
+.input-outline textarea:focus,
+.input-outline select:focus,
+.input-outline .form-control:focus,
+.input-outline .form-select:focus {
+    border-color: var(--bill-gold);
+    box-shadow: 0 0 0 3px rgba(201,162,39,.18);
+    background: #ffffff;
+}
+
+.input-outline input::placeholder,
+.input-outline textarea::placeholder { color: var(--bill-muted); opacity: 0.75; }
+
+/* Nullify old floating transitions */
 .input-outline input:focus + label,
 .input-outline input:not(:placeholder-shown) + label {
-    top: 0;
-    font-size: 0.75rem;
-    color: #c9a227;
+    top: auto;
+    font-size: 0.78rem;
+    color: var(--bill-muted);
     font-weight: 600;
 }
 
@@ -2036,8 +2061,11 @@ thead.sticky-top th {
     }
     
     /* Adjust input fields */
-    .input-outline input {
-        padding: 3px 4px;
+    .input-outline input,
+    .input-outline textarea,
+    .input-outline .form-control {
+        padding: 0.45rem 0.75rem;
+        font-size: 0.85rem;
     }
     
     /* Make buttons full width on mobile */

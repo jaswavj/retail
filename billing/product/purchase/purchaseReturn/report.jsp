@@ -29,20 +29,24 @@
     <title>Purchase Return Report</title>
     <%@ include file="/assets/common/head.jsp" %>
     <style>
-        body { background: #f5f7fa; }
+        .ret-no { color: var(--bill-gold); font-weight: 700; }
         @media print { .no-print { display: none !important; } }
     </style>
 </head>
 <body>
 <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Purchase Return Report");
+    request.setAttribute("pageSubtitle", "Purchase — Return History");
+    request.setAttribute("pageIcon",     "fa-solid fa-file-circle-minus");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container-fluid mt-3 px-4">
-    <h5 class="mb-3 no-print"><i class="fas fa-file-alt me-2 text-warning"></i>Purchase Return Report</h5>
+<div class="container-fluid mt-3 mst-page">
 
     <!-- Filter Form -->
-    <div class="card shadow-sm mb-3 no-print">
-        <div class="card-body py-2">
-            <form method="get" class="row g-2 align-items-end">
+    <div class="mst-filter-card mb-3 no-print">
+        <form method="get" class="row g-2 align-items-end">
                 <div class="col-md-2">
                     <label class="form-label form-label-sm mb-0">From Date</label>
                     <input type="date" name="fromDate" class="form-control form-control-sm"
@@ -67,29 +71,28 @@
                     </select>
                 </div>
                 <div class="col-auto">
-                    <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="fas fa-search me-1"></i> Generate
+                    <button type="submit" class="bb bb-primary">
+                        <i class="fa-solid fa-magnifying-glass"></i> Generate
                     </button>
                     <% if (searched && returns != null && !returns.isEmpty()) { %>
-                    <button type="button" class="btn btn-outline-secondary btn-sm ms-2" onclick="window.print()">
-                        <i class="fas fa-print me-1"></i> Print
+                    <button type="button" class="bb bb-outline ms-2" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> Print
                     </button>
                     <% } %>
                 </div>
             </form>
-        </div>
     </div>
 
     <!-- Results -->
     <% if (searched) { %>
-    <div class="card shadow-sm">
+    <div class="mst-card">
         <div class="card-header py-2 d-flex justify-content-between">
             <span class="fw-semibold">Results: <%= fromDate %> to <%= toDate %></span>
             <span class="text-muted small"><%= returns != null ? returns.size() : 0 %> return(s)</span>
         </div>
         <div class="table-responsive">
-            <table class="table table-bordered table-sm mb-0">
-                <thead class="table-dark">
+            <table class="table table-sm mb-0 mst-table">
+                <thead>
                     <tr>
                         <th>#</th>
                         <th>Return No</th>
@@ -120,7 +123,7 @@
                 %>
                     <tr>
                         <td><%= i+1 %></td>
-                        <td class="fw-semibold text-warning"><%= retNo %></td>
+                        <td class="ret-no"><%= retNo %></td>
                         <td><%= prno %></td>
                         <td><%= supName %></td>
                         <td class="text-end">₹<%= String.format("%.3f", retTotal) %></td>
@@ -128,14 +131,14 @@
                         <td><%= retDt %></td>
                         <td><%= enteredBy %></td>
                         <td class="no-print">
-                            <button class="btn btn-xs btn-outline-info py-0 px-2"
+                            <button class="bb bb-outline px-2" style="padding-top:2px;padding-bottom:2px;font-size:0.78rem;"
                                     onclick="viewDetails(<%= retId %>, '<%= retNo %>')">
-                                <i class="fas fa-eye"></i>
+                                <i class="fa-solid fa-eye"></i>
                             </button>
                         </td>
                     </tr>
                 <% } %>
-                    <tr class="table-warning fw-bold">
+                    <tr style="background: var(--bill-bg); font-weight: 700;">
                         <td colspan="4" class="text-end">Grand Total:</td>
                         <td class="text-end">₹<%= String.format("%.3f", grandReturnTotal) %></td>
                         <td colspan="4"></td>
@@ -154,13 +157,13 @@
 <div class="modal fade" id="detailsModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <div class="modal-header py-2">
+      <div class="modal-header py-2" style="background: var(--bill-navy); color: #fff;">
         <h6 class="modal-title" id="detailsModalTitle">Return Details</h6>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-0">
         <div class="table-responsive">
-          <table class="table table-bordered table-sm mb-0">
+          <table class="table table-sm mb-0 mst-table">
             <thead class="table-light">
               <tr><th>#</th><th>Product</th><th class="text-end">Qty</th><th class="text-end">Rate</th><th class="text-end">Total</th></tr>
             </thead>

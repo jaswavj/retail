@@ -16,21 +16,24 @@
     <title>Purchase Return</title>
     <%@ include file="/assets/common/head.jsp" %>
     <style>
-        body { background: #f5f7fa; }
-        .info-label { font-size: .75rem; color: #6c757d; margin-bottom: 0; }
+        .info-label { font-size: .75rem; color: var(--bill-muted); margin-bottom: 0; }
         .return-table th { white-space: nowrap; }
         .qty-input { width: 80px; }
     </style>
 </head>
 <body>
 <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Purchase Return");
+    request.setAttribute("pageSubtitle", "Purchase — Process Return");
+    request.setAttribute("pageIcon",     "fa-solid fa-rotate-left");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container-fluid mt-3 px-4">
-    <h5 class="mb-3"><i class="fas fa-undo me-2 text-warning"></i>Purchase Return</h5>
+<div class="container-fluid mt-3 mst-page">
 
     <!-- Search / Load Purchase -->
-    <div class="card shadow-sm mb-3">
-        <div class="card-body py-2">
+    <div class="mst-filter-card mb-3">
             <div class="row g-2 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label form-label-sm mb-0">Purchase Bill No / ID</label>
@@ -38,12 +41,12 @@
                            placeholder="Enter Purchase ID or Bill No" value="<%= preloadPurchaseId %>">
                 </div>
                 <div class="col-auto">
-                    <button class="btn btn-primary btn-sm" onclick="loadPurchase()">
-                        <i class="fas fa-search me-1"></i> Load Bill
+                    <button class="bb bb-primary" onclick="loadPurchase()">
+                        <i class="fa-solid fa-magnifying-glass"></i> Load Bill
                     </button>
                 </div>
                 <div class="col-md-5" id="purchaseInfoPanel" style="display:none;">
-                    <div class="border rounded px-3 py-1 bg-light d-flex gap-3 flex-wrap">
+                    <div class="border rounded px-3 py-1 d-flex gap-3 flex-wrap" style="background:var(--bill-bg);">
                         <span><span class="info-label d-block">Bill No</span><b id="infoHdr_prno">—</b></span>
                         <span><span class="info-label d-block">Invoice No</span><b id="infoHdr_invno">—</b></span>
                         <span><span class="info-label d-block">Invoice Date</span><b id="infoHdr_invdate">—</b></span>
@@ -52,19 +55,18 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 
     <!-- Return Items Table -->
-    <div class="card shadow-sm mb-3" id="returnItemsCard" style="display:none;">
+    <div class="mst-card mb-3" id="returnItemsCard" style="display:none;">
         <div class="card-header py-2 d-flex justify-content-between align-items-center">
             <span class="fw-semibold">Select Items to Return</span>
             <small class="text-muted">Qty must not exceed original purchased quantity</small>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-bordered table-sm mb-0">
-                    <thead class="table-light">
+                <table class="table table-sm mb-0 mst-table">
+                    <thead>
                         <tr>
                             <th style="width:40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)"></th>
                             <th>#</th>
@@ -86,9 +88,8 @@
     </div>
 
     <!-- Notes + Save -->
-    <div class="card shadow-sm mb-3" id="savePanel" style="display:none;">
-        <div class="card-body py-2">
-            <div class="row g-2 align-items-end">
+    <div class="mst-filter-card mb-3" id="savePanel" style="display:none;">
+        <div class="row g-2 align-items-end">
                 <div class="col-md-5">
                     <label class="form-label form-label-sm mb-0">Notes / Reason</label>
                     <input type="text" id="returnNotes" class="form-control form-control-sm" placeholder="Reason for return (optional)">
@@ -98,12 +99,11 @@
                     <input type="text" id="returnGrandTotal" class="form-control form-control-sm text-end fw-bold" readonly>
                 </div>
                 <div class="col-auto">
-                    <button class="btn btn-success btn-sm px-4" onclick="saveReturn()">
-                        <i class="fas fa-save me-1"></i> Save Return
+                    <button class="bb bb-green" onclick="saveReturn()">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Return
                     </button>
                 </div>
             </div>
-        </div>
     </div>
 </div>
 
@@ -241,7 +241,7 @@ function saveReturn() {
         text: 'Stock will be reduced for returned items. This cannot be undone.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#f0a500',
+        confirmButtonColor: '#c9a227',
         confirmButtonText: 'Yes, Save Return'
     }).then(result => {
         if (!result.isConfirmed) return;

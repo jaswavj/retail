@@ -13,7 +13,7 @@ Vector productList = prod.getAllProduct();
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Stock Adjustment Report Filter</title>
+    <title>Stock Adjustment</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <%@ include file="/assets/common/head.jsp" %>
 </head>
@@ -21,9 +21,14 @@ Vector productList = prod.getAllProduct();
 
 <!--%@ include file="../menu/reportMenu.jsp" %-->
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Stock Adjustment");
+    request.setAttribute("pageSubtitle", "Reports \u2014 Stock Adjustments");
+    request.setAttribute("pageIcon",     "fa-solid fa-sliders");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container mt-4 ">
-    <h3 class="mb-4">Stock Adjustment Report Filter</h3>
+<div class="container-fluid mt-3 mst-page">
 
     <form action="<%=contextPath%>/reports/stockAdj/page0.jsp" method="post" class="row g-3">
         <!-- From Date -->
@@ -70,7 +75,7 @@ Vector productList = prod.getAllProduct();
 
         <!-- Submit -->
         <div class="col-md-3 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+            <button type="submit" class="bb bb-primary w-100">Generate Report</button>
         </div>
     </form>
 </div>

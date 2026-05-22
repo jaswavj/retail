@@ -10,21 +10,24 @@ Vector productList = prod.getAllProduct();
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Brands - Billing App</title>
+    <title>Product Transaction</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Bootstrap CSS -->
 <%@ include file="/assets/common/head.jsp" %>
 
 </head>
-<body onload="document.form.opregInput.focus();">
+<body>
 
     <!--%@ include file="../menu/reportMenu.jsp" %-->
     <%@ include file="/assets/navbar/navbar.jsp" %>
-    <!-- Top Navbar -->
+<%
+    request.setAttribute("pageTitle",    "Product Transaction");
+    request.setAttribute("pageSubtitle", "Reports \u2014 Stock Movement");
+    request.setAttribute("pageIcon",     "fa-solid fa-arrow-right-arrow-left");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-
-    <div class="container mt-4 ">
-        <h3 class="mb-4">Collection Report Filter</h3>
+    <div class="container-fluid mt-3 mst-page">
 
     <form action="<%=contextPath%>/reports/prodTransaction/page0.jsp" method="get" class="row g-3">
         <div class="col-md-3">
@@ -54,7 +57,7 @@ Vector productList = prod.getAllProduct();
         </div>
 
         <div class="col-md-3 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+            <button type="submit" class="bb bb-primary w-100">Generate Report</button>
         </div>
     </form>
 </div>

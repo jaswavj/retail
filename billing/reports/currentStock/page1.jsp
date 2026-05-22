@@ -2,27 +2,38 @@
 <%@ page language="java" import="java.util.*" %>
 <%@ page language="java" import="java.util.*,java.text.*" %>
 <jsp:useBean id="prod" class="product.productBean" />
-<%
-%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sales Report</title>
+    <title>Current Stock Report</title>
     <%@ include file="/assets/common/head.jsp" %>
-<style>
-
-
-
-
-</style>
+    <style>
+        @media print {
+            @page { margin: 0.3cm; size: portrait; }
+            body { margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+            #printArea .container { max-width: 100% !important; margin: 0 !important; padding: 0 5px !important; }
+            #printArea .table-responsive { overflow: visible !important; }
+            #printArea table { width: 100% !important; font-size: 8px !important; }
+            #printArea table th, #printArea table td { padding: 1px 2px !important; font-size: 8px !important; word-wrap: break-word; max-width: 80px; }
+        }
+    </style>
 </head>
 <body>
     <!--%@ include file="../menu/reportMenu.jsp" %-->
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Current Stock");
+    request.setAttribute("pageSubtitle", "Reports — Stock on Hand");
+    request.setAttribute("pageIcon",     "fa-solid fa-warehouse");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container mt-4">
-    <p><strong>Stock Report</strong></p>
+<div class="container-fluid mt-3 mst-page">
 
     <!-- Filters -->
     <div class="mb-3 no-print row g-2">
@@ -43,26 +54,26 @@
             </select>
         </div>
         <div class="col-md-9 text-end">
-            <a href="<%=contextPath%>/reports/currentStock/page.jsp" class="btn btn-secondary btn-sm me-2">⬅ Back</a>
-            <button class="btn btn-primary btn-sm" onclick="printReport()">🖨 Print</button>
-            <button class="btn btn-success btn-sm" onclick="exportTableToExcel('stockTable', 'Stock_Report')">📊 Export to Excel</button>
+            <a href="<%=contextPath%>/reports/currentStock/page.jsp" class="bb bb-outline me-2"><i class="fa-solid fa-arrow-left"></i> Back</a>
+            <button class="bb bb-navy" onclick="printReport()"><i class="fa-solid fa-print"></i> Print</button>
+            <button class="bb bb-green" onclick="exportTableToExcel('stockTable', 'Stock_Report')"><i class="fa-solid fa-file-excel"></i> Export</button>
         </div>
     </div>
 
 
     <div class="table-responsive">
-<table id="stockTable" class="table table-hover mt-3" style="font-size: 12px;">
+<table id="stockTable" class="table mb-0 mst-table">
         <thead>
-            <tr style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-bottom: 2px solid #e2e8f0;">
-                <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: center;">S.No</th>
-                <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Product</th>
-                <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Code</th>
-                <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: center;">Stock</th>
-                <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Cost</th>
-                <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">MRP</th>
-                <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Total Cost</th>
-                <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Total MRP</th>
-                <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Discount</th>
+            <tr>
+                <th class="text-center">S.No</th>
+                <th>Product</th>
+                <th>Code</th>
+                <th class="text-center">Stock</th>
+                <th class="text-end">Cost</th>
+                <th class="text-end">MRP</th>
+                <th class="text-end">Total Cost</th>
+                <th class="text-end">Total MRP</th>
+                <th class="text-end">Discount</th>
             </tr>
         </thead>
         <tbody>
@@ -103,29 +114,29 @@
                 String categoryName = row.elementAt(11) != null ? row.elementAt(11).toString() : "";
             %>
             <tr class="stock-row" data-category="<%=categoryId%>">
-                <td style="text-align: center;"><%=i+1%></td>
+                <td class="text-center"><%=i+1%></td>
                 <td>
                     <%=row.elementAt(0)%>
                     <% if (!categoryName.isEmpty()) { %>
-                        <br><small style="font-size: 0.75rem; color: #6c757d;"><%=categoryName%></small>
+                        <br><small class="text-muted"><%=categoryName%></small>
                     <% } %>
                 </td>
                 <td><%=row.elementAt(1)%></td>
-                <td style="text-align: center;"><%=row.elementAt(2)%> <%=(row.size() > 12 && row.elementAt(12) != null && !row.elementAt(12).toString().isEmpty()) ? row.elementAt(12) : (row.size() > 9 && row.elementAt(9) != null ? row.elementAt(9) : "")%></td>
-                <td style="text-align: right;"><%=row.elementAt(3)%></td>
-                <td style="text-align: right;"><%=row.elementAt(4)%></td>
-                <td style="text-align: right;"><%=String.format("%.3f", itemTotalCost)%></td>
-                <td style="text-align: right;"><%=String.format("%.3f", itemTotalMRP)%></td>
-                <td style="text-align: right;"><%=row.elementAt(5)%></td>
+                <td class="text-center"><%=row.elementAt(2)%> <%=(row.size() > 12 && row.elementAt(12) != null && !row.elementAt(12).toString().isEmpty()) ? row.elementAt(12) : (row.size() > 9 && row.elementAt(9) != null ? row.elementAt(9) : "")%></td>
+                <td class="text-end"><%=row.elementAt(3)%></td>
+                <td class="text-end"><%=row.elementAt(4)%></td>
+                <td class="text-end"><%=String.format("%.3f", itemTotalCost)%></td>
+                <td class="text-end"><%=String.format("%.3f", itemTotalMRP)%></td>
+                <td class="text-end"><%=row.elementAt(5)%></td>
             </tr>
             <%
             }
             }
             %>
-            <tr class="table-secondary">
-                <td colspan="6" class="text-end" style="font-weight: bold;">Total Value:</td>
-                <td style="text-align: right; font-weight: bold;">₹<%=String.format("%.3f", totalCost)%></td>
-                <td style="text-align: right; font-weight: bold;">₹<%=String.format("%.3f", totalMRP)%></td>
+            <tr id="totalRow" style="background: var(--bill-bg); font-weight: 700;">
+                <td colspan="6" class="text-end">Total Value:</td>
+                <td class="text-end">&#8377;<%=String.format("%.3f", totalCost)%></td>
+                <td class="text-end">&#8377;<%=String.format("%.3f", totalMRP)%></td>
                 <td></td>
             </tr>
         </tbody>
@@ -133,9 +144,7 @@
     </div>
 </div>
 
-<!-- JS Functions -->
 <script>
-    // Filter table by category
     function filterByCategory() {
         const selectedCategory = document.getElementById('categoryFilter').value;
         const rows = document.querySelectorAll('.stock-row');
@@ -167,111 +176,13 @@
     
     // Update the total row values
     function updateTotalRow(totalCost, totalMRP) {
-        const totalRow = document.querySelector('.table-secondary');
+        const totalRow = document.getElementById('totalRow');
         if (totalRow) {
-            totalRow.cells[1].innerHTML = '₹' + totalCost.toFixed(3);
-            totalRow.cells[2].innerHTML = '₹' + totalMRP.toFixed(3);
-        }
-    }
-    
-    // Print function
-    function printReport() {
-    var table = document.getElementById("stockTable").outerHTML;
-    var newWin = window.open("", "_blank");
-    newWin.document.write(`
-        <html>
-        <head>
-            <title>Stock Report</title>
-            <style>
-                table { border-collapse: collapse; width: 100%; font-size: 12px; }
-                table, th, td { border: 1px solid black; padding: 5px; }
-                th { background: #333; color: white; }
-            </style>
-        </head>
-        <body>
-            <h3>Stock Report</h3>
-            ${table}
-        </body>
-        </html>
-    `);
-    newWin.document.close();
-    newWin.print();
-    newWin.close();
-}
-
-    // Export to Excel function
-    function exportTableToExcel(tableID, filename = '') {
-        var table = document.getElementById(tableID);
-        var tableHTML = table.outerHTML.replace(/ /g, '%20');
-
-        // Specify file name
-        filename = filename ? filename + '.xls' : 'excel_data.xls';
-
-        // Create download link
-        var downloadLink = document.createElement("a");
-        document.body.appendChild(downloadLink);
-
-        if (navigator.msSaveOrOpenBlob) {
-            // For IE
-            var blob = new Blob(['\ufeff', tableHTML], { type: 'application/vnd.ms-excel' });
-            navigator.msSaveOrOpenBlob(blob, filename);
-        } else {
-            // For other browsers
-            downloadLink.href = 'data:application/vnd.ms-excel,' + tableHTML;
-            downloadLink.download = filename;
-            downloadLink.click();
+            totalRow.cells[1].innerHTML = '&#8377;' + totalCost.toFixed(3);
+            totalRow.cells[2].innerHTML = '&#8377;' + totalMRP.toFixed(3);
         }
     }
 </script>
-
-<style>
-@media print {
-    @page {
-        margin: 0.3cm;
-        size: portrait;
-    }
-    body {
-        margin: 0;
-        padding: 0;
-    }
-    .no-print {
-        display: none !important;
-    }
-    body * {
-        visibility: hidden;
-    }
-    #printArea, #printArea * {
-        visibility: visible;
-    }
-    #printArea {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-    }
-    #printArea .container {
-        max-width: 100% !important;
-        margin: 0 !important;
-        padding: 0 5px !important;
-    }
-    #printArea .table-responsive {
-        overflow: visible !important;
-    }
-    #printArea table {
-        width: 100% !important;
-        font-size: 8px !important;
-    }
-    #printArea table th,
-    #printArea table td {
-        padding: 1px 2px !important;
-        font-size: 8px !important;
-        word-wrap: break-word;
-        max-width: 80px;
-    }
-}
-</style>
 
 <script>
 function printReport() {
