@@ -22,8 +22,8 @@
 <%@ include file="/assets/common/head.jsp" %>
     <style>
         .table td, .table th { vertical-align: middle; }
-        .cell-green { background-color: rgba(5, 150, 105, 0.12); }
-        .cell-red   { background-color: rgba(220, 38, 38, 0.12); }
+        .cell-green { background-color: rgba(5, 150, 105, 0.18) !important; color: #065f46; font-weight: 600; }
+        .cell-red   { background-color: rgba(220, 38, 38,  0.18) !important; color: #991b1b; font-weight: 600; }
         @media print {
             @page { margin: 0.3cm; size: portrait; }
             body { margin: 0; padding: 0; }

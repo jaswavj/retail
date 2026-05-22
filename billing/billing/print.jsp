@@ -120,6 +120,44 @@ for(Vector<Object> prod : billDetails){
 subTotalBeforeDiscount = totalAmount + totalDiscount;
     
 finalPaid = totalAmount - extradisc;
+
+// Payment Summary data
+Vector paymentInfo = new Vector();
+Vector duePayments = new Vector();
+String initialMode = "-";
+String initialMethod = "-";
+double initialPaid = 0;
+double initialBalance = 0;
+double currentPaidDisplay = paid;
+double currentBalanceDisplay = balance;
+try {
+    paymentInfo = bill.getBillPaymentInfo(billNo);
+    if (paymentInfo != null && paymentInfo.size() > 0) {
+        int billIdInt = (Integer) paymentInfo.get(0);
+        int pMode = (Integer) paymentInfo.get(5);
+        int pType = (Integer) paymentInfo.get(6);
+        double cash = (Double) paymentInfo.get(7);
+        double bank = (Double) paymentInfo.get(8);
+        initialPaid = cash + bank;
+        double payable = (Double) paymentInfo.get(4);
+        initialBalance = payable - initialPaid;
+        if (initialBalance < 0) initialBalance = 0;
+        if (pMode == 1) initialMode = "Cash";
+        else if (pMode == 2) initialMode = "Bank";
+        else if (pMode == 3) initialMode = "Cash & Bank";
+        if (pType == 1) initialMethod = "UPI";
+        else if (pType == 2) initialMethod = "Debit Card";
+        else if (pType == 3) initialMethod = "Credit Card";
+        else if (pType == 4) initialMethod = "NEFT";
+        else if (pType == 5) initialMethod = "Wallet";
+        else initialMethod = "-";
+        duePayments = bill.getDuePaidList(billIdInt);
+        double currentBalance = bill.getBillCurrentBalance(billIdInt);
+        currentBalanceDisplay = currentBalance;
+        currentPaidDisplay = finalPaid - currentBalance;
+        if (currentPaidDisplay < 0) currentPaidDisplay = 0;
+    }
+} catch (Exception e) { /* ignore — payment summary will be empty */ }
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -335,6 +373,35 @@ finalPaid = totalAmount - extradisc;
             background: #e8ebf0;
             padding: 8px 10px;
         }
+
+        /* Payment Summary */
+        .payment-summary-section {
+            border-top: 1px solid #2c3e50;
+            border-bottom: 1px solid #2c3e50;
+        }
+        .payment-summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        .payment-summary-table th {
+            background-color: #e9ecef;
+            color: #000;
+            border: 1px solid #2c3e50;
+            padding: 4px 8px;
+            font-weight: bold;
+            text-align: left;
+        }
+        .payment-summary-table th:first-child {
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        .payment-summary-table td {
+            border: 1px solid #ccc;
+            padding: 3px 8px;
+            vertical-align: middle;
+        }
+        .payment-summary-table .text-right { text-align: right; }
         
         /* Footer Info */
         .footer-row {
@@ -702,13 +769,59 @@ finalPaid = totalAmount - extradisc;
             </div>
             <div class="amount-row">
                 <div>Paid</div>
-                <div>₹ <%= df.format(paid) %></div>
+                <div>₹ <%= df.format(currentPaidDisplay) %></div>
             </div>
             <div class="amount-row">
                 <div>Balance</div>
-                <div>₹ <%= df.format(balance) %></div>
+                <div>₹ <%= df.format(currentBalanceDisplay) %></div>
             </div>
         </div>
+    </div>
+
+    <!-- Payment Summary -->
+    <div class="payment-summary-section">
+        <table class="payment-summary-table">
+            <thead>
+                <tr>
+                    <th colspan="5" class="purple-header" style="border:none;">Payment Summary</th>
+                </tr>
+                <tr>
+                    <th>Date</th>
+                    <th>Mode</th>
+                    <th>Method</th>
+                    <th class="text-right">Paid (&#8377;)</th>
+                    <th class="text-right">Balance (&#8377;)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (paymentInfo != null && paymentInfo.size() > 0) { %>
+                <tr>
+                    <td><%= billDate %></td>
+                    <td><%= initialMode %></td>
+                    <td><%= initialMethod %></td>
+                    <td class="text-right"><%= df.format(initialPaid) %></td>
+                    <td class="text-right"><%= df.format(initialBalance) %></td>
+                </tr>
+                <% } %>
+                <% if (duePayments != null) {
+                    for (int di = 0; di < duePayments.size(); di++) {
+                        Vector dueRow = (Vector) duePayments.get(di);
+                        String dueDate    = dueRow.get(6) != null ? dueRow.get(6).toString() : "-";
+                        String dueMode    = dueRow.get(4) != null ? dueRow.get(4).toString() : "-";
+                        String dueMethod  = dueRow.get(5) != null ? dueRow.get(5).toString() : "-";
+                        double duePaid    = dueRow.get(2) != null ? Double.parseDouble(dueRow.get(2).toString()) : 0;
+                        double dueFinalBal = dueRow.get(3) != null ? Double.parseDouble(dueRow.get(3).toString()) : 0;
+                %>
+                <tr>
+                    <td><%= dueDate %></td>
+                    <td><%= dueMode %></td>
+                    <td><%= dueMethod %></td>
+                    <td class="text-right"><%= df.format(duePaid) %></td>
+                    <td class="text-right"><%= df.format(dueFinalBal) %></td>
+                </tr>
+                <% }} %>
+            </tbody>
+        </table>
     </div>
 
     <!-- Words & Description -->
@@ -723,9 +836,9 @@ finalPaid = totalAmount - extradisc;
     <div class="footer-row">
         
         <div class="desc-box">
-            <div class="purple-header">Declaration</div>
+            <div class="purple-header">Terms & Conditions</div>
             <div  style="text-align: left; align-items: flex-start;" class="rightBorder">
-                Your Declaration Here.<br><br><br><br><br><br><br><br><br><br>
+                Your Terms & Conditions Here.<br><br><br><br><br><br><br><br><br><br>
             </div>
         </div>
         <div class="words-box">
@@ -756,24 +869,26 @@ finalPaid = totalAmount - extradisc;
         </div>
     </div>
 
-    <div class="footer-row">
-        <div class="desc-box">
-            <div class="purple-header">Payment Terms</div>
-            <div  style="text-align: left; align-items: flex-start;" class="rightBorder">
-                60 days credit from the date of invoice.<br><br><br><br><br><br><br><br><br>
-            </div>
-            
-        </div>
-        <div class="desc-box">
-            
-            <div class="footer-content" style="text-align: left; align-items: flex-start;">
-                <%= companyName %>
-                <br><br><br><br><br><br><br><br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Authorized Signatory
-            </div>
-        </div>
-    </div>
+
 
 </div>
-
+<div style="
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin: 3px 0 0 0;
+    padding: 4px 6px;
+    border-top: 1px solid rgba(11,122,68,0.2);
+    opacity: 0.55;
+">
+    <span style="font-family: Arial, sans-serif; font-size: 8.5px; color: #1e5a3c; letter-spacing: 0.4px; font-weight: 600;">
+        Powered by <strong style="font-size: 9px; letter-spacing: 0.8px;">JASXBILL</strong>
+        <span style="margin: 0 4px; color: #999;">&mdash;</span>
+        <span style="font-weight: 400; color: #444;">Smart Billing Software</span>
+        <span style="margin: 0 5px; color: #bbb;">&bull;</span>
+        <span style="color: #333;">8667214152</span>
+    </span>
+</div>
 </body>
 </html>

@@ -89,7 +89,7 @@ if (submittedUser != null && submittedPass != null) {
       <!-- Brand -->
       <div class="lc-brand">
         <div class="lc-brand-icon">
-          <i class="fas fa-file-invoice-dollar"></i>
+          <img src="billing/jasxbill.jpeg" alt="JASXBILL Logo" class="lc-logo-img">
         </div>
         <h1 class="lc-brand-name">JASXBILL</h1>
         <p class="lc-brand-tagline">Smart Business Management System</p>
@@ -187,17 +187,20 @@ if (submittedUser != null && submittedPass != null) {
     </div>
   </div>
 
-  <!-- Footer -->
   <footer class="login-footer">
     <div class="lfoot-inner">
       <div class="lfoot-brand">
-        <i class="fas fa-headset"></i>
-        <span>24/7 Support Available</span>
+        <i class="fas fa-building"></i>
+        <span>JASXBILL &mdash; Professional Billing Software</span>
       </div>
       <div class="lfoot-links">
-        <a href="mailto:jaswavj@gmail.com" class="lfoot-link">
+        <a href="mailto:jasxbill@gmail.com" class="lfoot-link">
           <i class="fas fa-envelope"></i>
-          jaswavj@gmail.com
+          jasxbill@gmail.com
+        </a>
+        <a href="https://jasxbill.in" target="_blank" class="lfoot-link">
+          <i class="fas fa-globe"></i>
+          jasxbill.in
         </a>
         <a href="tel:+918667214152" class="lfoot-link">
           <i class="fas fa-phone"></i>

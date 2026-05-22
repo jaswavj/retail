@@ -46,37 +46,40 @@ if (billInfo != null && !billInfo.isEmpty()) {
     
  
 </head>
-<body onload="document.form.opregInput.focus();">
+<body>
 
-<!--%@ include file="../menu/reportMenu.jsp" %-->
     <%@ include file="/assets/navbar/navbar.jsp" %>
-    <!-- Top Navbar -->
+<%
+    request.setAttribute("pageTitle",    "Bill Details");
+    request.setAttribute("pageSubtitle", "Admin — Edit Bill");
+    request.setAttribute("pageIcon",     "fa-solid fa-file-pen");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-
-    <div class="container mt-4 ">
+    <div class="container-fluid mt-3 mst-page">
         <h4>Bill Details (Bill No: <%= billNo %>)</h4>
         
         <!-- Date Edit Form -->
-        <div class="card mb-3">
+        <div class="card mst-card mb-3">
             <div class="card-body">
-                <h5 class="card-title">Bill Date</h5>
+                <h5 class="mst-card-header px-0 border-0 bg-transparent">Bill Date</h5>
                 <form action="<%= request.getContextPath() %>/admin/editBill/updateBillDate.jsp" method="post" class="row g-3">
                     <input type="hidden" name="billId" value="<%= billId %>">
                     <div class="col-md-4">
                         <label for="billDate" class="form-label">Current Date:</label>
-                        <input type="date" class="form-control" id="billDate" name="newDate" value="<%= billDate %>" required>
+                        <input type="date" class="form-control fg-inp" id="billDate" name="newDate" value="<%= billDate %>" required>
                     </div>
                     <div class="col-md-4 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Update Date
+                        <button type="submit" class="bb bb-primary">
+                            <i class="fa-solid fa-floppy-disk"></i> Update Date
                         </button>
                     </div>
                 </form>
             </div>
         </div>
         
-    <table class="table table-bordered table-sm mt-3">
-        <thead class="table-dark">
+    <table class="table mst-table table-sm mt-3">
+        <thead>
             <tr>
                 <th>S.No</th>
                 <th>Product</th>
@@ -106,7 +109,7 @@ if (billInfo != null && !billInfo.isEmpty()) {
     </table>
     <div class="row mt-4">
         <div class="col-md-6 offset-md-6">
-            <table class="table table-bordered">
+            <table class="table mst-table">
                 <tr>
                     <th>Total</th>
                     <td><%= total %></td>

@@ -23,12 +23,8 @@
             padding: 2px 7px;
             border-radius: 20px;
         }
-        .exchanged-row td {
-            background: #f8f0ff !important;
-        }
-        .returned-row td {
-            background: #fff3cd !important;
-        }
+        .exchanged-row td { background: #f8f0ff !important; }
+        .returned-row td  { background: #fff3cd !important; }
         .return-badge {
             font-size: 0.7rem;
             background: #fd7e14;
@@ -36,16 +32,11 @@
             padding: 2px 7px;
             border-radius: 20px;
         }
-        .bill-card {
-            border-left: 4px solid #6c63ff;
-        }
-        .prod-search-input {
-            position: relative;
-        }
+        .prod-search-input { position: relative; }
         .autocomplete-list {
             position: absolute;
             z-index: 9999;
-            background: #fff;
+            background: var(--bill-card);
             border: 1px solid #ccc;
             border-top: none;
             width: 100%;
@@ -62,31 +53,31 @@
             font-size: 0.9rem;
         }
         .autocomplete-list li:hover, .autocomplete-list li.active {
-            background: #6c63ff;
-            color: #fff;
-        }
-        #billTable thead {
-            background: #6c63ff;
+            background: var(--bill-navy);
             color: #fff;
         }
     </style>
 </head>
 <body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Product Exchange");
+    request.setAttribute("pageSubtitle", "Admin — Exchange");
+    request.setAttribute("pageIcon",     "fa-solid fa-arrow-right-arrow-left");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container-fluid mt-4">
-        <h4 class="mb-3"><i class="fas fa-exchange-alt me-2 text-primary"></i>Product Exchange</h4>
+<div class="container-fluid mt-3 mst-page">
 
-        <!-- Bill Search -->
-        <div class="card mb-4 bill-card shadow-sm">
+        <div class="card mst-card mb-4">
             <div class="card-body">
                 <div class="row g-2 align-items-end">
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Bill Number</label>
                         <div class="input-group">
-                            <input type="text" id="billNoInput" class="form-control" placeholder="Enter bill number…" autofocus>
-                            <button class="btn btn-primary" id="searchBillBtn">
-                                <i class="fas fa-search"></i> Load
+                            <input type="text" id="billNoInput" class="form-control fg-inp" placeholder="Enter bill number…" autofocus>
+                            <button class="bb bb-primary" id="searchBillBtn">
+                                <i class="fa-solid fa-magnifying-glass"></i> Load
                             </button>
                         </div>
                     </div>
@@ -97,14 +88,14 @@
 
         <!-- Bill Items Table -->
         <div id="billItemsArea" class="d-none">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <div class="card mst-card">
+                <div class="mst-card-header d-flex justify-content-between align-items-center">
                     <span class="fw-semibold">Bill Items</span>
                     <span class="text-muted small" id="billNoDisplay"></span>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-bordered table-hover mb-0" id="billTable">
+                        <table class="table mst-table mb-0" id="billTable">
                             <thead>
                                 <tr>
                                     <th>#</th>
@@ -129,12 +120,12 @@
     <div class="modal fade" id="exchangeModal" tabindex="-1" aria-labelledby="exchangeModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="exchangeModalLabel"><i class="fas fa-exchange-alt me-2"></i>Exchange Item</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <div class="modal-header mst-card-header">
+                    <h5 class="modal-title" id="exchangeModalLabel"><i class="fa-solid fa-right-left me-2"></i>Exchange Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3 p-3 bg-light rounded">
+                    <div class="mb-3 p-3 rounded" style="background:var(--bill-bg)">
                         <div class="text-muted small mb-1">Replacing:</div>
                         <div class="fw-semibold" id="oldProductName">-</div>
                         <div class="d-flex gap-3 mt-1">
@@ -146,21 +137,21 @@
 
                     <div class="mb-3 prod-search-input">
                         <label class="form-label fw-semibold">New Product <span class="text-danger">*</span></label>
-                        <input type="text" id="newProdSearch" class="form-control" placeholder="Type product name to search…" autocomplete="off">
+                        <input type="text" id="newProdSearch" class="form-control fg-inp" placeholder="Type product name to search…" autocomplete="off">
                         <ul class="autocomplete-list d-none" id="prodAutocompleteList"></ul>
                         <input type="hidden" id="newProdId" value="">
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">New Price (₹) <span class="text-danger">*</span></label>
-                        <input type="number" id="newPrice" class="form-control" min="0" step="0.01" placeholder="Enter price">
+                        <input type="number" id="newPrice" class="form-control fg-inp" min="0" step="0.01" placeholder="Enter price">
                         <div class="form-text" id="priceDiffHint"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="confirmExchangeBtn">
-                        <i class="fas fa-check me-1"></i>Confirm Exchange
+                    <button type="button" class="bb bb-outline" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="bb bb-primary" id="confirmExchangeBtn">
+                        <i class="fa-solid fa-check me-1"></i>Confirm Exchange
                     </button>
                 </div>
             </div>
@@ -224,15 +215,15 @@
 
             let actionBtns;
             if (exchanged || returned) {
-                actionBtns = `<button class="btn btn-sm btn-secondary" disabled><i class="fas fa-ban me-1"></i>${exchanged ? 'Exchanged' : 'Returned'}</button>`;
+                actionBtns = `<button class="btn btn-sm btn-outline-secondary" disabled><i class="fa-solid fa-ban me-1"></i>${exchanged ? 'Exchanged' : 'Returned'}</button>`;
             } else {
                 actionBtns = `
-                    <button class="btn btn-sm btn-warning open-return-btn"
+                    <button class="btn btn-sm btn-outline-warning open-return-btn"
                         data-detail-id="${item.detailId}"
                         data-prod-name="${escHtml(item.productName)}"
                         data-qty="${item.qty}"
                         data-total="${item.total}">
-                        <i class="fas fa-undo me-1"></i>Return
+                        <i class="fa-solid fa-rotate-left me-1"></i>Return
                     </button>`;
             }
 
@@ -404,9 +395,9 @@
         const hint = document.getElementById('priceDiffHint');
         if (newPrice <= 0) { hint.textContent = ''; return; }
         if (diff < 0) {
-            hint.innerHTML = `<span class="text-success"><i class="fas fa-arrow-down me-1"></i>Lower by ₹${Math.abs(diff).toFixed(2)} — customer earns exchange points</span>`;
+            hint.innerHTML = `<span class="text-success"><i class="fa-solid fa-arrow-down me-1"></i>Lower by \u20b9${Math.abs(diff).toFixed(2)} — customer earns exchange points</span>`;
         } else if (diff > 0) {
-            hint.innerHTML = `<span class="text-danger"><i class="fas fa-arrow-up me-1"></i>Higher by ₹${diff.toFixed(2)} — bill amount will increase</span>`;
+            hint.innerHTML = `<span class="text-danger"><i class="fa-solid fa-arrow-up me-1"></i>Higher by \u20b9${diff.toFixed(2)} — bill amount will increase</span>`;
         } else {
             hint.innerHTML = `<span class="text-secondary">Same amount — no change to bill or points</span>`;
         }

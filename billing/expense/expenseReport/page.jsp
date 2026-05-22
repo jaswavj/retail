@@ -11,7 +11,6 @@ if (userId == null) {
 }
 
 String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-String contextPath = request.getContextPath();
 
 // Get filter parameters
 String fromDate = request.getParameter("fromDate");
@@ -77,114 +76,70 @@ try {
     <meta charset="UTF-8">
     <title>Expense Report - Billing App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <jsp:include page="/assets/common/head.jsp" />
+    <%@ include file="/assets/common/head.jsp" %>
     
     <style>
-        .report-summary {
-            background: white;
-            color: #2d3748;
-            padding: 0.75rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-        }
-        
         .summary-card {
-            background: #f7fafc;
+            background: var(--bill-bg);
             border: 1px solid #e2e8f0;
             border-radius: 6px;
             padding: 0.625rem 0.75rem;
             text-align: center;
         }
-        
         .summary-value {
             font-size: 1.25rem;
             font-weight: 600;
             margin-bottom: 0.125rem;
-            color: #624b88;
+            color: var(--bill-navy);
         }
-        
         .summary-label {
             font-size: 0.75rem;
-            color: #718096;
+            color: var(--bill-muted);
             font-weight: 500;
         }
-        
-        .table-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        
-        .table thead th {
-            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-            font-weight: 600;
-            color: #4a5568;
-            border: none;
-            padding: 1rem;
-        }
-        
-        .table tbody td {
-            padding: 0.875rem 1rem;
-            vertical-align: middle;
-            border-color: #f1f5f9;
-        }
-        
-        .table tbody tr:hover {
-            background-color: #f7fafc;
-        }
-        
         .expense-badge {
-            padding: 0.375rem 0.75rem;
+            padding: 0.25rem 0.625rem;
             border-radius: 6px;
             font-weight: 500;
-            font-size: 0.875rem;
+            font-size: 0.85rem;
             display: inline-block;
+            background: var(--bill-bg);
+            color: var(--bill-navy);
         }
-        
-        .print-hide {
-            /* Hide when printing */
-        }
-        
         @media print {
-            .print-hide {
-                display: none !important;
-            }
-            
-            body {
-                background: white;
-            }
-            
-            .table-container {
-                box-shadow: none;
-            }
+            .print-hide { display: none !important; }
+            body { background: white; }
         }
     </style>
 </head>
 <body>
-    <jsp:include page="/assets/navbar/navbar.jsp" />
+    <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Expense Report");
+    request.setAttribute("pageSubtitle", "View and filter expense entries");
+    request.setAttribute("pageIcon",     "fa-solid fa-file-invoice");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container-fluid mt-3" style="max-width: 1400px;">
-        
-        <!-- Filter Section -->
-        <div class="card print-hide mb-3" style="border: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); border-radius: 12px;">
-            
-            <div class="card-body" style="padding: 1.5rem;">
+<div class="container-fluid mt-3 mst-page">
+    
+    <!-- Filter Section -->
+    <div class="card mst-card print-hide mb-3">
+        <div class="card-body p-3">
                 <form method="get" class="row g-3">
                     <div class="col-md-3">
-                        <label for="fromDate" class="form-label" style="font-weight: 600; color: #4a5568;">From Date</label>
-                        <input type="date" id="fromDate" name="fromDate" value="<%=fromDate%>" class="form-control" required style="padding: 0.625rem; border: 2px solid #e2e8f0; border-radius: 8px;">
+                        <label for="fromDate" class="form-label fw-semibold">From Date</label>
+                        <input type="date" id="fromDate" name="fromDate" value="<%=fromDate%>" class="form-control fg-inp" required>
                     </div>
 
                     <div class="col-md-3">
-                        <label for="toDate" class="form-label" style="font-weight: 600; color: #4a5568;">To Date</label>
-                        <input type="date" id="toDate" name="toDate" value="<%=toDate%>" class="form-control" required style="padding: 0.625rem; border: 2px solid #e2e8f0; border-radius: 8px;">
+                        <label for="toDate" class="form-label fw-semibold">To Date</label>
+                        <input type="date" id="toDate" name="toDate" value="<%=toDate%>" class="form-control fg-inp" required>
                     </div>
 
                     <div class="col-md-4">
-                        <label for="expenseType" class="form-label" style="font-weight: 600; color: #4a5568;">Expense Type</label>
-                        <select id="expenseType" name="expenseType" class="form-select" style="padding: 0.625rem; border: 2px solid #e2e8f0; border-radius: 8px;">
+                        <label for="expenseType" class="form-label fw-semibold">Expense Type</label>
+                        <select id="expenseType" name="expenseType" class="form-select fg-inp">
                             <option value="0" <%= expenseTypeFilter.equals("0") ? "selected" : "" %>>-- All Expense Types --</option>
                             <%
                             try {
@@ -206,19 +161,16 @@ try {
                     </div>
 
                     <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100" style="padding: 0.625rem; border-radius: 8px; background: #624b88; border: none;">
-                            <i class="fas fa-search me-2"></i>Generate
+                        <button type="submit" class="bb bb-primary w-100">
+                            <i class="fa-solid fa-magnifying-glass me-2"></i>Generate
                         </button>
                     </div>
                 </form>
             </div>
         </div>
 
-       
-        
-
         <!-- Summary Section -->
-        <div class="report-summary">
+        <div class="card mst-card p-3 mb-3">
             <div class="row g-2">
                 <div class="col-md-3">
                     <div class="summary-card">
@@ -234,7 +186,7 @@ try {
                 </div>
                 <div class="col-md-3">
                     <div class="summary-card">
-                        <div class="summary-value" style="font-size: 1rem;"><%= selectedExpenseTypeName %></div>
+                        <div class="summary-value"><%= selectedExpenseTypeName %></div>
                         <div class="summary-label">Expense Type</div>
                     </div>
                 </div>
@@ -248,16 +200,16 @@ try {
         </div>
 
         <!-- Data Table -->
-        <div class="table-container">
-            <div class="p-3 d-flex justify-content-between align-items-center border-bottom print-hide" style="background: #f7fafc;">
-                <h5 class="mb-0" style="color: #2d3748; font-weight: 600;"><i class="fas fa-table me-2"></i>Expense Details</h5>
-                <button onclick="window.print()" class="btn btn-sm" style="border-radius: 6px; background: #624b88; color: white; border: none;">
-                    <i class="fas fa-print me-2"></i>Print Report
+        <div class="card mst-card">
+            <div class="mst-card-header d-flex justify-content-between align-items-center print-hide">
+                <h5 class="mb-0"><i class="fa-solid fa-table me-2"></i>Expense Details</h5>
+                <button onclick="window.print()" class="bb bb-navy btn-sm">
+                    <i class="fa-solid fa-print me-2"></i>Print Report
                 </button>
             </div>
             
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table class="table mst-table mb-0">
                     <thead>
                         <tr>
                             <th style="width: 5%;">#</th>
@@ -283,23 +235,23 @@ try {
                                 String username = row.get(5).toString();
                         %>
                         <tr>
-                            <td style="color: #718096; font-weight: 500;"><%=i+1%></td>
-                            <td style="color: #2d3748; font-weight: 500;">
-                                <i class="far fa-calendar me-1" style="color: #624b88;"></i>
+                            <td class="text-muted fw-medium"><%=i+1%></td>
+                            <td class="fw-medium">
+                                <i class="fa-regular fa-calendar me-1" style="color:var(--bill-navy);"></i>
                                 <%= new SimpleDateFormat("dd MMM yyyy HH:mm").format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(expDateTime)) %>
                             </td>
                             <td>
-                                <span class="expense-badge" style="background: #e6f7ff; color: #0066cc;">
+                                <span class="expense-badge">
                                     <%= expenseTypeName %>
                                 </span>
                             </td>
-                            <td style="color: #2d3748; font-weight: 500;"><%=content%></td>
-                            <td style="color: #718096; font-size: 0.9rem;"><%=description.isEmpty() ? "-" : description%></td>
-                            <td class="text-end" style="color: #e53e3e; font-weight: 600; font-size: 1rem;">
+                            <td class="fw-medium"><%=content%></td>
+                            <td class="text-muted small"><%=description.isEmpty() ? "-" : description%></td>
+                            <td class="text-end fw-semibold" style="color:var(--bill-red);">
                                 ₹ <%= df.format(amount) %>
                             </td>
-                            <td style="color: #718096;">
-                                <i class="fas fa-user-circle me-1"></i><%=username%>
+                            <td class="text-muted">
+                                <i class="fa-solid fa-circle-user me-1"></i><%=username%>
                             </td>
                         </tr>
                         <%
@@ -307,9 +259,9 @@ try {
                         } else {
                         %>
                         <tr>
-                            <td colspan="7" class="text-center py-5" style="color: #718096;">
-                                <i class="fas fa-inbox fa-3x mb-3" style="opacity: 0.3;"></i>
-                                <p class="mb-0">No expense entries found for the selected period.</p>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-inbox fa-2x mb-2 d-block opacity-50"></i>
+                                No expense entries found for the selected period.
                             </td>
                         </tr>
                         <%
@@ -317,10 +269,10 @@ try {
                         %>
                     </tbody>
                     <% if (expenseData != null && expenseData.size() > 0) { %>
-                    <tfoot style="background: #f7fafc; border-top: 2px solid #e2e8f0;">
+                    <tfoot class="table-light">
                         <tr>
-                            <th colspan="5" class="text-end" style="padding: 1rem; font-weight: 600; color: #2d3748;">Grand Total:</th>
-                            <th class="text-end" style="padding: 1rem; color: #e53e3e; font-size: 1.1rem; font-weight: 700;">
+                            <th colspan="5" class="text-end fw-semibold py-3">Grand Total:</th>
+                            <th class="text-end fw-bold py-3" style="color:var(--bill-red);">
                                 ₹ <%= df.format(totalAmount) %>
                             </th>
                             <th></th>

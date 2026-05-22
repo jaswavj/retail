@@ -16,23 +16,28 @@ Vector userList = userBn.getAllUsersWithDiscount();
 </head>
 <body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "User Discount");
+    request.setAttribute("pageSubtitle", "Admin — Discount Settings");
+    request.setAttribute("pageIcon",     "fa-solid fa-percent");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container mt-4">
-        <h3 class="mb-4"><i class="fas fa-percent me-2"></i>User Discount</h3>
+<div class="container-fluid mt-3 mst-page">
 
         <!-- Alert placeholder for action feedback -->
         <div id="alertBox"></div>
 
-        <div class="card shadow-sm">
+        <div class="card mst-card">
             <div class="card-body p-0">
-                <table class="table table-hover table-bordered mb-0">
+                <table class="table mst-table mb-0">
                     <thead>
-                        <tr style="background:linear-gradient(135deg,#f7fafc,#edf2f7);border-bottom:2px solid #e2e8f0;">
-                            <th style="width:5%;font-size:.85rem;color:#4a5568;">#</th>
-                            <th style="font-size:.85rem;color:#4a5568;">Username</th>
-                            <th style="font-size:.85rem;color:#4a5568;">Full Name</th>
-                            <th style="font-size:.85rem;color:#4a5568;text-align:center;">Discount %</th>
-                            <th style="font-size:.85rem;color:#4a5568;text-align:center;">Action</th>
+                        <tr>
+                            <th style="width:5%;">#</th>
+                            <th>Username</th>
+                            <th>Full Name</th>
+                            <th class="text-center">Discount %</th>
+                            <th class="text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -49,13 +54,13 @@ Vector userList = userBn.getAllUsersWithDiscount();
                         <td><%=i+1%></td>
                         <td><%=userName%></td>
                         <td><%=fullName.isEmpty() ? "-" : fullName%></td>
-                        <td style="text-align:center;">
+                        <td class="text-center">
                             <span class="badge bg-primary fs-6"><%=discPer%>%</span>
                         </td>
-                        <td style="text-align:center;">
-                            <button class="btn btn-sm btn-outline-primary"
+                        <td class="text-center">
+                            <button class="bb bb-outline"
                                     onclick="openDiscountModal(<%=userId%>, '<%=userName.replace("'","\\\'")%>', '<%=fullName.isEmpty()?"-":fullName.replace("'","\\\'")%>', <%=discPer%>)">
-                                <i class="fas fa-edit me-1"></i>Edit
+                                    <i class="fa-solid fa-pen me-1"></i>Edit
                             </button>
                         </td>
                     </tr>
@@ -71,15 +76,15 @@ Vector userList = userBn.getAllUsersWithDiscount();
                 </table>
             </div>
         </div>
-    </div>
+</div>
 
     <!-- Edit Discount Modal -->
     <div class="modal fade" id="discountModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title"><i class="fas fa-percent me-2"></i>Edit Discount</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <div class="modal-header mst-card-header">
+                    <h5 class="modal-title"><i class="fa-solid fa-percent me-2"></i>Edit Discount</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="modalUserId">
@@ -88,9 +93,9 @@ Vector userList = userBn.getAllUsersWithDiscount();
                         <span class="fw-bold" id="modalUserLabel"></span>
                     </div>
 
-                    <table class="table table-sm table-bordered mb-3">
+                    <table class="table mst-table table-sm mb-3">
                         <tr>
-                            <th class="table-light">Current Discount</th>
+                            <th>Current Discount</th>
                             <td><span id="modalOldDisc" class="badge bg-secondary fs-6"></span></td>
                         </tr>
                     </table>
@@ -98,7 +103,7 @@ Vector userList = userBn.getAllUsersWithDiscount();
                     <div class="mb-3">
                         <label class="form-label fw-bold">New Discount %</label>
                         <div class="input-group">
-                            <input type="number" id="modalNewDisc" class="form-control"
+                            <input type="number" id="modalNewDisc" class="form-control fg-inp"
                                    min="0" max="100" step="1" placeholder="0 – 100">
                             <span class="input-group-text">%</span>
                         </div>
@@ -106,11 +111,11 @@ Vector userList = userBn.getAllUsersWithDiscount();
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancel
+                    <button type="button" class="bb bb-outline" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-xmark me-1"></i>Cancel
                     </button>
-                    <button type="button" class="btn btn-primary" onclick="saveDiscount()">
-                        <i class="fas fa-save me-1"></i>Update
+                    <button type="button" class="bb bb-primary" onclick="saveDiscount()">
+                        <i class="fa-solid fa-floppy-disk me-1"></i>Update
                     </button>
                 </div>
             </div>

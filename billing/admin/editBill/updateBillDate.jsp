@@ -38,22 +38,28 @@ if (billIdParam != null && newDate != null) {
 </head>
 <body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Update Bill Date");
+    request.setAttribute("pageSubtitle", "Admin — Edit Bill");
+    request.setAttribute("pageIcon",     "fa-solid fa-calendar-days");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container mt-4">
+<div class="container-fluid mt-3 mst-page">
     <div class="alert alert-<%= messageType %>">
         <%= message %>
     </div>
     
     <% if (returnUrl != null && !returnUrl.isEmpty()) { %>
-        <a href="<%= returnUrl %>" class="btn btn-primary">
-            <i class="fas fa-arrow-left"></i> Back
+        <a href="<%= returnUrl %>" class="bb bb-outline">
+            <i class="fa-solid fa-arrow-left"></i> Back
         </a>
     <% } else { %>
-        <a href="<%= request.getContextPath() %>/admin/editBill/edit.jsp?billId=<%= billIdParam %>" class="btn btn-primary">
-            <i class="fas fa-arrow-left"></i> Back to Bill Details
+        <a href="<%= request.getContextPath() %>/admin/editBill/edit.jsp?billId=<%= billIdParam %>" class="bb bb-outline">
+            <i class="fa-solid fa-arrow-left"></i> Back to Bill Details
         </a>
-        <a href="<%= request.getContextPath() %>/admin/editBill/changeBillDate.jsp" class="btn btn-secondary">
-            <i class="fas fa-search"></i> Change Bill Date
+        <a href="<%= request.getContextPath() %>/admin/editBill/changeBillDate.jsp" class="bb bb-outline">
+            <i class="fa-solid fa-magnifying-glass"></i> Change Bill Date
         </a>
     <% } %>
 </div>

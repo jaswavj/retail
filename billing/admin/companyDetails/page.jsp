@@ -7,102 +7,93 @@
 <head>
     <title>Company Details</title>
     <%@ include file="/assets/common/head.jsp" %>
-    <style>
-        body { background: #f5f7fa; }
-        .card {
-            max-width: 700px;
-            margin: 50px auto;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        textarea.form-control {
-            min-height: 120px;
-        }
-    </style>
 </head>
 <body>
-    <%
-        String msg = request.getParameter("msg");
-        String type = request.getParameter("type");
-        
-        // Fetch existing company details
-        String shopName = "";
-        String address = "";
-        String gstin = "";
-        int printType = 1; // Default: Thermal
-        String printerName = "";
-        String bankDetails = "";
-        String barcodePrinter = "";
-        
-        try {
-            Vector details = userBean.getCompanyDetails();
-            if (details != null && details.size() > 0) {
-                // details: [id, shop_name, address, gstin, print_type, printer_name, bank_details, barcode_printer]
-                shopName = details.elementAt(1) != null ? (String)details.elementAt(1) : "";
-                address = details.elementAt(2) != null ? (String)details.elementAt(2) : "";
-                gstin = details.elementAt(3) != null ? (String)details.elementAt(3) : "";
-                if (details.size() > 4) {
-                    Object ptObj = details.elementAt(4);
-                    printType = (ptObj != null) ? ((Integer)ptObj).intValue() : 1;
-                }
-                if (details.size() > 5) {
-                    printerName = details.elementAt(5) != null ? (String)details.elementAt(5) : "";
-                }
-                if (details.size() > 6) {
-                    bankDetails = details.elementAt(6) != null ? (String)details.elementAt(6) : "";
-                }
-                if (details.size() > 7) {
-                    barcodePrinter = details.elementAt(7) != null ? (String)details.elementAt(7) : "";
-                }
+<%
+    String msg = request.getParameter("msg");
+    String type = request.getParameter("type");
+
+    // Fetch existing company details
+    String shopName = "";
+    String address = "";
+    String gstin = "";
+    int printType = 1; // Default: Thermal
+    String printerName = "";
+    String bankDetails = "";
+    String barcodePrinter = "";
+
+    try {
+        Vector details = userBean.getCompanyDetails();
+        if (details != null && details.size() > 0) {
+            // details: [id, shop_name, address, gstin, print_type, printer_name, bank_details, barcode_printer]
+            shopName = details.elementAt(1) != null ? (String)details.elementAt(1) : "";
+            address = details.elementAt(2) != null ? (String)details.elementAt(2) : "";
+            gstin = details.elementAt(3) != null ? (String)details.elementAt(3) : "";
+            if (details.size() > 4) {
+                Object ptObj = details.elementAt(4);
+                printType = (ptObj != null) ? ((Integer)ptObj).intValue() : 1;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            if (details.size() > 5) {
+                printerName = details.elementAt(5) != null ? (String)details.elementAt(5) : "";
+            }
+            if (details.size() > 6) {
+                bankDetails = details.elementAt(6) != null ? (String)details.elementAt(6) : "";
+            }
+            if (details.size() > 7) {
+                barcodePrinter = details.elementAt(7) != null ? (String)details.elementAt(7) : "";
+            }
         }
-    %>
-
-    <% if (msg != null) { %>
-    <div class="alert alert-<%= (type != null ? type : "info") %> alert-dismissible fade show" role="alert" style="max-width: 700px; margin: 20px auto;">
-        <%= msg %>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    <% } %>
-
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+%>
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Company Details");
+    request.setAttribute("pageSubtitle", "Admin — Shop Settings");
+    request.setAttribute("pageIcon",     "fa-solid fa-building");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container">
-        <div class="card p-4 rounded">
-            <h3 class="text-center mb-4">Company Details</h3>
+<% if (msg != null) { %>
+<div class="alert alert-<%= (type != null ? type : "info") %> alert-dismissible fade show mx-3" role="alert">
+    <%= msg %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+<% } %>
 
-            <form action="<%= request.getContextPath() %>/admin/companyDetails/save.jsp" method="post">
+<div class="container-fluid mt-3 mst-page">
+    <form action="<%= request.getContextPath() %>/admin/companyDetails/save.jsp" method="post" class="card mst-card p-4" style="max-width: 700px; margin: 0 auto;">
                 <div class="mb-3">
                     <label for="shopName" class="form-label">Trade Name <span class="text-danger">*</span></label>
-                    <input type="text" name="shopName" id="shopName" class="form-control" 
+                    <input type="text" name="shopName" id="shopName" class="form-control fg-inp" 
                            value="<%= shopName %>" required placeholder="Enter trade name">
                 </div>
 
                 <div class="mb-3">
                     <label for="address" class="form-label">Address & Phone Number <span class="text-danger">*</span></label>
-                    <textarea name="address" id="address" class="form-control" 
+                    <textarea name="address" id="address" class="form-control fg-inp" rows="4" 
                               required placeholder="Enter address and phone number"><%= address %></textarea>
                     <small class="form-text text-muted">Enter complete address with phone number</small>
                 </div>
 
                 <div class="mb-3">
                     <label for="gstin" class="form-label">GSTIN No</label>
-                    <input type="text" name="gstin" id="gstin" class="form-control" 
+                    <input type="text" name="gstin" id="gstin" class="form-control fg-inp" 
                            value="<%= gstin %>" placeholder="Enter GSTIN number" maxlength="15">
                     <small class="form-text text-muted">15 character GSTIN (optional)</small>
                 </div>
 
                 <div class="mb-3">
                     <label for="bankDetails" class="form-label">Bank Details</label>
-                    <textarea name="bankDetails" id="bankDetails" class="form-control" 
+                    <textarea name="bankDetails" id="bankDetails" class="form-control fg-inp" rows="4" 
                               placeholder="Enter bank details (Account Name, Account No, IFSC Code, Bank Name, Branch)"><%= bankDetails %></textarea>
                     <small class="form-text text-muted">Will be displayed at the bottom of printed invoices</small>
                 </div>
 
                 <div class="mb-3">
                     <label for="printType" class="form-label">Print Format <span class="text-danger">*</span></label>
-                    <select name="printType" id="printType" class="form-control" required onchange="togglePrinterField()">
+                    <select name="printType" id="printType" class="form-select fg-inp" required onchange="togglePrinterField()">
                         <option value="1" <%= (printType == 1) ? "selected" : "" %>>Thermal Printer (58mm/80mm)</option>
                         <option value="2" <%= (printType == 2) ? "selected" : "" %>>A4 Paper</option>
                     </select>
@@ -111,7 +102,7 @@
 
                 <div class="mb-3" id="printerNameBox" style="<%= (printType == 1) ? "" : "display:none;" %>">
                     <label for="printerName" class="form-label">Printer Name <span class="text-danger">*</span></label>
-                    <input type="text" name="printerName" id="printerName" class="form-control" 
+                    <input type="text" name="printerName" id="printerName" class="form-control fg-inp" 
                            value="<%= printerName %>" placeholder="Enter printer sharing name">
                     <div class="alert alert-info mt-2 p-2" style="font-size: 0.9em;">
                         <strong>📌 How to setup and find your printer sharing name:</strong>
@@ -129,22 +120,21 @@
 
                 <div class="mb-3">
                     <label for="barcodePrinter" class="form-label">Barcode Printer Name</label>
-                    <input type="text" name="barcodePrinter" id="barcodePrinter" class="form-control" 
+                    <input type="text" name="barcodePrinter" id="barcodePrinter" class="form-control fg-inp" 
                            value="<%= barcodePrinter %>" placeholder="Enter barcode/label printer name (optional)">
                     <small class="form-text text-muted">Exact printer name for barcode labels (e.g., "SNBC TVSE LP 46 NEO BPLE"). Leave empty for auto-detection.</small>
                 </div>
 
                 <div class="d-flex justify-content-between">
-                    <button type="submit" class="btn btn-primary px-4">
-                        <i class="fas fa-save"></i> Save Details
+                    <button type="submit" class="bb bb-primary">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Save Details
                     </button>
-                    <a href="${pageContext.request.contextPath}/dashboard.jsp" class="btn btn-secondary">
-                        <i class="fas fa-home"></i> Home
+                    <a href="${pageContext.request.contextPath}/dashboard.jsp" class="bb bb-outline">
+                        <i class="fa-solid fa-house me-1"></i> Home
                     </a>
                 </div>
             </form>
-        </div>
-    </div>
+</div>
 
     <script>
         // GSTIN validation (optional field)

@@ -127,6 +127,7 @@ for (int i = 0; i < vecPer.size(); i++) {
         <a href="<%=request.getContextPath()%>/product/master/supplier/page.jsp" class="sidebar-subitem">Supplier</a>
         <a href="<%=request.getContextPath()%>/product/purchase/page.jsp" class="sidebar-subitem">Purchase Entry</a>
         <a href="<%=request.getContextPath()%>/product/purchase/purchaseReturn/page.jsp" class="sidebar-subitem">Purchase Return</a>
+        <hr>
         <a href="<%=request.getContextPath()%>/product/purchase/report/purchaseRegister/page.jsp" class="sidebar-subitem">Purchase Report</a>
         <a href="<%=request.getContextPath()%>/product/purchase/purchaseReturn/report.jsp" class="sidebar-subitem">Purchase Return Report</a>
         <a href="<%=request.getContextPath()%>/product/supplierPayment/report/page.jsp" class="sidebar-subitem">Supplier Payment Report</a>
@@ -286,12 +287,13 @@ for (int i = 0; i < vecPer.size(); i++) {
       </a>
       <div class="collapse sidebar-submenu" id="adminReportMenu">
         <a href="<%=request.getContextPath()%>/admin/companyDetails/page.jsp" class="sidebar-subitem">Company Details</a>
-        <a href="<%=request.getContextPath()%>/admin/editBill/page.jsp" class="sidebar-subitem">Cancel Bill</a>
-        <a href="<%=request.getContextPath()%>/admin/report/cancelBill/page.jsp" class="sidebar-subitem">Cancel Bill Reports</a>
-        <a href="<%=request.getContextPath()%>/admin/report/billDateChange/page.jsp" class="sidebar-subitem">Bill Date Change Report</a>
+        <a href="<%=request.getContextPath()%>/admin/editBill/page.jsp" class="sidebar-subitem">Edit Date/Cancel Bill</a>
         <a href="<%=request.getContextPath()%>/admin/changePaymentType/page.jsp" class="sidebar-subitem">Change Payment Type</a>
-        <a href="<%=request.getContextPath()%>/admin/report/paymentTypeChange/page.jsp" class="sidebar-subitem">Payment Type Change Report</a>
         <a href="<%=request.getContextPath()%>/admin/Exchange/page.jsp" class="sidebar-subitem">Exchange</a>
+        <hr>
+        <a href="<%=request.getContextPath()%>/admin/report/billDateChange/page.jsp" class="sidebar-subitem">Bill Date Change Report</a>
+        <a href="<%=request.getContextPath()%>/admin/report/cancelBill/page.jsp" class="sidebar-subitem">Cancel Bill Reports</a>        
+        <a href="<%=request.getContextPath()%>/admin/report/paymentTypeChange/page.jsp" class="sidebar-subitem">Payment Type Change Report</a>
         <a href="<%=request.getContextPath()%>/admin/Exchange/report.jsp" class="sidebar-subitem">Exchange &amp; Return Report</a>
       </div>
         </div>

@@ -10,19 +10,24 @@
 </head>
 <body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Change Payment Type");
+    request.setAttribute("pageSubtitle", "Admin — Payment Management");
+    request.setAttribute("pageIcon",     "fa-solid fa-right-left");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container mt-4">
-        <h3 class="mb-4"><i class="fas fa-exchange-alt me-2"></i>Change Payment Type</h3>
+<div class="container-fluid mt-3 mst-page">
 
         <!-- Bill Number Search -->
-        <div class="card shadow-sm mb-4" style="max-width: 480px;">
+        <div class="card mst-card mb-4" style="max-width: 480px;">
             <div class="card-body">
                 <label class="form-label fw-bold">Enter Bill No</label>
                 <div class="input-group">
-                    <input type="text" id="billNoInput" class="form-control"
+                    <input type="text" id="billNoInput" class="form-control fg-inp"
                            placeholder="e.g. 26-52" autocomplete="off">
-                    <button class="btn btn-primary" id="searchBtn" onclick="searchBill()">
-                        <i class="fas fa-search"></i> Search
+                    <button class="bb bb-primary" id="searchBtn" onclick="searchBill()">
+                        <i class="fa-solid fa-magnifying-glass"></i> Search
                     </button>
                 </div>
                 <div class="form-text text-muted">Enter the bill display number and press Search or Enter.</div>
@@ -34,11 +39,11 @@
     <div class="modal fade" id="billDetailModal" tabindex="-1" aria-labelledby="billDetailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header mst-card-header">
                     <h5 class="modal-title" id="billDetailModalLabel">
-                        <i class="fas fa-file-invoice me-2"></i>Bill Details &mdash; <span id="modalBillNo"></span>
+                        <i class="fa-solid fa-file-invoice me-2"></i>Bill Details &mdash; <span id="modalBillNo"></span>
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <!-- Hidden bill id -->
@@ -46,47 +51,47 @@
                     <input type="hidden" id="hiddenPayable">
 
                     <!-- Summary Table -->
-                    <table class="table table-bordered table-sm mb-3">
+                    <table class="table mst-table table-sm mb-3">
                         <tbody>
                             <tr>
-                                <th class="table-light" style="width:18%">Bill No</th>
+                                <th style="width:18%">Bill No</th>
                                 <td id="detBillNo"></td>
-                                <th class="table-light" style="width:12%">Date</th>
+                                <th style="width:12%">Date</th>
                                 <td id="detDate"></td>
                             </tr>
                             <tr>
-                                <th class="table-light">Customer</th>
+                                <th>Customer</th>
                                 <td id="detCus"></td>
-                                <th class="table-light">Payable</th>
+                                <th>Payable</th>
                                 <td id="detPayable"></td>
                             </tr>
                         </tbody>
                     </table>
 
                     <hr>
-                    <h6 class="text-primary mb-3"><i class="fas fa-money-bill-wave me-1"></i>Edit Payment</h6>
+                    <h6 class="fw-semibold mb-3" style="color:var(--bill-navy)"><i class="fa-solid fa-money-bill-wave me-1"></i>Edit Payment</h6>
 
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label fw-bold">Cash Amount</label>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-money-bill"></i></span>
-                                <input type="number" id="cashAmount" class="form-control"
+                                <span class="input-group-text"><i class="fa-solid fa-money-bill"></i></span>
+                                <input type="number" id="cashAmount" class="form-control fg-inp"
                                        step="0.001" min="0" placeholder="0.000">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold">Bank Amount</label>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-university"></i></span>
-                                <input type="number" id="bankAmount" class="form-control"
+                                <span class="input-group-text"><i class="fa-solid fa-building-columns"></i></span>
+                                <input type="number" id="bankAmount" class="form-control fg-inp"
                                        step="0.001" min="0" placeholder="0.000"
                                        oninput="onBankAmountChange()">
                             </div>
                         </div>
                         <div class="col-md-4" id="bankTypeContainer">
                             <label class="form-label fw-bold">Bank / Payment Mode</label>
-                            <select id="bankMode" class="form-select">
+                            <select id="bankMode" class="form-select fg-inp">
                                 <option value="1">UPI</option>
                                 <option value="2">Debit Card</option>
                                 <option value="3">Credit Card</option>
@@ -97,16 +102,16 @@
                     </div>
 
                     <div class="alert alert-info mt-3 mb-0 py-2 small" id="paymentModeInfo">
-                        <i class="fas fa-info-circle me-1"></i>
+                        <i class="fa-solid fa-circle-info me-1"></i>
                         <span id="paymentModeText"></span>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancel
+                    <button type="button" class="bb bb-outline" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-xmark me-1"></i>Cancel
                     </button>
-                    <button type="button" class="btn btn-primary" onclick="updatePayment()">
-                        <i class="fas fa-save me-1"></i>Update Payment
+                    <button type="button" class="bb bb-primary" onclick="updatePayment()">
+                        <i class="fa-solid fa-floppy-disk me-1"></i>Update Payment
                     </button>
                 </div>
             </div>
@@ -133,7 +138,7 @@
                 dataType: 'json',
                 success: function (data) {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-search"></i> Search';
+                    btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Search';
                     if (!data.success) {
                         Swal.fire({ icon: 'warning', title: 'Not Found', text: data.message });
                         return;
@@ -143,7 +148,7 @@
                 },
                 error: function () {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-search"></i> Search';
+                    btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Search';
                     Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to fetch bill details. Please try again.' });
                 }
             });

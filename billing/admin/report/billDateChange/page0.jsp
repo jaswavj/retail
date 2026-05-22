@@ -16,34 +16,34 @@ String toDate = request.getParameter("toDate");
 </head>
 <body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Bill Date Change Report");
+    request.setAttribute("pageSubtitle", "Admin — Reports");
+    request.setAttribute("pageIcon",     "fa-solid fa-calendar-days");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container my-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Bill Date Change Report</h2>
-            <div class="no-print">
-                <a href="<%=contextPath%>/admin/report/billDateChange/page.jsp" class="btn btn-secondary me-2">
-                    <i class="fas fa-arrow-left"></i> Back
-                </a>
-                <button class="btn btn-primary me-2" onclick="printReport()">🖨 Print</button>
-                <button class="btn btn-success" onclick="exportTableToExcel()">📊 Export to Excel</button>
-            </div>
-        </div>
-        
-        <div class="alert alert-info mb-4">
-            <strong>Report Period:</strong> <%= fromDate %> to <%= toDate %>
-        </div>
+<div class="container-fluid mt-3 mst-page">
+    <div class="d-flex flex-wrap gap-2 mb-3 no-print">
+        <a href="<%=contextPath%>/admin/report/billDateChange/page.jsp" class="bb bb-outline"><i class="fa-solid fa-arrow-left me-1"></i>Back</a>
+        <button class="bb bb-navy" onclick="printReport()"><i class="fa-solid fa-print me-1"></i>Print</button>
+        <button class="bb bb-green" onclick="exportTableToExcel()"><i class="fa-solid fa-file-excel me-1"></i>Export Excel</button>
+    </div>
+    <div class="alert alert-info mb-3">
+        <strong>Report Period:</strong> <%= fromDate %> to <%= toDate %>
+    </div>
 
         <div class="table-responsive">
-            <table id="billDateChangeTable" class="table table-hover">
+            <table id="billDateChangeTable" class="table mst-table">
                 <thead>
-                    <tr style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-bottom: 2px solid #e2e8f0;">
-                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: center;">S.No</th>
-                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Bill No</th>
-                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Old Date</th>
-                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">New Date</th>
-                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Change Date</th>
-                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Change Time</th>
-                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Changed By</th>
+                    <tr>
+                        <th class="text-center">S.No</th>
+                        <th>Bill No</th>
+                        <th>Old Date</th>
+                        <th>New Date</th>
+                        <th>Change Date</th>
+                        <th>Change Time</th>
+                        <th>Changed By</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -57,9 +57,8 @@ String toDate = request.getParameter("toDate");
                     <tr>
                         <td><%=i+1%></td>
                         <td>
-                            <a href="#" onclick="loadBillDetails(<%=billId%>); return false;" 
-                               class="btn btn-sm btn-edit" 
-                               style="background-color:hsl(222, 86%, 89%); color:#000000;">
+                            <a href="#" onclick="loadBillDetails(<%=billId%>); return false;"
+                               class="inv-link">
                                 <%=row.elementAt(1)%>
                             </a>
                         </td>
@@ -146,7 +145,7 @@ function printReport() {
             printArea.id = 'printArea';
             printArea.innerHTML = headerHtml;
             
-            const container = document.querySelector('.container').cloneNode(true);
+            const container = document.querySelector('.mst-page').cloneNode(true);
             const noPrintElements = container.querySelectorAll('.no-print');
             noPrintElements.forEach(el => el.remove());
             
@@ -196,7 +195,7 @@ function loadBillDetails(billId) {
   fetch('<%=contextPath%>/billing/balanceDetailModal.jsp?billId=' + billId)
     .then(response => response.text())
     .then(data => { document.getElementById('billDetailContent').innerHTML = data; })
-    .catch(error => { document.getElementById('billDetailContent').innerHTML = '<div class="alert alert-danger" role="alert"><i class="fas fa-exclamation-triangle"></i> Error loading bill details. Please try again.</div>'; console.error('Error:', error); });
+    .catch(error => { document.getElementById('billDetailContent').innerHTML = '<div class="alert alert-danger" role="alert"><i class="fa-solid fa-triangle-exclamation"></i> Error loading bill details. Please try again.</div>'; console.error('Error:', error); });
 }
 </script>
 
@@ -204,15 +203,15 @@ function loadBillDetails(billId) {
 <div class="modal fade" id="billDetailModal" tabindex="-1" aria-labelledby="billDetailModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header" style="background: linear-gradient(135deg, #3d1a52, #570a57); color: white;">
+      <div class="modal-header mst-card-header">
         <h5 class="modal-title" id="billDetailModalLabel">Bill Details</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" id="billDetailContent">
         <div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="bb bb-outline" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>

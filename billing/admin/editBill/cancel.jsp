@@ -42,17 +42,20 @@ if (billInfo != null && !billInfo.isEmpty()) {
     
  
 </head>
-<body onload="document.form.opregInput.focus();">
+<body>
 
-<!--%@ include file="../menu/reportMenu.jsp" %-->
     <%@ include file="/assets/navbar/navbar.jsp" %>
-    <!-- Top Navbar -->
+<%
+    request.setAttribute("pageTitle",    "Cancel Bill");
+    request.setAttribute("pageSubtitle", "Admin — Bill Management");
+    request.setAttribute("pageIcon",     "fa-solid fa-ban");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-
-<div class="container mt-4 ">
+<div class="container-fluid mt-3 mst-page">
         <h4>Bill Details (Bill No: <%= billId %>)</h4>
-    <table class="table table-bordered table-sm mt-3">
-        <thead class="table-dark">
+    <table class="table mst-table table-sm mt-3">
+        <thead>
             <tr>
                 <th>S.No</th>
                 <th>Product</th>
@@ -88,20 +91,20 @@ if (billInfo != null && !billInfo.isEmpty()) {
 
             <div class="mb-3">
                 <label for="cancelReason" class="form-label fw-bold">Reason for Cancellation</label>
-                <textarea class="form-control" id="cancelReason" name="cancelReason"
+                <textarea class="form-control fg-inp" id="cancelReason" name="cancelReason"
                           rows="5" placeholder="Enter reason..." required></textarea>
             </div>
 
             <div class="mt-3">
-                <button type="submit" class="btn btn-primary">Cancel Bill</button>
-                <button type="button" class="btn btn-secondary" onclick="window.history.back();">Back</button>
+                <button type="submit" class="bb bb-primary"><i class="fa-solid fa-ban"></i> Cancel Bill</button>
+                <button type="button" class="bb bb-outline" onclick="window.history.back();"><i class="fa-solid fa-arrow-left"></i> Back</button>
             </div>
         </form>
     </div>
 
     <!-- Right: Totals table -->
     <div class="col-md-6">
-        <table class="table table-bordered">
+        <table class="table mst-table">
             <tr>
                 <th>Total</th>
                 <td><%= total %></td>

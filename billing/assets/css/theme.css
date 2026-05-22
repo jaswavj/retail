@@ -1431,7 +1431,7 @@ body:has(.mst-page) { background: var(--bill-bg); }
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: #130828;
+    background: #0a1628;
     position: relative;
     overflow-x: hidden;
     overflow-y: auto;
@@ -1452,7 +1452,7 @@ body:has(.mst-page) { background: var(--bill-bg); }
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, #130828 0%, #2d1260 35%, #4a1080 65%, #2d0d5c 100%);
+    background: linear-gradient(135deg, #0a1628 0%, #1a2540 35%, #1e2e50 65%, #0f1c38 100%);
 }
 
 .bg-orb {
@@ -1465,7 +1465,7 @@ body:has(.mst-page) { background: var(--bill-bg); }
 .bg-orb-1 {
     width: 520px;
     height: 520px;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.4), transparent 70%);
+    background: radial-gradient(circle, rgba(201, 162, 39, 0.22), transparent 70%);
     top: -180px;
     left: -180px;
     animation-duration: 22s;
@@ -1474,7 +1474,7 @@ body:has(.mst-page) { background: var(--bill-bg); }
 .bg-orb-2 {
     width: 420px;
     height: 420px;
-    background: radial-gradient(circle, rgba(192, 38, 211, 0.3), transparent 70%);
+    background: radial-gradient(circle, rgba(26, 37, 64, 0.6), transparent 70%);
     bottom: -120px;
     right: -120px;
     animation-delay: 7s;
@@ -1484,7 +1484,7 @@ body:has(.mst-page) { background: var(--bill-bg); }
 .bg-orb-3 {
     width: 320px;
     height: 320px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.25), transparent 70%);
+    background: radial-gradient(circle, rgba(201, 162, 39, 0.14), transparent 70%);
     top: 45%;
     right: 8%;
     animation-delay: 3s;
@@ -1535,30 +1535,34 @@ body:has(.mst-page) { background: var(--bill-bg); }
 }
 
 .lc-brand-icon {
-    width: 68px;
-    height: 68px;
-    background: linear-gradient(135deg, #5b21b6, #7c3aed);
+    width: 80px;
+    height: 80px;
+    background: #fff;
     border-radius: 18px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 14px;
-    box-shadow: 0 12px 32px rgba(109, 40, 217, 0.45);
+    box-shadow: 0 12px 32px rgba(201, 162, 39, 0.35), 0 0 0 3px rgba(201,162,39,0.18);
     animation: icon-pulse 3s ease-in-out infinite;
+    overflow: hidden;
+    padding: 4px;
 }
 
-.lc-brand-icon i {
-    font-size: 1.9rem;
-    color: #fff;
+.lc-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 14px;
 }
 
 @keyframes icon-pulse {
     0%, 100% {
-        box-shadow: 0 12px 32px rgba(109, 40, 217, 0.45);
+        box-shadow: 0 12px 32px rgba(201, 162, 39, 0.35), 0 0 0 3px rgba(201,162,39,0.18);
         transform: translateY(0);
     }
     50% {
-        box-shadow: 0 18px 42px rgba(109, 40, 217, 0.65);
+        box-shadow: 0 18px 42px rgba(201, 162, 39, 0.55), 0 0 0 4px rgba(201,162,39,0.28);
         transform: translateY(-3px);
     }
 }
@@ -1567,7 +1571,7 @@ body:has(.mst-page) { background: var(--bill-bg); }
     font-size: 2rem;
     font-weight: 900;
     letter-spacing: 3px;
-    background: linear-gradient(135deg, #4c1d95, #7c3aed);
+    background: linear-gradient(135deg, #c9a227, #e8c94a, #c9a227);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -1627,7 +1631,7 @@ body:has(.mst-page) { background: var(--bill-bg); }
 }
 
 .lc-field:focus-within .lc-field-icon {
-    color: #7c3aed;
+    color: #c9a227;
 }
 
 .lc-input {
@@ -1645,9 +1649,9 @@ body:has(.mst-page) { background: var(--bill-bg); }
 }
 
 .lc-input:focus {
-    border-color: #7c3aed;
+    border-color: #c9a227;
     background: #fff;
-    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+    box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.15);
 }
 
 .lc-input::placeholder {
@@ -1680,8 +1684,8 @@ body:has(.mst-page) { background: var(--bill-bg); }
 }
 
 .lc-eye-btn:hover {
-    color: #7c3aed;
-    background: rgba(124, 58, 237, 0.08);
+    color: #c9a227;
+    background: rgba(201, 162, 39, 0.1);
 }
 
 /* ---- Alerts ---- */
@@ -1741,23 +1745,26 @@ body:has(.mst-page) { background: var(--bill-bg); }
     align-items: center;
     justify-content: center;
     gap: 9px;
-    background: linear-gradient(135deg, #5b21b6, #7c3aed);
-    color: #fff;
-    box-shadow: 0 6px 22px rgba(109, 40, 217, 0.42);
+    background: linear-gradient(135deg, #1a2540, #2a3a60);
+    color: #c9a227;
+    box-shadow: 0 6px 22px rgba(26, 37, 64, 0.5);
     transition: all 0.25s ease;
     margin-top: 4px;
     -webkit-appearance: none;
+    border: 1.5px solid rgba(201,162,39,0.3);
 }
 
 .lc-btn:hover {
-    background: linear-gradient(135deg, #4c1d95, #6d28d9);
-    box-shadow: 0 10px 30px rgba(109, 40, 217, 0.58);
+    background: linear-gradient(135deg, #c9a227, #e8c94a);
+    color: #1a2540;
+    box-shadow: 0 10px 30px rgba(201, 162, 39, 0.45);
     transform: translateY(-2px);
+    border-color: #c9a227;
 }
 
 .lc-btn:active {
     transform: translateY(0);
-    box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3);
+    box-shadow: 0 4px 12px rgba(201, 162, 39, 0.3);
 }
 
 /* ---- Card Footer Note ---- */
@@ -1771,7 +1778,7 @@ body:has(.mst-page) { background: var(--bill-bg); }
 }
 
 .lc-note i {
-    color: #7c3aed;
+    color: #c9a227;
     margin-right: 4px;
 }
 
@@ -1789,26 +1796,27 @@ body:has(.mst-page) { background: var(--bill-bg); }
 }
 
 .lf-card {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.11);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(201, 162, 39, 0.2);
     border-radius: 14px;
     padding: 16px 12px;
     text-align: center;
     backdrop-filter: blur(10px);
-    color: #e9d5ff;
+    color: #e2c97e;
     transition: all 0.3s ease;
 }
 
 .lf-card:hover {
-    background: rgba(255, 255, 255, 0.13);
+    background: rgba(201, 162, 39, 0.1);
     transform: translateY(-4px);
-    border-color: rgba(167, 139, 250, 0.4);
+    border-color: rgba(201, 162, 39, 0.45);
 }
 
 .lf-icon {
     width: 42px;
     height: 42px;
-    background: linear-gradient(135deg, #6d28d9, #a855f7);
+    background: linear-gradient(135deg, #1a2540, #2a3a60);
+    border: 1px solid rgba(201,162,39,0.35);
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -1818,20 +1826,20 @@ body:has(.mst-page) { background: var(--bill-bg); }
 
 .lf-icon i {
     font-size: 1.05rem;
-    color: #fff;
+    color: #c9a227;
 }
 
 .lf-card h3 {
     font-size: 0.85rem;
     font-weight: 700;
     margin: 0 0 4px;
-    color: #f3e8ff;
+    color: #f0dfa0;
 }
 
 .lf-card p {
     font-size: 0.73rem;
     margin: 0;
-    color: #c4b5fd;
+    color: #b8a06a;
     line-height: 1.45;
 }
 
@@ -1859,13 +1867,13 @@ body:has(.mst-page) { background: var(--bill-bg); }
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #c4b5fd;
+    color: #c9a227;
     font-weight: 600;
     font-size: 0.87rem;
 }
 
 .lfoot-brand i {
-    color: #a78bfa;
+    color: #e8c94a;
 }
 
 .lfoot-links {
@@ -1875,7 +1883,7 @@ body:has(.mst-page) { background: var(--bill-bg); }
 }
 
 .lfoot-link {
-    color: #c4b5fd;
+    color: #b8a06a;
     text-decoration: none;
     font-size: 0.84rem;
     display: flex;
@@ -1887,7 +1895,7 @@ body:has(.mst-page) { background: var(--bill-bg); }
 
 .lfoot-link:hover {
     opacity: 1;
-    color: #ede9fe;
+    color: #e8c94a;
     transform: translateY(-1px);
 }
 

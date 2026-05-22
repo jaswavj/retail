@@ -15,51 +15,33 @@ String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 <%@ include file="/assets/common/head.jsp" %>
     
 
-    <style>
-        body {
-            background: #f5f7fa;
-        }
-        .navbar {
-            background-color: #4e73df;
-        }
-        .navbar-brand {
-            color: #fff !important;
-        }
-        .table td, .table th {
-            vertical-align: middle;
-        }
-        .btn-edit, .btn-delete {
-            margin: 0 2px;
-        }
-
-    </style>
-
 </head>
-<body onload="document.form.opregInput.focus();">
-
-    <!--%@ include file="../menu/reportMenu.jsp" %-->
+<body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
-    <!-- Top Navbar -->
+<%
+    request.setAttribute("pageTitle",    "Cancel Bill Report");
+    request.setAttribute("pageSubtitle", "Admin — Reports");
+    request.setAttribute("pageIcon",     "fa-solid fa-ban");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-
-    <div class="container mt-4 ">
-        <h3 class="mb-4">Cancel Bill Report</h3>
+<div class="container-fluid mt-3 mst-page">
 
     <form action="<%=contextPath%>/admin/report/cancelBill/page0.jsp" method="get" class="row g-3">
         <div class="col-md-3">
             <label for="fromDate" class="form-label">From Date:</label>
-            <input type="date" id="fromDate" name="fromDate" value="<%=today%>" class="form-control" required>
+            <input type="date" id="fromDate" name="fromDate" value="<%=today%>" class="form-control fg-inp" required>
         </div>
 
         <div class="col-md-3">
             <label for="toDate" class="form-label">To Date:</label>
-            <input type="date" id="toDate" name="toDate" value="<%=today%>" class="form-control" required>
+            <input type="date" id="toDate" name="toDate" value="<%=today%>" class="form-control fg-inp" required>
         </div>
         
         
 
         <div class="col-md-4 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+            <button type="submit" class="bb bb-primary w-100"><i class="fa-solid fa-magnifying-glass me-1"></i>Generate Report</button>
         </div>
     </form>
 </div>

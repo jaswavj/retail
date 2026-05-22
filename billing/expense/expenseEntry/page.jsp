@@ -20,104 +20,93 @@ if (userId == null) {
     <!-- Bootstrap CSS -->
     <%@ include file="/assets/common/head.jsp" %>
 
-    <style>
-        body {
-            background: #f5f7fa;
-        }
-    </style>
-    
 </head>
 <body>
+    <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Expense Entry");
+    request.setAttribute("pageSubtitle", "Add a new expense record");
+    request.setAttribute("pageIcon",     "fa-solid fa-receipt");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
+
+<div class="container-fluid mt-3 mst-page" style="max-width:900px;">
 <%
 String msg = request.getParameter("msg");
-String type = request.getParameter("type"); // success / danger / warning
+String type = request.getParameter("type");
 %>
-
 <% if (msg != null) { %>
-<div class="alert alert-<%= (type != null ? type : "info") %> alert-dismissible fade show mt-3" role="alert">
+<div class="alert alert-<%= (type != null ? type : "info") %> alert-dismissible fade show mb-3" role="alert">
   <%= msg %>
   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 <% } %>
-
-    <%@ include file="/assets/navbar/navbar.jsp" %>
-
-    <div class="container-fluid mt-2" style="max-width: 900px;">
-        <div class="card" style="border: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); border-radius: 12px;">
-            <div class="card-header" style="background: #624b88; color: white; border-radius: 12px 12px 0 0; padding: 1rem 1.5rem;">
-                <h5 class="mb-0" style="font-weight: 600;"><i class="fas fa-receipt me-2"></i>Add Expense Entry</h5>
-            </div>
-            <div class="card-body" style="padding: 2rem;">
+    <div class="card mst-card">
+        <div class="mst-card-header">
+            <h5 class="mb-0"><i class="fa-solid fa-receipt me-2"></i>Add Expense Entry</h5>
+        </div>
+        <div class="card-body p-4">
                 <form action="<%=contextPath%>/expense/expenseEntry/saveExpenseEntry.jsp" method="post" onsubmit="return validateForm()">
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <div class="input-outline">
-                                <select name="expenseType" id="expenseType" class="form-control" required style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;">
-                                    <option value="">-- Select Expense Type --</option>
-                                    <%
-                                    try {
-                                        Vector expTypes = prod.getExpenseTypeList();
-                                        for (int i = 0; i < expTypes.size(); i++) {
-                                            Vector expType = (Vector) expTypes.get(i);
-                                            String typeName = expType.elementAt(0).toString();
-                                            String typeId = expType.elementAt(1).toString();
-                                    %>
-                                        <option value="<%=typeId%>"><%=typeName%></option>
-                                    <%
-                                        }
-                                    } catch (Exception e) {
-                                        out.println("<option value=''>Error loading expense types</option>");
+                            <label class="form-label fw-semibold">Expense Type</label>
+                            <select name="expenseType" id="expenseType" class="form-select fg-inp" required>
+                                <option value="">-- Select Expense Type --</option>
+                                <%
+                                try {
+                                    Vector expTypes = prod.getExpenseTypeList();
+                                    for (int i = 0; i < expTypes.size(); i++) {
+                                        Vector expType = (Vector) expTypes.get(i);
+                                        String typeName = expType.elementAt(0).toString();
+                                        String typeId = expType.elementAt(1).toString();
+                                %>
+                                    <option value="<%=typeId%>"><%=typeName%></option>
+                                <%
                                     }
-                                    %>
-                                </select>
-                                
-                            </div>
+                                } catch (Exception e) {
+                                    out.println("<option value=''>Error loading expense types</option>");
+                                }
+                                %>
+                            </select>
                         </div>
                         
                         <div class="col-md-6">
-                            <div class="input-outline">
-                                <input type="number" step="0.01" name="amount" id="amount" class="form-control" placeholder="" required style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;">
-                                <label style="background: white; padding: 0 8px; font-size: 0.9rem;">Amount</label>
-                            </div>
+                            <label class="form-label fw-semibold">Amount</label>
+                            <input type="number" step="0.01" name="amount" id="amount" class="form-control fg-inp" placeholder="0.00" required>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <div class="input-outline">
-                            <input type="text" name="content" id="content" class="form-control" placeholder="" required style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;">
-                            <label style="background: white; padding: 0 8px; font-size: 0.9rem;">Content</label>
-                        </div>
+                        <label class="form-label fw-semibold">Content</label>
+                        <input type="text" name="content" id="content" class="form-control fg-inp" placeholder="Enter content" required>
                     </div>
                     
                     <div class="mb-3">
-                        <div class="input-outline">
-                            <textarea name="description" id="description" class="form-control" rows="4" placeholder="Description(type anything you want to store here)" style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;"></textarea>
-                        </div>
+                        <label class="form-label fw-semibold">Description</label>
+                        <textarea name="description" id="description" class="form-control fg-inp" rows="4" placeholder="Type anything you want to store here"></textarea>
                     </div>
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <div class="input-outline">
-                                <input type="date" name="expenseDate" id="expenseDate" class="form-control" required style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;" value="<%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()) %>">
-                                <label style="background: white; padding: 0 8px; font-size: 0.9rem;">Date</label>
-                            </div>
+                            <label class="form-label fw-semibold">Date</label>
+                            <input type="date" name="expenseDate" id="expenseDate" class="form-control fg-inp" required value="<%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()) %>">
                         </div>
                         
                         <div class="col-md-6">
-                            <div class="input-outline">
-                                <input type="time" name="expenseTime" id="expenseTime" class="form-control" required style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;" value="<%= new java.text.SimpleDateFormat("HH:mm").format(new java.util.Date()) %>">
-                                <label style="background: white; padding: 0 8px; font-size: 0.9rem;">Time</label>
-                            </div>
+                            <label class="form-label fw-semibold">Time</label>
+                            <input type="time" name="expenseTime" id="expenseTime" class="form-control fg-inp" required value="<%= new java.text.SimpleDateFormat("HH:mm").format(new java.util.Date()) %>">
                         </div>
                     </div>
                     
                     <div class="d-flex gap-2 justify-content-end mt-4">
-                        <button type="reset" class="btn btn-secondary" style="padding: 10px 24px; border-radius: 8px;">
-                            <i class="fas fa-undo me-2"></i>Reset
+                        <button type="reset" class="bb bb-outline">
+                            <i class="fa-solid fa-rotate-left me-2"></i>Reset
                         </button>
-                        <button type="submit" class="btn btn-primary" style="padding: 10px 24px; border-radius: 8px; background: #624b88; border: none;">
-                            <i class="fas fa-save me-2"></i>Save Expense
+                        <button type="submit" class="bb bb-primary">
+                            <i class="fa-solid fa-floppy-disk me-2"></i>Save Expense
+                        </button>
+                    </div>
                         </button>
                     </div>
                 </form>

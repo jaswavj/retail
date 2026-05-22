@@ -20,61 +20,42 @@ if (userId == null) {
     <!-- Bootstrap CSS -->
     <%@ include file="/assets/common/head.jsp" %>
 
-    <style>
-        body {
-            background: #f5f7fa;
-        }
-        .navbar {
-            background-color: #4e73df;
-        }
-        .navbar-brand {
-            color: #fff !important;
-        }
-        .table td, .table th {
-            vertical-align: middle;
-        }
-        .btn-edit, .btn-delete {
-            margin: 0 2px;
-        }
-    </style>
-    
 </head>
 <body>
+    <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Expense Types");
+    request.setAttribute("pageSubtitle", "Manage expense categories");
+    request.setAttribute("pageIcon",     "fa-solid fa-tags");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
+
+<div class="container-fluid mt-3 mst-page">
 <%
 String msg = request.getParameter("msg");
-String type = request.getParameter("type"); // success / danger / warning
+String type = request.getParameter("type");
 %>
-
 <% if (msg != null) { %>
-<div class="alert alert-<%= (type != null ? type : "info") %> alert-dismissible fade show mt-3" role="alert">
+<div class="alert alert-<%= (type != null ? type : "info") %> alert-dismissible fade show mb-3" role="alert">
   <%= msg %>
   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 <% } %>
-
-    <%@ include file="/assets/navbar/navbar.jsp" %>
-    <!-- Top Navbar -->
-
-
-    <div class="container-fluid mt-2" style="max-width: 1400px;">
-        <div class="row g-2">
+        <div class="row g-3">
             <!-- Left Column - Add Expense Type Form -->
             <div class="col-md-7">
-                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07); border-radius: 8px; height: 100%;">
-                    <div class="card-header" style="background: #624b88; color: white; border-radius: 8px 8px 0 0; padding: 0.75rem 1rem;">
-                        <h6 class="mb-0" style="font-weight: 600; font-size: 0.95rem;"><i class="fas fa-plus-circle me-2"></i>Add New Expense Type</h6>
+                <div class="card mst-card h-100">
+                    <div class="mst-card-header">
+                        <h6 class="mb-0"><i class="fa-solid fa-plus-circle me-2"></i>Add New Expense Type</h6>
                     </div>
-                    <div class="card-body" style="padding: 1rem;">
+                    <div class="card-body p-3">
                         <form action="<%=contextPath%>/expense/expenseType/saveExpenseType.jsp" method="post">
                             <div class="mb-3">
-                                <div class="input-outline">
-                                    <input type="text" name="expenseTypeName" class="form-control" placeholder="" style="padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem;" required>
-                                    <label style="background: white; padding: 0 6px; font-size: 0.85rem;">Expense Type Name</label>
-                                </div>
+                                <label class="form-label fw-semibold">Expense Type Name</label>
+                                <input type="text" name="expenseTypeName" class="form-control fg-inp" placeholder="Enter expense type name" required>
                             </div>
-                            
-                            <button type="submit" class="btn btn-primary w-100" style="padding: 8px 10px; font-size: 0.9rem;">
-                                <i class="fas fa-save me-1"></i>Add Expense Type
+                            <button type="submit" class="bb bb-primary w-100">
+                                <i class="fa-solid fa-floppy-disk me-1"></i>Add Expense Type
                             </button>
                         </form>
                     </div>
@@ -83,18 +64,18 @@ String type = request.getParameter("type"); // success / danger / warning
 
             <!-- Right Column - Expense Type List Table -->
             <div class="col-md-5">
-                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07); border-radius: 8px;">
-                    <div class="card-header" style="background: white; border-bottom: 1px solid #f7fafc; border-radius: 8px 8px 0 0; padding: 0.75rem 1rem;">
-                        <h6 class="mb-0" style="color: #2d3748; font-weight: 600; font-size: 0.95rem;"><i class="fas fa-list me-2"></i>Expense Type List</h6>
+                <div class="card mst-card">
+                    <div class="mst-card-header">
+                        <h6 class="mb-0"><i class="fa-solid fa-list me-2"></i>Expense Type List</h6>
                     </div>
-                    <div class="card-body" style="padding: 0;">
+                    <div class="card-body p-0">
 
-                <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
-                    <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
+                <table class="table mst-table table-sm mb-0">
+                    <thead>
                         <tr>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">#</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;"><i class="fas fa-tag me-1"></i>Name</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; text-align: center; border: none; font-size: 0.85rem;"><i class="fas fa-cog me-1"></i>Actions</th>
+                            <th>#</th>
+                            <th><i class="fa-solid fa-tag me-1"></i>Name</th>
+                            <th class="text-center"><i class="fa-solid fa-gear me-1"></i>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -111,12 +92,12 @@ String type = request.getParameter("type"); // success / danger / warning
                                     String typeName = vec1.elementAt(0).toString();
                                     int typeId = Integer.parseInt(vec1.elementAt(1).toString());
                         %>
-                        <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=i+1%></td>
-                            <td style="padding: 0.4rem; color: #2d3748; font-weight: 500; border: none; font-size: 0.9rem;"><%=typeName%></td>
-                            <td style="padding: 0.4rem; text-align: center; border: none;">
-                                <button onclick="openEditModal('<%=typeName.replace("'", "\\'")%>', <%=typeId%>)" class="btn btn-sm" style="background: #624b88; color: white; padding: 4px 12px; border-radius: 5px; border: none; font-weight: 500; font-size: 0.85rem;">
-                                    <i class="fas fa-edit me-1"></i>Edit
+                        <tr>
+                            <td><%=i+1%></td>
+                            <td class="fw-medium"><%=typeName%></td>
+                            <td class="text-center">
+                                <button onclick="openEditModal('<%=typeName.replace("'", "\\'" )%>', <%=typeId%>)" class="btn btn-sm bb bb-outline">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i>Edit
                                 </button>
                             </td>
                         </tr>
@@ -125,9 +106,9 @@ String type = request.getParameter("type"); // success / danger / warning
                             } else {
                         %>
                         <tr>
-                            <td colspan="3" class="text-center" style="padding: 2rem; color: #718096;">
-                                <i class="fas fa-inbox fa-3x mb-3" style="opacity: 0.3;"></i>
-                                <p class="mb-0">No expense types found. Add your first expense type above.</p>
+                            <td colspan="3" class="text-center py-4 text-muted">
+                                <i class="fa-solid fa-inbox fa-2x mb-2 d-block opacity-50"></i>
+                                No expense types found. Add your first expense type above.
                             </td>
                         </tr>
                         <%
@@ -148,43 +129,41 @@ String type = request.getParameter("type"); // success / danger / warning
     <!-- Edit Expense Type Modal -->
     <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="border-radius: 8px; border: none; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);">
-                <div class="modal-header" style="background: #624b88; color: white; border-radius: 8px 8px 0 0; padding: 0.75rem 1rem;">
-                    <h6 class="modal-title mb-0" style="font-size: 0.95rem;"><i class="fas fa-edit me-2"></i>Edit Expense Type</h6>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content">
+                <div class="modal-header mst-card-header">
+                    <h6 class="modal-title mb-0"><i class="fa-solid fa-pen-to-square me-2"></i>Edit Expense Type</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" style="padding: 1.25rem;">
+                <div class="modal-body p-3">
                     <form id="editForm" action="<%=contextPath%>/expense/expenseType/editExpenseType.jsp" method="post">
                         <input type="hidden" name="expenseTypeId" id="editExpenseTypeId">
                         
-                        <div class="mb-2">
-                            <label class="form-label" style="color: #4a5568; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">Current Name</label>
-                            <input type="text" id="currentName" class="form-control" disabled style="background: #f7fafc; border: 2px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; font-size: 0.9rem;">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Current Name</label>
+                            <input type="text" id="currentName" class="form-control fg-inp" disabled>
                         </div>
                         
-                        <div class="mb-2">
-                            <div class="input-outline">
-                                <input type="text" name="newExpenseType" id="editExpenseTypeName" class="form-control" placeholder="" style="padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem;" required>
-                                <label style="background: white; padding: 0 6px; font-size: 0.85rem;">New Expense Type Name</label>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">New Expense Type Name</label>
+                            <input type="text" name="newExpenseType" id="editExpenseTypeName" class="form-control fg-inp" placeholder="Enter new name" required>
                         </div>
                         
-                        <div class="mb-2">
-                            <div class="form-check" style="padding: 8px; background: #fff5f5; border-radius: 6px; border-left: 3px solid #f56565;">
+                        <div class="mb-3">
+                            <div class="form-check p-2 rounded" style="background:#fff5f5; border-left:3px solid var(--bill-red);">
                                 <input class="form-check-input" type="checkbox" name="block" value="block" id="editBlock">
-                                <label class="form-check-label" for="editBlock" style="color: #c53030; font-weight: 500; font-size: 0.85rem;">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>Block this expense type
+                                <label class="form-check-label fw-medium" for="editBlock" style="color:var(--bill-red);">
+                                    <i class="fa-solid fa-triangle-exclamation me-1"></i>Block this expense type
                                 </label>
                             </div>
-                            <small class="text-muted" style="display: block; margin-top: 4px; font-size: 0.75rem;">Blocking will make this expense type unavailable for selection</small>
+                            <small class="text-muted mt-1 d-block">Blocking will make this expense type unavailable for selection</small>
                         </div>
                         
                         <div class="d-flex gap-2 justify-content-end">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 6px 16px; border-radius: 6px; font-size: 0.85rem;">
-                                <i class="fas fa-times me-1"></i>Cancel
+                            <button type="button" class="bb bb-outline" data-bs-dismiss="modal">
+                                <i class="fa-solid fa-xmark me-1"></i>Cancel
                             </button>
-                            <button type="submit" class="btn btn-primary" style="padding: 6px 16px; border-radius: 6px; background: #5b21b6; border: none; font-size: 0.85rem;">
-                                <i class="fas fa-save me-1"></i>Update
+                            <button type="submit" class="bb bb-primary">
+                                <i class="fa-solid fa-floppy-disk me-1"></i>Update
                             </button>
                         </div>
                     </form>

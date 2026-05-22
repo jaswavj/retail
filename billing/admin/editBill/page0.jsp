@@ -6,7 +6,8 @@
 <%
     String fromDate = request.getParameter("fromDate");  
     String toDate   = request.getParameter("toDate");
-    int userId = Integer.parseInt(request.getParameter("userId"));
+    String userIdParam = request.getParameter("userId");
+    int userId = (userIdParam != null && !userIdParam.isEmpty()) ? Integer.parseInt(userIdParam) : 0;
     int typeId = 0; 
     int modeId = 0; 
     
@@ -28,39 +29,43 @@
     <title>Sales Report</title>
 <%@ include file="/assets/common/head.jsp" %>
 </head>
-<body > 
-<!--%@ include file="../menu/reportMenu.jsp" %-->
-    <%@ include file="/assets/navbar/navbar.jsp" %>
+<body>
+<%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Edit Bill Report");
+    request.setAttribute("pageSubtitle", "Admin — Bill Management");
+    request.setAttribute("pageIcon",     "fa-solid fa-file-pen");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container mt-4 table-wrapper">
-<p><strong>Sales Report From:</strong> <%= fromDate %> - <%= toDate %></p>
+<div class="container-fluid mt-3 mst-page">
+<p class="fw-semibold"><i class="fa-solid fa-file-invoice me-1"></i>Sales Report From: <%= fromDate %> &ndash; <%= toDate %></p>
 
 <div class="table-responsive">
-<table class="table table-hover mt-3" style="font-size: 12px; min-width: 900px;">
+<table class="table mst-table table-sm mt-3" style="min-width: 900px;">
     <thead>
-        <tr style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-bottom: 2px solid #e2e8f0;">
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: center;">S.No</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Bill No</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Total</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Discount</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Payable</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Paid</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Balance</th>
-            <!--<% if(modeId !=2) { %><th>cash</th><%}%>
-            <% if(modeId !=1) { %><th>Bank</th><% } %>
-            
-            <th>Pending Balance</th>
-            
-            <% if(modeId !=1) { %><th>Mode</th><% } %>-->
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Date</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Time</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Biller</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: center;">Action</th>
+        <tr>
+            <th class="text-center">S.No</th>
+            <th>Bill No</th>
+            <th class="text-end">Total</th>
+            <th class="text-end">Discount</th>
+            <th class="text-end">Payable</th>
+            <th class="text-end">Paid</th>
+            <th class="text-end">Balance</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Biller</th>
+            <th class="text-center">Action</th>
         </tr>
     </thead>
     <tbody>
         <%
-        Vector vec = bill.getsalesCashBankReport(fromDate,toDate,modeId,typeId,userId);
+        Vector vec = new Vector();
+        try {
+            vec = bill.getsalesCashBankReport(fromDate,toDate,modeId,typeId,userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         double finTotal=0.0;
         double finDiscount=0.0;
         double finPayable=0.0; 
@@ -110,8 +115,8 @@
             <td><%=row.elementAt(6)%></td>
             <td><%=row.elementAt(7)%></td>
             <td>
-                <a href="<%=contextPath%>/admin/editBill/edit.jsp?billId=<%=billId%>" class="btn btn-sm btn-edit" style="background-color:hsl(222, 86%, 89%); color:#000000;">Edit</a>
-                <a href="<%=contextPath%>/admin/editBill/cancel.jsp?billId=<%=billId%>" class="btn btn-sm btn-edit" style="background-color:hsl(0, 86%, 89%); color:#000000;">Cancel</a>
+                <a href="<%=contextPath%>/admin/editBill/edit.jsp?billId=<%=billId%>" class="bb bb-outline btn-sm"><i class="fa-solid fa-pen"></i> Edit</a>
+                <a href="<%=contextPath%>/admin/editBill/cancel.jsp?billId=<%=billId%>" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-ban"></i> Cancel</a>
             </td>
         </tr>
         <%
@@ -136,13 +141,13 @@
             
         </tr>
     </tbody>
+</table>
 </div>
-<p><strong>Due Collection Report From:</strong> <%= fromDate %> - <%= toDate %></p>
+<p class="fw-semibold mt-4"><i class="fa-solid fa-money-bill-wave me-1"></i>Due Collection Report From: <%= fromDate %> – <%= toDate %></p>
 
 <div class="table-responsive">
-<table class="table table-bordered table-striped mt-3" style="font-size: 12px; min-width: 900
-<table class="table table-bordered table-striped mt-3" style="font-size: 12px;">
-   <thead class="table-dark">
+<table class="table mst-table mt-3">
+   <thead>
     <tr>
         <th>S.No</th>
         <th>Bill No</th>
@@ -159,7 +164,12 @@
 </thead>
 <tbody>
 <%
-    Vector dueDetails = bill.getDuePaidList(fromDate, toDate, userId);
+    Vector dueDetails = new Vector();
+    try {
+        dueDetails = bill.getDuePaidList(fromDate, toDate, userId);
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
     double totalCashPaid = 0.0;
     double totalBankPaid = 0.0;
     for (int j = 0; j < dueDetails.size(); j++) {
@@ -205,9 +215,8 @@
         <td colspan="5"></td>
     </tr>
 </tbody>
-
-</div>
 </table>
+</div>
 </div>
 </body>
 </html>

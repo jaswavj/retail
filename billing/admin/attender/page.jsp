@@ -20,57 +20,39 @@ Vector attenderList = prod.getAllAttenders();
     <title>Attender Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <%@ include file="/assets/common/head.jsp" %>
-    <style>
-        body {
-            background: #f5f7fa;
-        }
-        .table td, .table th {
-            vertical-align: middle;
-        }
-        .badge-active {
-            background: #28a745;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-        .badge-blocked {
-            background: #dc3545;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-    </style>
 </head>
 <body>
+    <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Attender Management");
+    request.setAttribute("pageSubtitle", "Admin — Manage Attenders");
+    request.setAttribute("pageIcon",     "fa-solid fa-users");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
+
 <%
 String msg = request.getParameter("msg");
 String type = request.getParameter("type");
 %>
-
 <% if (msg != null) { %>
-<div class="alert alert-<%= (type != null ? type : "info") %> alert-dismissible fade show mt-3" role="alert">
+<div class="alert alert-<%= (type != null ? type : "info") %> alert-dismissible fade show mx-3" role="alert">
   <%= msg %>
   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 <% } %>
 
-    <%@ include file="/assets/navbar/navbar.jsp" %>
-    
-    <div class="container mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3>Attender Management</h3>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAttenderModal">
-                <i class="fa-solid fa-plus"></i> Add Attender
-            </button>
-        </div>
+<div class="container-fluid mt-3 mst-page">
+    <div class="d-flex justify-content-end mb-3">
+        <button class="bb bb-primary" data-bs-toggle="modal" data-bs-target="#addAttenderModal">
+            <i class="fa-solid fa-plus me-1"></i> Add Attender
+        </button>
+    </div>
 
-        <div class="card">
-            <div class="card-body">
+    <div class="card mst-card">
+        <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover table-bordered">
-                        <thead class="table-light">
+                    <table class="table mst-table mb-0">
+                        <thead>
                             <tr>
                                 <th>S.No</th>
                                 <th>Name</th>
@@ -94,23 +76,23 @@ String type = request.getParameter("type");
                                 <td><%=name%></td>
                                 <td><%=code%></td>
                                 <td>
-                                    <span class="badge <%=isActive == 1 ? "badge-active" : "badge-blocked"%>">
+                                    <span class="badge <%=isActive == 1 ? "bg-success" : "bg-danger"%>">
                                         <%=isActive == 1 ? "Active" : "Blocked"%>
                                     </span>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning btn-edit-attender" 
+                                    <button class="bb bb-outline btn-edit-attender" 
                                         data-id="<%=id%>" 
                                         data-name="<%=name.replace("\"", "&quot;")%>" 
                                         data-code="<%=code.replace("\"", "&quot;")%>">
                                         <i class="fa-solid fa-edit"></i> Edit
                                     </button>
                                     <%if (isActive == 1) {%>
-                                    <button class="btn btn-sm btn-danger btn-block-attender" data-id="<%=id%>">
+                                    <button class="btn btn-sm btn-outline-danger btn-block-attender" data-id="<%=id%>">
                                         <i class="fa-solid fa-ban"></i> Block
                                     </button>
                                     <%} else {%>
-                                    <button class="btn btn-sm btn-success btn-unblock-attender" data-id="<%=id%>">
+                                    <button class="bb bb-green btn-unblock-attender" data-id="<%=id%>">
                                         <i class="fa-solid fa-check"></i> Unblock
                                     </button>
                                     <%}%>
@@ -130,14 +112,14 @@ String type = request.getParameter("type");
                     </table>
                 </div>
             </div>
-        </div>
     </div>
+</div>
 
     <!-- Add Attender Modal -->
     <div class="modal fade" id="addAttenderModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header mst-card-header">
                     <h5 class="modal-title">Add Attender</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -146,13 +128,13 @@ String type = request.getParameter("type");
                         <input type="hidden" name="action" value="add">
                         <div class="mb-3">
                             <label class="form-label">Name<span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" required>
+                            <input type="text" name="name" class="form-control fg-inp" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Code</label>
-                            <input type="text" name="code" class="form-control">
+                            <input type="text" name="code" class="form-control fg-inp">
                         </div>
-                        <button type="submit" class="btn btn-primary">Add Attender</button>
+                        <button type="submit" class="bb bb-primary">Add Attender</button>
                     </form>
                 </div>
             </div>
@@ -163,7 +145,7 @@ String type = request.getParameter("type");
     <div class="modal fade" id="editAttenderModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header mst-card-header">
                     <h5 class="modal-title">Edit Attender</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -173,13 +155,13 @@ String type = request.getParameter("type");
                         <input type="hidden" name="id" id="editId">
                         <div class="mb-3">
                             <label class="form-label">Name<span class="text-danger">*</span></label>
-                            <input type="text" name="name" id="editName" class="form-control" required>
+                            <input type="text" name="name" id="editName" class="form-control fg-inp" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Code</label>
-                            <input type="text" name="code" id="editCode" class="form-control">
+                            <input type="text" name="code" id="editCode" class="form-control fg-inp">
                         </div>
-                        <button type="submit" class="btn btn-primary">Update Attender</button>
+                        <button type="submit" class="bb bb-primary">Update Attender</button>
                     </form>
                 </div>
             </div>

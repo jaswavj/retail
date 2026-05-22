@@ -3293,6 +3293,156 @@ public int getTodayBillCount() throws Exception {
     return billCount;
 }
 
+/** Daily sales for every day in the given year/month — used for dashboard charts */
+public Vector getDailySalesForMonth(int year, int month) throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.set(year, month - 1, 1);
+        String firstDay = String.format("%04d-%02d-01", year, month);
+        cal.set(java.util.Calendar.DAY_OF_MONTH, cal.getActualMaximum(java.util.Calendar.DAY_OF_MONTH));
+        String lastDay = new java.text.SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
+        String sql = "SELECT DATE_FORMAT(d.day_date,'%d-%m-%Y') AS bill_date," +
+                     " IFNULL(SUM(pb.payable),0) AS total " +
+                     "FROM (SELECT DATE_ADD(? ,INTERVAL n DAY) AS day_date FROM (" +
+                     " SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4" +
+                     " UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9" +
+                     " UNION ALL SELECT 10 UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14" +
+                     " UNION ALL SELECT 15 UNION ALL SELECT 16 UNION ALL SELECT 17 UNION ALL SELECT 18 UNION ALL SELECT 19" +
+                     " UNION ALL SELECT 20 UNION ALL SELECT 21 UNION ALL SELECT 22 UNION ALL SELECT 23 UNION ALL SELECT 24" +
+                     " UNION ALL SELECT 25 UNION ALL SELECT 26 UNION ALL SELECT 27 UNION ALL SELECT 28 UNION ALL SELECT 29" +
+                     " UNION ALL SELECT 30) nums WHERE DATE_ADD(?,INTERVAL n DAY)<=?) d" +
+                     " LEFT JOIN prod_bill pb ON DATE(pb.date)=d.day_date AND pb.is_cancelled=0" +
+                     " GROUP BY d.day_date ORDER BY d.day_date";
+        pt = con.prepareStatement(sql);
+        pt.setString(1, firstDay);
+        pt.setString(2, firstDay);
+        pt.setString(3, lastDay);
+        rs = pt.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString(1));
+            row.addElement(rs.getString(2));
+            vec.addElement(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (pt != null) try { pt.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return vec;
+}
+
+/** Daily purchase for every day in the given year/month — used for dashboard charts */
+public Vector getDailyPurchaseForMonth(int year, int month) throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.set(year, month - 1, 1);
+        String firstDay = String.format("%04d-%02d-01", year, month);
+        cal.set(java.util.Calendar.DAY_OF_MONTH, cal.getActualMaximum(java.util.Calendar.DAY_OF_MONTH));
+        String lastDay = new java.text.SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
+        String sql = "SELECT DATE_FORMAT(d.day_date,'%d-%m-%Y') AS bill_date," +
+                     " IFNULL(SUM(pp.total),0) AS total " +
+                     "FROM (SELECT DATE_ADD(?,INTERVAL n DAY) AS day_date FROM (" +
+                     " SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4" +
+                     " UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9" +
+                     " UNION ALL SELECT 10 UNION ALL SELECT 11 UNION ALL SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14" +
+                     " UNION ALL SELECT 15 UNION ALL SELECT 16 UNION ALL SELECT 17 UNION ALL SELECT 18 UNION ALL SELECT 19" +
+                     " UNION ALL SELECT 20 UNION ALL SELECT 21 UNION ALL SELECT 22 UNION ALL SELECT 23 UNION ALL SELECT 24" +
+                     " UNION ALL SELECT 25 UNION ALL SELECT 26 UNION ALL SELECT 27 UNION ALL SELECT 28 UNION ALL SELECT 29" +
+                     " UNION ALL SELECT 30) nums WHERE DATE_ADD(?,INTERVAL n DAY)<=?) d" +
+                     " LEFT JOIN prod_purchase pp ON DATE(pp.ent_date)=d.day_date AND pp.is_cancelled=0" +
+                     " GROUP BY d.day_date ORDER BY d.day_date";
+        pt = con.prepareStatement(sql);
+        pt.setString(1, firstDay);
+        pt.setString(2, firstDay);
+        pt.setString(3, lastDay);
+        rs = pt.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString(1));
+            row.addElement(rs.getString(2));
+            vec.addElement(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (pt != null) try { pt.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return vec;
+}
+
+/** Top 5 customers by sales for a given date range */
+public Vector getTopCustomersByDateRange(String from, String to) throws Exception {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    Vector result = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql = "SELECT c.name, SUM(pb.payable) as total_sales, COUNT(pb.id) as bill_count " +
+                     "FROM prod_bill pb JOIN customers c ON pb.customerId = c.id " +
+                     "WHERE pb.is_cancelled = 0 AND pb.date BETWEEN ? AND ? " +
+                     "GROUP BY c.id, c.name ORDER BY total_sales DESC LIMIT 5";
+        ps = con.prepareStatement(sql);
+        ps.setString(1, from);
+        ps.setString(2, to);
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.add(rs.getString("name"));
+            row.add(rs.getDouble("total_sales"));
+            row.add(rs.getInt("bill_count"));
+            result.add(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return result;
+}
+
+/** Top 5 suppliers by purchase for a given date range */
+public Vector getTopSuppliersByDateRange(String from, String to) throws Exception {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    Vector result = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql = "SELECT ps.name, SUM(pp.net) as total_purchase, COUNT(pp.id) as purchase_count " +
+                     "FROM prod_purchase pp JOIN prod_supplier ps ON pp.deal_id = ps.id " +
+                     "WHERE pp.is_cancelled = 0 AND pp.invdate BETWEEN ? AND ? AND pp.is_po = 0 " +
+                     "GROUP BY ps.id, ps.name ORDER BY total_purchase DESC LIMIT 5";
+        ps = con.prepareStatement(sql);
+        ps.setString(1, from);
+        ps.setString(2, to);
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.add(rs.getString("name"));
+            row.add(rs.getDouble("total_purchase"));
+            row.add(rs.getInt("purchase_count"));
+            result.add(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return result;
+}
+
 public Vector getProductWiseProfitLoss(String from, String to) throws Exception {
     Connection con = null;
     PreparedStatement pt = null;

@@ -24,7 +24,6 @@
         }
         .type-exchange { background: #e8d5ff; color: #6610f2; font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
         .type-return   { background: #ffe8cc; color: #d63d00; font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
-        #reportTable thead th { background: #4b0082; color: #fff; white-space: nowrap; }
         .summary-card  { border-left: 4px solid; border-radius: 6px; }
         .summary-exchange { border-color: #6610f2; background: #f8f0ff; }
         .summary-return   { border-color: #fd7e14; background: #fff3cd; }
@@ -33,41 +32,46 @@
 </head>
 <body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Exchange &amp; Return Report");
+    request.setAttribute("pageSubtitle", "Admin — Reports");
+    request.setAttribute("pageIcon",     "fa-solid fa-rotate");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container-fluid mt-4 px-4">
-        <div class="d-flex align-items-center justify-content-between mb-3 no-print">
-            <h4 class="mb-0"><i class="fas fa-file-alt me-2 text-purple"></i>Exchange &amp; Return Report</h4>
-            <a href="<%=ctx%>/admin/Exchange/page.jsp" class="btn btn-sm btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i>Back to Exchange
+    <div class="container-fluid mt-3 mst-page px-4">
+        <div class="d-flex align-items-center justify-content-end mb-3 no-print">
+            <a href="<%=ctx%>/admin/Exchange/page.jsp" class="bb bb-outline btn-sm">
+                <i class="fa-solid fa-arrow-left me-1"></i>Back to Exchange
             </a>
         </div>
 
         <!-- ── Filter ───────────────────────────────────────────────────── -->
-        <div class="card shadow-sm mb-4 no-print">
+        <div class="card mst-card mb-4 no-print">
             <div class="card-body">
                 <div class="row g-3 align-items-end">
                     <div class="col-sm-3">
                         <label class="form-label fw-semibold">From Date</label>
-                        <input type="date" id="fromDate" class="form-control" value="<%=today%>">
+                        <input type="date" id="fromDate" class="form-control fg-inp" value="<%=today%>">
                     </div>
                     <div class="col-sm-3">
                         <label class="form-label fw-semibold">To Date</label>
-                        <input type="date" id="toDate" class="form-control" value="<%=today%>">
+                        <input type="date" id="toDate" class="form-control fg-inp" value="<%=today%>">
                     </div>
                     <div class="col-sm-3">
                         <label class="form-label fw-semibold">Type</label>
-                        <select id="typeFilter" class="form-select">
+                        <select id="typeFilter" class="form-select fg-inp">
                             <option value="0">All (Exchange + Return)</option>
                             <option value="1">Exchange Only</option>
                             <option value="2">Return Only</option>
                         </select>
                     </div>
                     <div class="col-sm-3 d-flex gap-2">
-                        <button id="loadBtn" class="btn btn-primary flex-fill">
-                            <i class="fas fa-search me-1"></i>Generate
+                        <button id="loadBtn" class="bb bb-primary flex-fill">
+                            <i class="fa-solid fa-magnifying-glass me-1"></i>Generate
                         </button>
-                        <button onclick="window.print()" class="btn btn-outline-secondary" title="Print">
-                            <i class="fas fa-print"></i>
+                        <button onclick="window.print()" class="bb bb-outline" title="Print">
+                            <i class="fa-solid fa-print"></i>
                         </button>
                     </div>
                 </div>
@@ -103,10 +107,10 @@
         </div>
 
         <!-- ── Table ─────────────────────────────────────────────────────── -->
-        <div class="card shadow-sm">
+        <div class="card mst-card">
             <div class="card-body p-0">
                 <div id="tableWrap" class="table-responsive d-none">
-                    <table class="table table-bordered table-hover mb-0 align-middle" id="reportTable">
+                    <table class="table mst-table mb-0 align-middle" id="reportTable">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -124,7 +128,7 @@
                     </table>
                 </div>
                 <div id="emptyMsg" class="text-center text-muted py-5 d-none">
-                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>No records found for the selected range.
+                    <i class="fa-solid fa-inbox fa-2x mb-2 d-block"></i>No records found for the selected range.
                 </div>
                 <div id="loadingMsg" class="text-center text-muted py-5 d-none">
                     <div class="spinner-border spinner-border-sm me-2"></div>Loading...
@@ -191,8 +195,8 @@
                 `<td>${esc(row.oldProd)}</td>` +
                 `<td>${isExchange ? esc(row.newProd) : '<span class="text-muted">—</span>'}</td>` +
                 `<td>${isExchange
-                        ? '<span class="type-exchange"><i class="fas fa-exchange-alt me-1"></i>Exchange</span>'
-                        : '<span class="type-return"><i class="fas fa-undo me-1"></i>Return</span>'}</td>` +
+                        ? '<span class="type-exchange"><i class="fa-solid fa-right-left me-1"></i>Exchange</span>'
+                        : '<span class="type-return"><i class="fa-solid fa-rotate-left me-1"></i>Return</span>'}</td>` +
                 `<td class="text-end">₹${parseFloat(row.points).toFixed(2)}</td>` +
                 `<td>${esc(row.staff)}</td>`;
             tbody.appendChild(tr);
