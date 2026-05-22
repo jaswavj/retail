@@ -8,7 +8,7 @@
 <html>
 <head>
     <title>Payment Details</title>
-    <jsp:include page="../../../assets/common/head.jsp" />
+    <%@ include file="../../../assets/common/head.jsp" %>
     <style>
         body {
             background: #f5f7fa;
@@ -42,8 +42,8 @@
         </div>
         
         <div class="table-responsive">
-            <table class="table table-hover table-bordered">
-                <thead class="table-dark">
+            <table class="table mst-table">
+                <thead>
                     <tr>
                         <th>S.No</th>
                         <th>Date & Time</th>
@@ -77,7 +77,7 @@
                         }
                     %>
                 </tbody>
-                <tfoot class="table-secondary">
+                <tfoot style="background:var(--bill-bg);font-weight:700">
                     <tr>
                         <td colspan="2" class="text-end"><strong>Total Paid:</strong></td>
                         <td class="text-end"><strong><%= String.format("%.3f", totalPaid) %></strong></td>

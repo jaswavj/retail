@@ -18,34 +18,22 @@
     <meta charset="UTF-8">
     <title>Sales Report</title>
 <%@ include file="/assets/common/head.jsp" %>
-    <style>
-        body {
-            background: #f5f7fa;
-        }
-        .navbar {
-            background-color: #4e73df;
-        }
-        .navbar-brand {
-            color: #fff !important;
-        }
-        .table td, .table th {
-            vertical-align: middle;
-        }
-        .btn-edit, .btn-delete {
-            margin: 0 2px;
-        }
-
-    </style>
 </head>
-<body >
+<body>
 <!--%@ include file="../menu/reportMenu.jsp" %-->
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Day Account Details");
+    request.setAttribute("pageSubtitle", "Reports — Daily Sales Detail");
+    request.setAttribute("pageIcon",     "fa-solid fa-list");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container mt-4 ">
-<p><strong>Sales Report From:</strong> <%= fromDate %> - <%= toDate %></p>
+<div class="container-fluid mt-3 mst-page">
+<p class="mb-2 text-muted"><strong>Sales Report From:</strong> <%= fromDate %> — <%= toDate %></p>
 
-<table class="table table-bordered table-striped mt-3" style="font-size: 12px;">
-    <thead class="table-dark">
+<table class="table mst-table mt-3">
+    <thead>
         <tr>
             <th>S.No</th>
             <th>Bill No</th>
@@ -99,7 +87,7 @@
     
 }
         %>
-        <tr class="table-secondary">
+        <tr style="background:var(--bill-bg);font-weight:700">
             <td colspan="4" class="text-end"><strong>Grand Total:</strong></td>
             <td><strong><%=String.format("%.3f", grandPrice)%></strong></td>
             <td><strong><%=String.format("%.3f", grandDiscount)%></strong></td>

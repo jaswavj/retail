@@ -9,40 +9,37 @@ Vector userList = prod.getUserModules();
 <html>
 <head>
     <title>Create User</title>
-    <jsp:include page="/assets/common/head.jsp" />
-    <style>
-        body { background: #f5f7fa; }
-        .navbar { background-color: #4e73df; }
-        .navbar-brand { color: #fff !important; }
-        .table td, .table th { vertical-align: middle; }
-        .badge-add { background: #28a745; color: white; }
-        .badge-remove { background: #dc3545; color: white; }
-    </style>
+    <%@ include file="/assets/common/head.jsp" %>
 </head>
 <body>
-    <!--%@ include file="../menu/adminMenu.jsp" %-->
-        <jsp:include page="/assets/navbar/navbar.jsp" />
-    <div class="container mt-4">
+    <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Create User");
+    request.setAttribute("pageSubtitle", "Admin — User Management");
+    request.setAttribute("pageIcon",     "fa-solid fa-user-plus");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <form action="<%= request.getContextPath() %>/admin/userCreate/page1.jsp" method="post" class="container mt-4 p-4 border rounded shadow-sm bg-light" style="max-width: 600px;">
-    <h4 class="mb-4 text-primary">Create New User</h4>
+<div class="container-fluid mt-3 mst-page">
+
+    <form action="<%= request.getContextPath() %>/admin/userCreate/page1.jsp" method="post" class="card mst-card p-4" style="max-width: 600px; margin: 0 auto;">
 
     <!-- Full Name -->
     <div class="mb-3">
         <label class="form-label">Full Name</label>
-        <input type="text" name="fullName" class="form-control" required>
+        <input type="text" name="fullName" class="form-control fg-inp" required>
     </div>
 
     <!-- Username -->
     <div class="mb-3">
         <label class="form-label">Username</label>
-        <input type="text" name="userName" class="form-control" required>
+        <input type="text" name="userName" class="form-control fg-inp" required>
     </div>
 
     <!-- Password -->
     <div class="mb-3">
         <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" required>
+        <input type="password" name="password" class="form-control fg-inp" required>
     </div>
 
     <!-- Module Permissions -->
@@ -83,10 +80,10 @@ Vector userList = prod.getUserModules();
 
     <!-- Submit -->
     <div class="d-grid">
-        <button type="submit" class="btn btn-primary">Create User</button>
+        <button type="submit" class="bb bb-primary w-100">Create User</button>
     </div>
-</form>
+    </form>
 
-    </div>
+</div>
 </body>
 </html>

@@ -15,36 +15,32 @@ Vector billList = bill.getDueSupplierBills(supId);
     <title>Billing - Billing App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <%@ include file="/assets/common/head.jsp" %>
-    <style>
-    .red-text {
-        color: red !important;
-        
-    }
-</style>
 </head>
 <body>
-    <div class="container-fluid h-100 d-flex flex-column">
+    <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Pending Supplier Payments");
+    request.setAttribute("pageSubtitle", "Product — Supplier Bills");
+    request.setAttribute("pageIcon",     "fa-solid fa-truck-ramp-box");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-        <!-- Navbar -->
-        <%@ include file="/assets/navbar/navbar.jsp" %>
-
-<div class="container mt-4">
-  <h4 class="mb-3">Billing Details</h4>
+<div class="container-fluid mt-3 mst-page">
 
   <div class="table-responsive">
-    <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
-      <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
+    <table class="table mst-table">
+      <thead>
         <tr>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">S.No</th>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Inv/GR No</th>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Invoice date</th>
-          <th scope="col" class="text-end" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Total</th>
-          <th scope="col" class="text-end" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Paid</th>
-          <th scope="col" class="text-end" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Balance</th>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Date/Time</th>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">User</th>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Supplier</th>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Action</th>
+          <th>S.No</th>
+          <th>Inv/GR No</th>
+          <th>Invoice date</th>
+          <th class="text-end">Total</th>
+          <th class="text-end">Paid</th>
+          <th class="text-end">Balance</th>
+          <th>Date/Time</th>
+          <th>User</th>
+          <th>Supplier</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -56,21 +52,18 @@ Vector billList = bill.getDueSupplierBills(supId);
                 int billId		= Integer.parseInt(row.elementAt(0).toString());
 
             %>
-        <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
-          <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=i+1%></td>
-            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><a href="<%=contextPath%>/product/purchase/report/purchaseRegister/purchaseDetails.jsp?id=<%=billId%>" class="btn  btn-sm btn-edit" style="background-color:hsl(222, 86%, 89%); color:#000000;"><%=row.elementAt(1)%>/<%=row.elementAt(9)%></a></td>
-          <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(2)%></td>
-          <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(3)%></td>
-          <td class="text-end" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(4)%></td>
-          <td class="text-end <%= (Double.parseDouble(currentBalance) > 0) ? "red-text" : "" %>" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=currentBalance%></td>
-          <td class="text-end" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(6)%></td>
-          <td class="text-end" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(7)%></td>
-          <td class="text-end" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(8)%></td>
-          <td class="text-center" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;">
-            <a href="<%=contextPath%>/product/supplierPayment/payBalance.jsp?billId=<%=billId%>&supId=<%=supId%>"
-            class="btn btn-sm btn-outline-primary">
-            Pay Balance
-          </a>
+        <tr>
+          <td><%=i+1%></td>
+          <td><a href="<%=contextPath%>/product/purchase/report/purchaseRegister/purchaseDetails.jsp?id=<%=billId%>" class="inv-link"><%=row.elementAt(1)%>/<%=row.elementAt(9)%></a></td>
+          <td><%=row.elementAt(2)%></td>
+          <td><%=row.elementAt(3)%></td>
+          <td class="text-end"><%=row.elementAt(4)%></td>
+          <td class="text-end <%= (Double.parseDouble(currentBalance) > 0) ? "text-danger fw-bold" : "" %>"><%=currentBalance%></td>
+          <td><%=row.elementAt(6)%></td>
+          <td><%=row.elementAt(7)%></td>
+          <td><%=row.elementAt(8)%></td>
+          <td class="text-center">
+            <a href="<%=contextPath%>/product/supplierPayment/payBalance.jsp?billId=<%=billId%>&supId=<%=supId%>" class="bb bb-outline">Pay Balance</a>
           </td>
         </tr>
         <%

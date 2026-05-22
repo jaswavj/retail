@@ -7,26 +7,21 @@
 <head>
     <title>Special Permission - Select User</title>
     <%@ include file="/assets/common/head.jsp" %>
-    <style>
-        body { background: #f5f7fa; }
-        .navbar { background-color: #4e73df; }
-        .navbar-brand { color: #fff !important; }
-        .table td, .table th { vertical-align: middle; }
-    </style>
 </head>
-<body class="bg-light">
+<body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
-    
-    <div class="container mt-4">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card shadow-lg border-0 rounded-3">
-                    <div class="card-body p-4">
-                        <h3 class="card-title mb-4 text-center">Special Permission - Select User</h3>
-                        <form action="<%= request.getContextPath() %>/admin/specialPermission/page1.jsp" method="get">
+<%
+    request.setAttribute("pageTitle",    "Special Permissions");
+    request.setAttribute("pageSubtitle", "Admin — Select User");
+    request.setAttribute("pageIcon",     "fa-solid fa-lock");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
+
+<div class="container-fluid mt-3 mst-page">
+    <form action="<%= request.getContextPath() %>/admin/specialPermission/page1.jsp" method="get" class="card mst-card p-4" style="max-width: 500px; margin: 0 auto;">
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Choose a User</label>
-                                <select name="userId" class="form-select" required>
+                                <select name="userId" class="form-select fg-inp" required>
                                     <option value="">-- Select User --</option>
                                     <%
                                     Vector userList = prod.getAllUser(); 
@@ -42,13 +37,9 @@
                                 </select>
                             </div>
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg">Manage Special Permissions</button>
+                                <button type="submit" class="bb bb-primary w-100">Manage Special Permissions</button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    </form>
+</div>
 </body>
 </html>

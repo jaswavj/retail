@@ -54,15 +54,20 @@
 </head>
 <body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Profit & Loss");
+    request.setAttribute("pageSubtitle", "Reports — Financial Summary");
+    request.setAttribute("pageIcon",     "fa-solid fa-scale-balanced");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container mt-4">
-    <h3 class="mb-4">Profit & Loss Report</h3>
-    <p><strong>Period:</strong> <%= fromDate %> to <%= toDate %></p>
+<div class="container-fluid mt-3 mst-page">
+    <p class="mb-1 text-muted"><strong>Period:</strong> <%= fromDate %> — <%= toDate %></p>
 
-    <div class="mb-3 no-print">
-        <a href="<%=contextPath%>/reports/profitLoss/page.jsp" class="btn btn-secondary btn-sm me-2">⬅ Back</a>
-        <button class="btn btn-primary btn-sm" onclick="printReport()">🖨 Print</button>
-        <button class="btn btn-success btn-sm" onclick="exportTableToExcel()">📊 Export to Excel</button>
+    <div class="d-flex gap-2 mb-3 no-print">
+        <a href="<%=contextPath%>/reports/profitLoss/page.jsp" class="bb bb-outline"><i class="fa-solid fa-arrow-left me-1"></i>Back</a>
+        <button class="bb bb-navy" onclick="printReport()"><i class="fa-solid fa-print me-1"></i>Print</button>
+        <button class="bb bb-green" onclick="exportTableToExcel()"><i class="fa-solid fa-file-excel me-1"></i>Export</button>
     </div>
 
     <%
@@ -72,8 +77,8 @@
     <div class="row">
         <div class="col-md-8">
             <div class="table-responsive">
-            <table id="profitLossTable" class="table table-bordered">
-                <thead class="table-dark">
+            <table id="profitLossTable" class="table mst-table">
+                <thead>
                     <tr>
                         <th>Description</th>
                         <th class="text-end">Amount (₹)</th>
@@ -126,33 +131,31 @@
         </div>
 
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">Profit/Loss Summary</h5>
-                </div>
-                <div class="card-body">
+            <div class="card mst-card">
+                <div class="card-body p-3" style="background:var(--bill-bg);border-top:3px solid var(--bill-navy);">
+                    <h6 class="fw-bold mb-2">Profit/Loss Summary</h6>
                     <div class="mb-3">
                         <strong>Total Revenue:</strong><br>
-                        <span class="h4 text-primary">₹<%= String.format("%.3f", totalSales) %></span>
+                        <span class="h4" style="color:var(--bill-navy-mid)">₹<%= String.format("%.3f", totalSales) %></span>
                     </div>
                     <div class="mb-3">
                         <strong>Cost of Goods Sold:</strong><br>
-                        <span class="h4 text-warning">₹<%= String.format("%.3f", totalPurchases) %></span>
+                        <span class="h4" style="color:var(--bill-amber)">₹<%= String.format("%.3f", totalPurchases) %></span>
                     </div>
                     <div class="mb-3">
                         <strong>Operating Expenses:</strong><br>
-                        <span class="h4 text-info">₹<%= String.format("%.3f", totalExpenses) %></span>
+                        <span class="h4" style="color:var(--bill-slate)">₹<%= String.format("%.3f", totalExpenses) %></span>
                     </div>
                     <hr>
                     <div class="mb-3">
                         <strong>Net Result:</strong><br>
-                        <span class="h4 <%= netProfit >= 0 ? "text-success" : "text-danger" %>">
+                        <span class="h4" style="color:<%= netProfit >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>">
                             <%= netProfit >= 0 ? "Profit" : "Loss" %>: ₹<%= String.format("%.3f", Math.abs(netProfit)) %>
                         </span>
                     </div>
                     <div class="mb-3">
                         <strong>Profit Margin:</strong><br>
-                        <span class="h5 <%= profitMargin >= 0 ? "text-success" : "text-danger" %>">
+                        <span class="h5" style="color:<%= profitMargin >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>">
                             <%= String.format("%.3f", profitMargin) %>%
                         </span>
                     </div>
@@ -187,8 +190,8 @@
     </div>
     <% } else { %>
 
-    <table id="profitLossTable" class="table table-bordered table-striped">
-        <thead class="table-dark">
+    <table id="profitLossTable" class="table mst-table">
+        <thead>
             <tr>
                 <th>Product Name</th>
                 <th class="text-end">Qty Sold</th>
@@ -241,7 +244,7 @@
             }
             %>
         </tbody>
-        <tfoot class="table-dark">
+        <tfoot style="background:var(--bill-navy);color:#fff">
             <tr>
                 <th><strong>TOTAL</strong></th>
                 <th class="text-end">-</th>
@@ -249,21 +252,17 @@
                 <th class="text-end">-</th>
                 <th class="text-end"><strong><%= String.format("%.3f", totalProductSales) %></strong></th>
                 <th class="text-end"><strong><%= String.format("%.3f", totalProductCost) %></strong></th>
-                <th class="text-end <%= totalProductProfit >= 0 ? "text-success" : "text-danger" %>"><strong><%= String.format("%.3f", totalProductProfit) %></strong></th>
-                <th class="text-end <%= totalProductProfit >= 0 ? "text-success" : "text-danger" %>"><strong><%= String.format("%.3f", totalProductSales > 0 ? (totalProductProfit/totalProductSales)*100 : 0) %>%</strong></th>
+                <th class="text-end" style="color:<%= totalProductProfit >= 0 ? "#6ee7b7" : "#fca5a5" %>"><strong><%= String.format("%.3f", totalProductProfit) %></strong></th>
+                <th class="text-end" style="color:<%= totalProductProfit >= 0 ? "#6ee7b7" : "#fca5a5" %>"><strong><%= String.format("%.3f", totalProductSales > 0 ? (totalProductProfit/totalProductSales)*100 : 0) %>%</strong></th>
             </tr>
         </tfoot>
     </table>
 
     <div class="row mt-3">
         <div class="col-md-6">
-            <div class="card <%= totalProductProfit >= 0 ? "border-success" : "border-danger" %>">
-                <div class="card-header <%= totalProductProfit >= 0 ? "bg-success" : "bg-danger" %> text-white">
-                    <h5 class="card-title mb-0">Product Wise Summary</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-2">
-                        <strong>Total Products Sold:</strong> <%= productWiseData.size() %>
+            <div class="card mst-card">
+                <div class="card-body p-3" style="background:var(--bill-bg);border-top:3px solid var(--bill-navy);">
+                    <h6 class="fw-bold mb-2">Product Wise Summary</h6>
                     </div>
                     <div class="mb-2">
                         <strong>Total Sales:</strong> ₹<%= String.format("%.3f", totalProductSales) %>
@@ -274,13 +273,13 @@
                     <hr>
                     <div class="mb-2">
                         <strong>Net <%= totalProductProfit >= 0 ? "Profit" : "Loss" %>:</strong>
-                        <span class="h5 <%= totalProductProfit >= 0 ? "text-success" : "text-danger" %>">
+                        <span class="h5" style="color:<%= totalProductProfit >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>">
                             ₹<%= String.format("%.3f", Math.abs(totalProductProfit)) %>
                         </span>
                     </div>
                     <div class="mb-2">
                         <strong>Overall Margin:</strong>
-                        <span class="h5 <%= totalProductProfit >= 0 ? "text-success" : "text-danger" %>">
+                        <span class="h5" style="color:<%= totalProductProfit >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>">
                             <%= String.format("%.3f", totalProductSales > 0 ? (totalProductProfit/totalProductSales)*100 : 0) %>%
                         </span>
                     </div>
@@ -298,8 +297,8 @@
         Comprehensive breakdown including sales, purchases, operating expenses, and net profit/loss.
     </div>
 
-    <table id="profitLossTable" class="table table-bordered">
-        <thead class="table-dark">
+    <table id="profitLossTable" class="table mst-table">
+        <thead>
             <tr>
                 <th>Period</th>
                 <th class="text-end">Sales (₹)</th>
@@ -315,13 +314,13 @@
                 <td><strong><%= fromDate %> to <%= toDate %></strong></td>
                 <td class="text-end"><%= String.format("%.3f", totalSales) %></td>
                 <td class="text-end"><%= String.format("%.3f", totalPurchases) %></td>
-                <td class="text-end <%= grossProfit >= 0 ? "text-success" : "text-warning" %>"><%= String.format("%.3f", grossProfit) %></td>
-                <td class="text-end text-info"><%= String.format("%.3f", totalExpenses) %></td>
-                <td class="text-end <%= netProfit >= 0 ? "text-success" : "text-danger" %>"><strong><%= String.format("%.3f", netProfit) %></strong></td>
-                <td class="text-end <%= profitMargin >= 0 ? "text-success" : "text-danger" %>"><strong><%= String.format("%.3f", profitMargin) %>%</strong></td>
+                <td class="text-end" style="color:<%= grossProfit >= 0 ? "var(--bill-green)" : "var(--bill-gold)" %>"><%= String.format("%.3f", grossProfit) %></td>
+                <td class="text-end" style="color:var(--bill-muted)"><%= String.format("%.3f", totalExpenses) %></td>
+                <td class="text-end" style="color:<%= netProfit >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>"><strong><%= String.format("%.3f", netProfit) %></strong></td>
+                <td class="text-end" style="color:<%= profitMargin >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>"><strong><%= String.format("%.3f", profitMargin) %>%</strong></td>
             </tr>
         </tbody>
-        <tfoot class="table-secondary">
+        <tfoot style="background:var(--bill-bg);">
             <tr>
                 <th>Summary</th>
                 <th class="text-end">Revenue</th>
@@ -341,8 +340,8 @@
     %>
     <div class="mt-4">
         <h5>Operating Expenses Breakdown</h5>
-        <table class="table table-bordered table-sm">
-            <thead class="table-light">
+        <table class="table mst-table table-sm">
+            <thead>
                 <tr>
                     <th>Date & Time</th>
                     <th>Expense Type</th>
@@ -364,16 +363,16 @@
                 %>
                 <tr>
                     <td><%= new SimpleDateFormat("dd MMM yyyy HH:mm").format(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(expDateTime)) %></td>
-                    <td><span class="badge bg-info"><%= expenseType %></span></td>
+                    <td><span class="badge" style="background:var(--bill-navy-mid);color:#fff"><%= expenseType %></span></td>
                     <td><%= content %></td>
                     <td><%= description.isEmpty() ? "-" : description %></td>
-                    <td class="text-end text-danger">₹ <%= df.format(amount) %></td>
+                    <td class="text-end" style="color:var(--bill-red)">₹ <%= df.format(amount) %></td>
                 </tr>
                 <%
                 }
                 %>
             </tbody>
-            <tfoot class="table-secondary">
+            <tfoot style="background:var(--bill-bg);">
                 <tr>
                     <th colspan="4" class="text-end">Total Operating Expenses:</th>
                     <th class="text-end text-danger">₹ <%= String.format("%.3f", totalExpenses) %></th>
@@ -393,101 +392,46 @@
 
 <style>
 @media print {
-    @page {
-        size: portrait;
-        margin: 0.3cm;
-    }
-    body * {
-        visibility: hidden;
-    }
-    #printArea, #printArea * {
-        visibility: visible;
-    }
-    #printArea {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-    }
-    .no-print {
-        display: none !important;
-    }
-    body {
-        font-size: 8px;
-        padding: 0;
-        margin: 0;
-    }
-    .container {
-        padding: 0 5px;
-        max-width: 100%;
-    }
-    table {
-        font-size: 8px;
-        width: 100%;
-        border-collapse: collapse;
-    }
-    th, td {
-        padding: 1px 2px;
-        word-wrap: break-word;
-        max-width: 80px;
-    }
-    h3 {
-        font-size: 10px;
-        margin: 0;
-    }
+    @page { size: portrait; margin: 0.3cm; }
+    body * { visibility: hidden; }
+    #printArea, #printArea * { visibility: visible; }
+    #printArea { position: absolute; left: 0; top: 0; width: 100%; }
+    .no-print { display: none !important; }
+    body { font-size: 8px; padding: 0; margin: 0; }
+    table { font-size: 8px; width: 100%; border-collapse: collapse; }
+    th, td { padding: 1px 2px; word-wrap: break-word; max-width: 80px; }
 }
 </style>
 
 <script>
 function printReport() {
     fetch('<%=contextPath%>/printHeader.jsp')
-        .then(response => response.text())
-        .then(headerHtml => {
-            const printArea = document.createElement('div');
-            printArea.id = 'printArea';
-            printArea.innerHTML = headerHtml;
-            
-            const container = document.querySelector('.container').cloneNode(true);
-            const noPrintElements = container.querySelectorAll('.no-print');
-            noPrintElements.forEach(el => el.remove());
-            
-            printArea.appendChild(container);
-            document.body.appendChild(printArea);
-            
+        .then(r => r.text())
+        .then(h => {
+            const pa = document.createElement('div');
+            pa.id = 'printArea';
+            pa.innerHTML = h;
+            const c = document.querySelector('.mst-page').cloneNode(true);
+            c.querySelectorAll('.no-print').forEach(el => el.remove());
+            pa.appendChild(c);
+            document.body.appendChild(pa);
             window.print();
-            
-            document.body.removeChild(printArea);
+            document.body.removeChild(pa);
         })
-        .catch(err => {
-            console.error('Error loading print header:', err);
-            alert('Error loading print header');
-        });
+        .catch(err => console.error('Print header error:', err));
 }
 
 function exportTableToExcel() {
     const table = document.getElementById('profitLossTable');
-    const filename = 'Profit_Loss_Report.xls';
-    
-    const tableClone = table.cloneNode(true);
-    const buttons = tableClone.querySelectorAll('button, .no-print');
-    buttons.forEach(btn => btn.remove());
-    
-    const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">' +
-                 '<head><meta charset="utf-8"><style>table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #000; padding: 8px; text-align: left; }</style></head>' +
-                 '<body>' + tableClone.outerHTML + '</body></html>';
-    
-    const blob = new Blob(['\ufeff', html], {
-        type: 'application/vnd.ms-excel'
-    });
-    
-    const url = URL.createObjectURL(blob);
-    const downloadLink = document.createElement('a');
-    downloadLink.href = url;
-    downloadLink.download = filename;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    URL.revokeObjectURL(url);
+    const html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><style>th,td{border:1px solid #000;padding:4px}</style></head><body>' + table.outerHTML + '</body></html>';
+    const blob = new Blob(['\ufeff', html], {type: 'application/vnd.ms-excel'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'Profit_Loss_Report.xls';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
 }
 </script>
 

@@ -38,15 +38,15 @@
     <h5 class="mb-3">Bill No: <%= billId %></h5>
     
     <div class="table-responsive">
-        <table class="table table-bordered table-sm">
-            <thead style="background: linear-gradient(135deg, #3d1a52, #570a57);">
+        <table class="table mst-table table-sm">
+            <thead>
                 <tr>
-                    <th style="color: #fff;">S.No</th>
-                    <th style="color: #fff;"><%=head3%></th>
-                    <th style="color: #fff;">Qty</th>
-                    <th style="color: #fff;">Price</th>
-                    <th style="color: #fff;">Discount</th>
-                    <th style="color: #fff;">Total</th>
+                    <th>S.No</th>
+                    <th><%=head3%></th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Discount</th>
+                    <th>Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -71,40 +71,40 @@
     
     <div class="row mt-3">
         <div class="col-md-8 offset-md-2">
-            <table class="table table-bordered table-sm">
+            <table class="table mst-table table-sm">
                 <tr>
-                    <th style="background-color: #f8f9fa;">Total</th>
+                    <th>Total</th>
                     <td><%= total %></td>
                 </tr>
                 <tr>
-                    <th style="background-color: #f8f9fa;"><%=head3%> Discount</th>
+                    <th><%=head3%> Discount</th>
                     <td><%= prodDiscount %></td>
                 </tr>
                 <tr>
-                    <th style="background-color: #f8f9fa;">Extra Discount</th>
+                    <th>Extra Discount</th>
                     <td><%= extraDiscount %></td>
                 </tr>
                 <tr>
-                    <th style="background-color: #f8f9fa;">Payable</th>
+                    <th>Payable</th>
                     <td><%= payable %></td>
                 </tr>
-                <tr style="background-color: #d4edda;">
+                <tr class="table-success">
                     <th>Paid</th>
                     <td><%= paid %></td>
                 </tr>
-                <tr style="background-color: #d4edda;">
+                <tr class="table-success">
                     <th>Cash Paid</th>
                     <td><%= cash %></td>
                 </tr>
-                <tr style="background-color: #d4edda;">
+                <tr class="table-success">
                     <th>Bank Paid</th>
                     <td><%= bank %></td>
                 </tr>
-                <tr style="background-color: #f8d7da;">
+                <tr class="table-danger">
                     <th>Balance</th>
                     <td><%= balance %></td>
                 </tr>
-                <tr style="background-color: #f8d7da;">
+                <tr class="table-danger">
                     <th>Current Balance</th>
                     <td><%= currentBalance %></td>
                 </tr>

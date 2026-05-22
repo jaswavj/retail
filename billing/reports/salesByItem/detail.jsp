@@ -42,15 +42,18 @@ if (billInfo != null && !billInfo.isEmpty()) {
     
  
 </head>
-<body onload="document.form.opregInput.focus();">
+<body>
 
 <!--%@ include file="../menu/reportMenu.jsp" %-->
     <%@ include file="/assets/navbar/navbar.jsp" %>
-    <!-- Top Navbar -->
+<%
+    request.setAttribute("pageTitle",    "Bill Details");
+    request.setAttribute("pageSubtitle", "Sales — Bill #" + billId);
+    request.setAttribute("pageIcon",     "fa-solid fa-file-invoice");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-
-    <div class="container mt-4 ">
-        <h4>Bill Details (Bill No: <%= billId %>)</h4>
+    <div class="container-fluid mt-3 mst-page">
     <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
         <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
             <tr>

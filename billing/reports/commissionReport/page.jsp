@@ -9,19 +9,20 @@ String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Commission Report - Billing App</title>
+    <title>Commission Report</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <%@ include file="/assets/common/head.jsp" %>
-    <style>
-        body { background: #f5f7fa; }
-        .table td, .table th { vertical-align: middle; }
-    </style>
 </head>
 <body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Commission Report");
+    request.setAttribute("pageSubtitle", "Reports — Customer Commission");
+    request.setAttribute("pageIcon",     "fa-solid fa-percent");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container mt-4">
-        <h3 class="mb-4">Commission Report</h3>
+    <div class="container-fluid mt-3 mst-page">
 
         <form action="<%=contextPath%>/reports/commissionReport/page0.jsp" method="get" class="row g-3">
             <div class="col-md-3">
@@ -48,7 +49,7 @@ String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
                 </select>
             </div>
             <div class="col-md-3 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+                <button type="submit" class="bb bb-primary w-100">Generate Report</button>
             </div>
         </form>
     </div>

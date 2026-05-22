@@ -2,7 +2,6 @@
 <%@ page import="java.util.*, javax.servlet.http.*" %>
 <jsp:useBean id="bill" class="billing.billingBean" />
 <%
-String contextPath = request.getContextPath();
 Vector billList = bill.getDueBills();
     
 %>
@@ -12,60 +11,56 @@ Vector billList = bill.getDueBills();
     <meta charset="UTF-8">
     <title>Billing - Billing App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <jsp:include page="/assets/common/head.jsp" />
-    <style>
-    .red-text {
-        color: red !important;
-        
-    }
-</style>
+    <%@ include file="/assets/common/head.jsp" %>
 </head>
 <body>
-    <div class="container-fluid h-100 d-flex flex-column">
+    <jsp:include page="/assets/navbar/navbar.jsp" />
+<%
+    request.setAttribute("pageTitle",    "Credit Details");
+    request.setAttribute("pageSubtitle", "Billing — Due Bills");
+    request.setAttribute("pageIcon",     "fa-solid fa-file-invoice-dollar");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-        <!-- Navbar -->
-        <jsp:include page="/assets/navbar/navbar.jsp" />
-
-<div class="container mt-4">
-  <h4 class="mb-3">Credit Details</h4>
+<div class="container-fluid mt-3 mst-page">
 
   <!-- Filter Section -->
   <div class="row mb-3">
     <div class="col-md-4">
       <div class="input-group">
         <span class="input-group-text"><i class="fas fa-user"></i></span>
-        <input type="text" id="nameFilter" class="form-control" placeholder="Filter by Name..." onkeyup="filterTable()">
+        <input type="text" id="nameFilter" class="form-control fg-inp" placeholder="Filter by Name..." onkeyup="filterTable()">
       </div>
     </div>
     <div class="col-md-4">
       <div class="input-group">
         <span class="input-group-text"><i class="fas fa-phone"></i></span>
-        <input type="text" id="phoneFilter" class="form-control" placeholder="Filter by Phone Number..." onkeyup="filterTable()">
+        <input type="text" id="phoneFilter" class="form-control fg-inp" placeholder="Filter by Phone Number..." onkeyup="filterTable()">
       </div>
     </div>
     <div class="col-md-4">
-      <button class="btn btn-secondary" onclick="clearFilters()">
-        <i class="fas fa-times"></i> Clear Filters
+      <button class="bb bb-outline" onclick="clearFilters()">
+        <i class="fa-solid fa-xmark me-1"></i>Clear Filters
       </button>
     </div>
   </div>
 
   <div class="table-responsive">
-    <table id="billingTable" class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
-      <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
+    <table id="billingTable" class="table mst-table">
+      <thead>
         <tr>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">S.No</th>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Bill No</th>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Name</th>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Phone Number</th>
-          <th scope="col" class="text-end" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Total</th>
-          <th scope="col" class="text-end" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Paid</th>
-          <th scope="col" class="text-end" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Balance</th>
-           <th scope="col" class="text-end" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Pending Balance</th>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Date</th>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Time</th>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Biller</th>
-          <th scope="col" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Action</th>
+          <th>S.No</th>
+          <th>Bill No</th>
+          <th>Name</th>
+          <th>Phone Number</th>
+          <th class="text-end">Total</th>
+          <th class="text-end">Paid</th>
+          <th class="text-end">Balance</th>
+          <th class="text-end">Pending Balance</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Biller</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -87,29 +82,24 @@ Vector billList = bill.getDueBills();
                 int billId		= Integer.parseInt(row.elementAt(9).toString());
 
             %>
-        <tr class="bill-row" data-name="<%=name.toLowerCase()%>" data-phone="<%=phno%>" style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
-          <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=i+1%></td>
-            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;">
-              <a href="#" onclick="loadBillDetails(<%=billId%>); return false;" class="btn btn-sm btn-edit" style="background-color:hsl(222, 86%, 89%); color:#000000;"><%=billNo%></a>
-            </td>
-          <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=name%></td>
-          <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;">
+        <tr class="bill-row" data-name="<%=name.toLowerCase()%>" data-phone="<%=phno%>">
+          <td><%=i+1%></td>
+          <td><a href="#" onclick="loadBillDetails(<%=billId%>); return false;" class="inv-link"><%=billNo%></a></td>
+          <td><%=name%></td>
+          <td>
             <a href="#" onclick="sendToWhatsApp('<%=phno%>', '<%=name%>', '<%=billNo%>', '<%=payable%>', '<%=paid%>', '<%=currentBalance%>', '<%=date%>', <%=billId%>); return false;" class="text-success" title="Send details via WhatsApp">
               <i class="fab fa-whatsapp"></i> <%=phno%>
             </a>
           </td>
-          <td class="text-end" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=payable%></td>
-          <td class="text-end" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=paid%></td>
-          <td class="text-end" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=Balance%></td>
-          <td class="text-end <%= (Double.parseDouble(currentBalance) > 0) ? "red-text" : "" %>" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=currentBalance%></td>
-          <td class="text-end" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=date%></td>
-          <td class="text-end" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=time%></td>
-          <td class="text-end" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=uname%></td>
-          <td class="text-center" style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;">
-            <a href="<%=contextPath%>/billing/payBalance.jsp?billId=<%=billId%>"
-            class="btn btn-sm btn-outline-primary">
-            Pay Balance
-          </a>
+          <td class="text-end"><%=payable%></td>
+          <td class="text-end"><%=paid%></td>
+          <td class="text-end"><%=Balance%></td>
+          <td class="text-end <%= (Double.parseDouble(currentBalance) > 0) ? "text-danger fw-bold" : "" %>"><%=currentBalance%></td>
+          <td><%=date%></td>
+          <td><%=time%></td>
+          <td><%=uname%></td>
+          <td class="text-center">
+            <a href="<%=contextPath%>/billing/payBalance.jsp?billId=<%=billId%>" class="bb bb-outline">Pay Balance</a>
           </td>
         </tr>
         <%
@@ -125,7 +115,7 @@ Vector billList = bill.getDueBills();
 <div class="modal fade" id="billDetailModal" tabindex="-1" aria-labelledby="billDetailModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header" style="background: linear-gradient(135deg, #3d1a52, #570a57); color: white;">
+      <div class="modal-header mst-card-header">
         <h5 class="modal-title" id="billDetailModalLabel">Bill Details</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -137,7 +127,7 @@ Vector billList = bill.getDueBills();
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="bb bb-outline" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -254,9 +244,6 @@ function updateSerialNumbers() {
 }
 </script>
 
-<script>
-    var contextPath = '<%=contextPath%>';
-</script>        
 <script src="billing.js"></script>
 </body>
 </html>

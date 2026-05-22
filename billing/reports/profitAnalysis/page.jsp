@@ -2,7 +2,6 @@
 <%@ page language="java" import="java.util.*"%>
 <%@ page import="java.text.SimpleDateFormat, java.util.Date" %>
 <%
-String contextPath = request.getContextPath();
 String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 %>
 <!DOCTYPE html>
@@ -11,13 +10,18 @@ String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
     <meta charset="UTF-8">
     <title>Profit Analysis Report</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <jsp:include page="/assets/common/head.jsp" />
+    <%@ include file="/assets/common/head.jsp" %>
 </head>
 <body>
     <jsp:include page="/assets/navbar/navbar.jsp" />
+<%
+    request.setAttribute("pageTitle",    "Profit Analysis");
+    request.setAttribute("pageSubtitle", "Reports — Profit by Bill");
+    request.setAttribute("pageIcon",     "fa-solid fa-chart-line");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container mt-4 ">
-    <h3 class="mb-4">Profit Analysis Report</h3>
+<div class="container-fluid mt-3 mst-page">
 
     <form action="<%=contextPath%>/reports/profitAnalysis/page0.jsp" method="post" class="row g-3">
         <!-- From Date -->
@@ -34,7 +38,7 @@ String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 
         <!-- Submit Button -->
         <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+            <button type="submit" class="bb bb-primary w-100">Generate Report</button>
         </div>
     </form>
 </div>

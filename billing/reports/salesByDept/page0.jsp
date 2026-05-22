@@ -17,58 +17,46 @@
     <meta charset="UTF-8">
     <title>Billing Report</title>
 <%@ include file="/assets/common/head.jsp" %>
-    <style>
-        body {
-            background: #f5f7fa;
-        }
-        .navbar {
-            background-color: #4e73df;
-        }
-        .navbar-brand {
-            color: #fff !important;
-        }
-        .table td, .table th {
-            vertical-align: middle;
-        }
-        .btn-edit, .btn-delete {
-            margin: 0 2px;
-        }
-
-    </style>
 </head>
-<body >
+<body>
 <!--%@ include file="../menu/reportMenu.jsp" %-->
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Sales by " + head2);
+    request.setAttribute("pageSubtitle", "Reports — Department Sales");
+    request.setAttribute("pageIcon",     "fa-solid fa-building");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container mt-4 ">
+<div class="container-fluid mt-3 mst-page">
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <p class="mb-0"><strong>billing Report From:</strong> <%= fromDate %> - <%= toDate %></p>
-    <div class="no-print">
-        <a href="<%=contextPath%>/reports/salesByDept/page.jsp" class="btn btn-secondary btn-sm me-2">⬅ Back</a>
-        <button class="btn btn-primary btn-sm" onclick="printReport()">🖨 Print</button>
-        <button class="btn btn-success btn-sm" onclick="exportTableToExcel('printTable', 'Sales_By_Department_Report')">📊 Export to Excel</button>
+    <p class="mb-0 text-muted"><strong>Report From:</strong> <%= fromDate %> — <%= toDate %></p>
+    <div class="d-flex gap-2 no-print">
+        <a href="<%=contextPath%>/reports/salesByDept/page.jsp" class="bb bb-outline"><i class="fa-solid fa-arrow-left me-1"></i>Back</a>
+        <button class="bb bb-navy" onclick="printReport()"><i class="fa-solid fa-print me-1"></i>Print</button>
+        <button class="bb bb-green" onclick="exportTableToExcel('printTable', 'Sales_By_Department_Report')"><i class="fa-solid fa-file-excel me-1"></i>Export</button>
     </div>
 </div>
 
 <div class="table-responsive">
-<table id="printTable" class="table table-hover mt-3" style="font-size: 12px;">
+<table id="printTable" class="table mt-3 mst-table">
     <thead>
-        <tr style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-bottom: 2px solid #e2e8f0;">
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: center;">S.No</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Bill No</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Customer Name</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: center;">Qty</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Price</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Discount</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Total</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Paid</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Balance</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Pending balance</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;"><%=head1%></th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;"><%=head2%></th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Date</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Time</th>
-            <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Biller</th>
+        <tr>
+            <th class="text-center">S.No</th>
+            <th>Bill No</th>
+            <th>Customer Name</th>
+            <th class="text-center">Qty</th>
+            <th class="text-end">Price</th>
+            <th class="text-end">Discount</th>
+            <th class="text-end">Total</th>
+            <th class="text-end">Paid</th>
+            <th class="text-end">Balance</th>
+            <th class="text-end">Pending balance</th>
+            <th><%=head1%></th>
+            <th><%=head2%></th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Biller</th>
         </tr>
     </thead>
     <tbody>
@@ -102,7 +90,7 @@
         %>
         <tr>
             <td><%=i+1%></td>
-            <td><a href="#" onclick="loadBillDetails(<%=billId%>); return false;" class="btn  btn-sm btn-edit" style="background-color:hsl(222, 86%, 89%); color:#000000;"><%=row.elementAt(0)%></a></td>
+            <td><a href="#" onclick="loadBillDetails(<%=billId%>); return false;" class="inv-link"><%=row.elementAt(0)%></a></td>
             <td><%=row.elementAt(15)%></td>
             <td><%=row.elementAt(1)%></td>
             <td><%=row.elementAt(2)%></td>
@@ -121,7 +109,7 @@
     
 }
         %>
-        <tr class="table-secondary">
+        <tr style="background:var(--bill-bg);font-weight:700">
             <td colspan="4" class="text-end"><strong>Grand Total:</strong></td>
             <td><strong><%=String.format("%.3f", grandPrice)%></strong></td>
             <td><strong><%=String.format("%.3f", grandDiscount)%></strong></td>
@@ -136,53 +124,34 @@
 </div>
 
 <script>
-function printReport(title) {
-    var printContent = document.getElementById('printTable').outerHTML;
-    var originalContent = document.body.innerHTML;
-
-    document.body.innerHTML = '<html><head><title>' + title + '</title></head><body>' +
-        '<h2>' + title + '</h2>' +
-        '<p>Period: <%= fromDate %> to <%= toDate %></p>' +
-        printContent +
-        '</body></html>';
-
-    window.print();
-    document.body.innerHTML = originalContent;
-}
-</script>
-
-<style>
-@media print {
-    @page { margin: 0.3cm; size: portrait; }
-    body { margin: 0; padding: 0; }
-    .no-print { display: none !important; }
-    body * { visibility: hidden; }
-    #printArea, #printArea * { visibility: visible; }
-    #printArea { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
-    #printArea .container { max-width: 100% !important; margin: 0 !important; padding: 0 5px !important; }
-    #printArea table { width: 100% !important; font-size: 8px !important; }
-    #printArea table th, #printArea table td { padding: 1px 2px !important; font-size: 8px !important; word-wrap: break-word; max-width: 80px; }
-}
-</style>
-
-<script>
 function printReport() {
     var printArea = document.createElement('div');
     printArea.id = 'printArea';
     fetch('<%=contextPath%>/printHeader.jsp')
-        .then(response => response.text())
-        .then(headerHtml => {
-            printArea.innerHTML = headerHtml;
-            var tableContainer = document.querySelector('.container');
-            var tableClone = tableContainer.cloneNode(true);
-            var buttons = tableClone.querySelector('.no-print');
-            if(buttons) buttons.remove();
-            printArea.appendChild(tableClone);
+        .then(r => r.text())
+        .then(h => {
+            printArea.innerHTML = h;
+            var c = document.querySelector('.mst-page').cloneNode(true);
+            c.querySelectorAll('.no-print').forEach(el => el.remove());
+            printArea.appendChild(c);
             document.body.appendChild(printArea);
             window.print();
             document.body.removeChild(printArea);
         })
-        .catch(error => { console.error('Error loading print header:', error); window.print(); });
+        .catch(() => window.print());
+}
+    fetch('<%=contextPath%>/printHeader.jsp')
+        .then(r => r.text())
+        .then(h => {
+            printArea.innerHTML = h;
+            var c = document.querySelector('.mst-page').cloneNode(true);
+            c.querySelectorAll('.no-print').forEach(el => el.remove());
+            printArea.appendChild(c);
+            document.body.appendChild(printArea);
+            window.print();
+            document.body.removeChild(printArea);
+        })
+        .catch(() => window.print());
 }
 
 function exportTableToExcel(tableID, filename = ''){
@@ -215,7 +184,7 @@ function loadBillDetails(billId) {
 <div class="modal fade" id="billDetailModal" tabindex="-1" aria-labelledby="billDetailModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header" style="background: linear-gradient(135deg, #3d1a52, #570a57); color: white;">
+      <div class="modal-header" style="background:var(--bill-navy);color:#fff;">
         <h5 class="modal-title" id="billDetailModalLabel">Bill Details</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>

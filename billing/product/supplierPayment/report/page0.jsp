@@ -1,7 +1,6 @@
 <%@ page import="java.util.*" %>
 <jsp:useBean id="productBean" class="product.productBean" />
 <%
-String contextPath = request.getContextPath();
     String fromDate = request.getParameter("fromDate");
     String toDate = request.getParameter("toDate");
     String supplierIdStr = request.getParameter("supplierId");
@@ -14,7 +13,7 @@ String contextPath = request.getContextPath();
 <html>
 <head>
     <title>Supplier Payment Report</title>
-    <jsp:include page="../../../assets/common/head.jsp" />
+    <%@ include file="../../../assets/common/head.jsp" %>
     <style>
         body {
             background: #f5f7fa;
@@ -48,8 +47,8 @@ String contextPath = request.getContextPath();
         </div>
         
         <div class="table-responsive">
-            <table class="table table-hover table-bordered" id="reportTable">
-                <thead class="table-dark">
+            <table class="table mst-table" id="reportTable">
+                <thead>
                     <tr>
                         <th>S.No</th>
                         <th>Date</th>
@@ -92,7 +91,7 @@ String contextPath = request.getContextPath();
                         <td class="text-end"><%= String.format("%.3f", balance) %></td>
                         <td class="text-center no-print">
                             <a href="detail.jsp?paymentId=<%= paymentId %>&supplierName=<%= java.net.URLEncoder.encode(supplierName, "UTF-8") %>" 
-                               class="btn btn-sm btn-info">
+                               class="bb bb-outline">
                                 <i class="fas fa-eye"></i> Details
                             </a>
                         </td>
@@ -101,7 +100,7 @@ String contextPath = request.getContextPath();
                         }
                     %>
                 </tbody>
-                <tfoot class="table-secondary">
+                <tfoot style="background:var(--bill-bg);font-weight:700">
                     <tr>
                         <td colspan="3" class="text-end"><strong>Grand Total:</strong></td>
                         <td class="text-end"><strong><%= String.format("%.3f", grandTotal) %></strong></td>

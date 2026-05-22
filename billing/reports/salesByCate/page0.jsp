@@ -15,73 +15,46 @@
                     <meta charset="UTF-8">
                     <title>Sales Report</title>
                     <%@ include file="/assets/common/head.jsp" %>
-                        <style>
-                            body {
-                                background: #f5f7fa;
-                            }
-
-                            .navbar {
-                                background-color: #4e73df;
-                            }
-
-                            .navbar-brand {
-                                color: #fff !important;
-                            }
-
-                            .table td,
-                            .table th {
-                                vertical-align: middle;
-                            }
-
-                            .btn-edit,
-                            .btn-delete {
-                                margin: 0 2px;
-                            }
-                        </style>
                 </head>
 
                 <body>
-                    <!--%@ include file="../menu/reportMenu.jsp" %-->
                     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Sales by " + head1);
+    request.setAttribute("pageSubtitle", "Reports — Category Sales");
+    request.setAttribute("pageIcon",     "fa-solid fa-tags");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-                        <div class="container mt-4 ">
+                        <div class="container-fluid mt-3 mst-page">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <p class="mb-0"><strong>Collection Report From:</strong>
-                                    <%= fromDate %> - <%= toDate %>
-                                </p>
-                                <div class="no-print">
-                                    <a href="<%=contextPath%>/reports/salesByCate/page.jsp" class="btn btn-secondary btn-sm me-2">⬅ Back</a>
-                                    <button class="btn btn-primary btn-sm" onclick="printReport()">🖨 Print</button>
-                                    <button class="btn btn-success btn-sm"
-                                        onclick="exportTableToExcel('stockTable', 'Sales_By_Category_Report')">📊 Export to
-                                        Excel</button>
+                                <p class="mb-0 text-muted"><strong>Collection Report From:</strong> <%= fromDate %> — <%= toDate %></p>
+                                <div class="d-flex gap-2 no-print">
+                                    <a href="<%=contextPath%>/reports/salesByCate/page.jsp" class="bb bb-outline"><i class="fa-solid fa-arrow-left me-1"></i>Back</a>
+                                    <button class="bb bb-navy" onclick="printReport()"><i class="fa-solid fa-print me-1"></i>Print</button>
+                                    <button class="bb bb-green" onclick="exportTableToExcel('stockTable', 'Sales_By_Category_Report')"><i class="fa-solid fa-file-excel me-1"></i>Export</button>
                                 </div>
                             </div>
 
                             <div class="table-responsive">
-                            <table id="stockTable" class="table table-hover mt-3"
-                                style="font-size: 12px; min-width: 1200px;">
+                            <table id="stockTable" class="table mt-3 mst-table">
                                 <thead>
-                                    <tr style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-bottom: 2px solid #e2e8f0;">
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: center;">S.No</th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Bill No</th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Customer Name</th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: center;">Qty</th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Price</th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Discount</th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Total</th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Paid</th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Balance</th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; text-align: right;">Pending balance</th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">
-                                            <%=head1%>
-                                        </th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">
-                                            <%=head2%>
-                                        </th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Date</th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Time</th>
-                                        <th style="padding: 0.4rem; font-size: 0.85rem; font-weight: 600; color: #4a5568;">Biller</th>
+                                    <tr>
+                                        <th class="text-center">S.No</th>
+                                        <th>Bill No</th>
+                                        <th>Customer Name</th>
+                                        <th class="text-center">Qty</th>
+                                        <th class="text-end">Price</th>
+                                        <th class="text-end">Discount</th>
+                                        <th class="text-end">Total</th>
+                                        <th class="text-end">Paid</th>
+                                        <th class="text-end">Balance</th>
+                                        <th class="text-end">Pending balance</th>
+                                        <th><%=head1%></th>
+                                        <th><%=head2%></th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Biller</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -102,11 +75,7 @@
                                             <td>
                                                 <%=i+1%>
                                             </td>
-                                            <td><a href="#" onclick="loadBillDetails(<%=billId%>); return false;"
-                                                    class="btn  btn-sm btn-edit"
-                                                    style="background-color:hsl(222, 86%, 89%); color:#000000;">
-                                                    <%=row.elementAt(0)%>
-                                                </a></td>
+                                            <td><a href="#" onclick="loadBillDetails(<%=billId%>); return false;" class="inv-link"><%=row.elementAt(0)%></a></td>
                                             <td>
                                                 <%=row.elementAt(15)%>
                                             </td>
@@ -148,7 +117,7 @@
                                             </td>
                                         </tr>
                                         <% } %>
-                                            <tr class="table-secondary">
+                                                <tr style="background:var(--bill-bg);font-weight:700">
                                                 <td colspan="4" class="text-end"><strong>Grand Total:</strong></td>
                                                 <td><strong>
                                                         <%=String.format("%.3f", grandPrice)%>
@@ -175,138 +144,35 @@
 
                         </div>
                         <script>
-                            // Print function
                             function printReport() {
-                                // Get table HTML
-                                var table = document.getElementById("stockTable").outerHTML;
-
-                                // Get header/navbar HTML
-                                var header = document.getElementById("printHeader"); // wrap navbar in div with id="printHeader"
-                                var headerHtml = header ? header.outerHTML : "";
-
-                                // Open new window
-                                var newWin = window.open("", "_blank");
-                                newWin.document.write(`
-        <html>
-        <head>
-            <title>Billing Report</title>
-            <style>
-                /* Force all text to black */
-                body, h1, h2, h3, h4, h5, h6, p, span, td, th, a, div {
-                    color: #000 !important;
-                }
-
-                /* Table styles */
-                table { 
-                    border-collapse: collapse !important; 
-                    width: 100%; 
-                    font-size: 12px; 
-                    color: #000 !important; 
-                }
-                table, th, td { 
-                    border: 1px solid black !important; 
-                    padding: 5px !important; 
-                    color: #000 !important; 
-                }
-                th { 
-                    background: #ccc !important; 
-                    color: #000 !important; 
-                }
-
-                a { 
-                    color: #000 !important; 
-                    text-decoration: none !important; 
-                }
-
-                button { display: none !important; } /* hide buttons in print */
-            </style>
-        </head>
-        <body>
-            ${headerHtml}
-            <h3>Billing Report <%=fromDate%> - <%=toDate%></h3>
-            ${table}
-        </body>
-        </html>
-    `);
-                                newWin.document.close();
-                                newWin.focus();
-                                newWin.print();
-                                newWin.close();
+                                var printArea = document.createElement('div');
+                                printArea.id = 'printArea';
+                                fetch('<%=contextPath%>/printHeader.jsp')
+                                    .then(r => r.text())
+                                    .then(h => {
+                                        printArea.innerHTML = h;
+                                        var c = document.querySelector('.mst-page').cloneNode(true);
+                                        c.querySelectorAll('.no-print').forEach(el => el.remove());
+                                        printArea.appendChild(c);
+                                        document.body.appendChild(printArea);
+                                        window.print();
+                                        document.body.removeChild(printArea);
+                                    })
+                                    .catch(() => window.print());
                             }
 
-                            // Export to Excel function
-                            function exportTableToExcel(tableID, filename = '') {
+                            function exportTableToExcel(tableID, filename) {
                                 var table = document.getElementById(tableID);
-                                var tableHTML = table.outerHTML.replace(/ /g, '%20');
-
-                                // Specify file name
-                                filename = filename ? filename + '.xls' : 'excel_data.xls';
-
-                                // Create download link
-                                var downloadLink = document.createElement("a");
-                                document.body.appendChild(downloadLink);
-
-                                if (navigator.msSaveOrOpenBlob) {
-                                    // For IE
-                                    var blob = new Blob(['\ufeff', tableHTML], { type: 'application/vnd.ms-excel' });
-                                    navigator.msSaveOrOpenBlob(blob, filename);
-                                } else {
-                                    // For other browsers
-                                    downloadLink.href = 'data:application/vnd.ms-excel,' + tableHTML;
-                                    downloadLink.download = filename;
-                                    downloadLink.click();
-                                }
+                                if (!table) { alert('Table not found!'); return; }
+                                var html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><style>th,td{border:1px solid #000;padding:4px}</style></head><body>' + table.outerHTML + '</body></html>';
+                                var blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel' });
+                                var a = document.createElement('a');
+                                a.href = URL.createObjectURL(blob);
+                                a.download = (filename || 'export') + '.xls';
+                                document.body.appendChild(a); a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(a.href);
                             }
-                        </script>
-
-<style>
-@media print {
-    @page { margin: 0.3cm; size: portrait; }
-    body { margin: 0; padding: 0; }
-    .no-print { display: none !important; }
-    body * { visibility: hidden; }
-    #printArea, #printArea * { visibility: visible; }
-    #printArea { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
-    #printArea .container { max-width: 100% !important; margin: 0 !important; padding: 0 5px !important; }
-    #printArea table { width: 100% !important; font-size: 8px !important; }
-    #printArea table th, #printArea table td { padding: 1px 2px !important; font-size: 8px !important; word-wrap: break-word; max-width: 80px; }
-}
-</style>
-
-<script>
-function printReport() {
-    var printArea = document.createElement('div');
-    printArea.id = 'printArea';
-    fetch('<%=contextPath%>/printHeader.jsp')
-        .then(response => response.text())
-        .then(headerHtml => {
-            printArea.innerHTML = headerHtml;
-            var tableContainer = document.querySelector('.container');
-            var tableClone = tableContainer.cloneNode(true);
-            var buttons = tableClone.querySelector('.no-print');
-            if(buttons) buttons.remove();
-            printArea.appendChild(tableClone);
-            document.body.appendChild(printArea);
-            window.print();
-            document.body.removeChild(printArea);
-        })
-        .catch(error => { console.error('Error loading print header:', error); window.print(); });
-}
-
-function exportTableToExcel(tableID, filename = ''){
-    var table = document.getElementById(tableID);
-    if (!table) { alert('Table not found!'); return; }
-    var tableClone = table.cloneNode(true);
-    var html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><style>table {border-collapse: collapse;} td, th {border: 1px solid black; padding: 5px;}</style></head><body><table border="1">' + tableClone.innerHTML + '</table></body></html>';
-    filename = filename ? filename + '.xls' : 'excel_data.xls';
-    var blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel' });
-    var downloadLink = document.createElement("a");
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = filename;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-}
 
 function loadBillDetails(billId) {
   var modal = new bootstrap.Modal(document.getElementById('billDetailModal'));
@@ -323,7 +189,7 @@ function loadBillDetails(billId) {
 <div class="modal fade" id="billDetailModal" tabindex="-1" aria-labelledby="billDetailModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header" style="background: linear-gradient(135deg, #3d1a52, #570a57); color: white;">
+      <div class="modal-header" style="background:var(--bill-navy);color:#fff;">
         <h5 class="modal-title" id="billDetailModalLabel">Bill Details</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>

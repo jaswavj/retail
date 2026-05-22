@@ -4,7 +4,6 @@
 <jsp:useBean id="bill" class="billing.billingBean" />
 <jsp:useBean id="prod" class="product.productBean" />
 <%
-String contextPath = request.getContextPath();
 String fromDate = request.getParameter("fromDate");  
 String toDate = request.getParameter("toDate");
 
@@ -35,37 +34,40 @@ if (attenderParam != null && !attenderParam.isEmpty()) {
 <head>
     <meta charset="UTF-8">
     <title>Attender-Wise Sales Report</title>
-    <jsp:include page="/assets/common/head.jsp" />
+    <%@ include file="/assets/common/head.jsp" %>
 </head>
 <body>
     <jsp:include page="/assets/navbar/navbar.jsp" />
+<%
+    request.setAttribute("pageTitle",    "Attender-Wise Sales");
+    request.setAttribute("pageSubtitle", "Reports — Attender Performance");
+    request.setAttribute("pageIcon",     "fa-solid fa-person-chalkboard");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container mt-4">
-        <p><strong>Attender-Wise Sales Report</strong></p>
-        <p><strong>Period:</strong> <%= fromDate %> to <%= toDate %></p>
-        <p><strong>Attender:</strong> <%= attenderName %></p>
-        
-        <div class="mb-3 no-print">
-            <a href="<%=contextPath%>/reports/attenderSales/page.jsp" class="btn btn-secondary btn-sm me-2">⬅ Back</a>
-            <button class="btn btn-primary btn-sm" onclick="printReport()">🖨 Print</button>
-            <button class="btn btn-success btn-sm" onclick="exportTableToExcel('printTable', 'Attender_Sales_Report')">📊 Export to Excel</button>
+    <div class="container-fluid mt-3 mst-page">
+        <p class="mb-1 text-muted"><strong>Period:</strong> <%= fromDate %> to <%= toDate %> &nbsp;|&nbsp; <strong>Attender:</strong> <%= attenderName %></p>
+        <div class="d-flex gap-2 mb-3 no-print">
+            <a href="<%=contextPath%>/reports/attenderSales/page.jsp" class="bb bb-outline"><i class="fa-solid fa-arrow-left me-1"></i>Back</a>
+            <button class="bb bb-navy" onclick="printReport()"><i class="fa-solid fa-print me-1"></i>Print</button>
+            <button class="bb bb-green" onclick="exportTableToExcel('printTable', 'Attender_Sales_Report')"><i class="fa-solid fa-file-excel me-1"></i>Export to Excel</button>
         </div>
 
         <div class="table-responsive">
-            <table id="printTable" class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; font-size: 12px;">
-                <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
+            <table id="printTable" class="table mb-0 mst-table">
+                <thead>
                     <tr>
-                        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">S.No</th>
-                        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Bill No</th>
-                        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Customer Name</th>
-                        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Total</th>
-                        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Discount</th>
-                        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Payable</th>
-                        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Paid</th>
-                        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Balance</th>
-                        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Date</th>
-                        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Time</th>
-                        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Attender</th>
+                        <th>S.No</th>
+                        <th>Bill No</th>
+                        <th>Customer Name</th>
+                        <th>Total</th>
+                        <th>Discount</th>
+                        <th>Payable</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Attender</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -96,32 +98,32 @@ if (attenderParam != null && !attenderParam.isEmpty()) {
                         finPaid += paid;
                         finBalance += balance;
                     %>
-                    <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
-                        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=i+1%></td>
-                        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;">
-                            <a href="<%=contextPath%>/billing/print.jsp?billNo=<%=billNo%>" target="_blank" class="btn btn-sm btn-edit" style="background-color:#5a9fd4; color:#fff;"><%=billNo%></a>
+                    <tr>
+                        <td><%=i+1%></td>
+                        <td>
+                            <a href="<%=contextPath%>/billing/print.jsp?billNo=<%=billNo%>" target="_blank" class="inv-link"><%=billNo%></a>
                         </td>
-                        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=cusName%></td>
-                        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=String.format("%.2f", totalAmt)%></td>
-                        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=String.format("%.2f", discount)%></td>
-                        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=String.format("%.2f", payable)%></td>
-                        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=String.format("%.2f", paid)%></td>
-                        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=String.format("%.2f", balance)%></td>
-                        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=date%></td>
-                        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=time%></td>
-                        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=attender%></td>
+                        <td><%=cusName%></td>
+                        <td><%=String.format("%.2f", totalAmt)%></td>
+                        <td><%=String.format("%.2f", discount)%></td>
+                        <td><%=String.format("%.2f", payable)%></td>
+                        <td><%=String.format("%.2f", paid)%></td>
+                        <td><%=String.format("%.2f", balance)%></td>
+                        <td><%=date%></td>
+                        <td><%=time%></td>
+                        <td><%=attender%></td>
                     </tr>
                     <%
                     }
                     %>
-                    <tr style="background: #f7fafc; border-top: 2px solid #4a5568;">
-                        <td colspan="3" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong>Grand Total</strong></td>
-                        <td style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong><%=String.format("%.2f", finTotal)%></strong></td>
-                        <td style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong><%=String.format("%.2f", finDiscount)%></strong></td>
-                        <td style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong><%=String.format("%.2f", finPayable)%></strong></td>
-                        <td style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong><%=String.format("%.2f", finPaid)%></strong></td>
-                        <td style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong><%=String.format("%.2f", finBalance)%></strong></td>
-                        <td colspan="3" style="padding: 0.4rem; border: none;"></td>
+                    <tr style="background:var(--bill-bg);font-weight:700">
+                        <td colspan="3"><strong>Grand Total</strong></td>
+                        <td><strong><%=String.format("%.2f", finTotal)%></strong></td>
+                        <td><strong><%=String.format("%.2f", finDiscount)%></strong></td>
+                        <td><strong><%=String.format("%.2f", finPayable)%></strong></td>
+                        <td><strong><%=String.format("%.2f", finPaid)%></strong></td>
+                        <td><strong><%=String.format("%.2f", finBalance)%></strong></td>
+                        <td colspan="3"></td>
                     </tr>
                 </tbody>
             </table>
@@ -130,47 +132,33 @@ if (attenderParam != null && !attenderParam.isEmpty()) {
 
     <script>
         function printReport() {
-            window.print();
+            fetch('<%=contextPath%>/printHeader.jsp')
+                .then(r => r.text())
+                .then(h => {
+                    const pa = document.createElement('div');
+                    pa.id = 'printArea';
+                    pa.innerHTML = h;
+                    const c = document.querySelector('.mst-page').cloneNode(true);
+                    c.querySelectorAll('.no-print').forEach(el => el.remove());
+                    pa.appendChild(c);
+                    document.body.appendChild(pa);
+                    window.print();
+                    document.body.removeChild(pa);
+                });
         }
 
-        function exportTableToExcel(tableID, filename = '') {
-            var downloadLink;
-            var dataType = 'application/vnd.ms-excel';
-            var tableSelect = document.getElementById(tableID);
-            var tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
-            
-            filename = filename ? filename + '.xls' : 'excel_data.xls';
-            
-            downloadLink = document.createElement("a");
-            
-            document.body.appendChild(downloadLink);
-            
-            if (navigator.msSaveOrOpenBlob) {
-                var blob = new Blob(['\ufeff', tableHTML], {
-                    type: dataType
-                });
-                navigator.msSaveOrOpenBlob(blob, filename);
-            } else {
-                downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
-                downloadLink.download = filename;
-                downloadLink.click();
-            }
+        function exportTableToExcel(tableID, filename) {
+            var table = document.getElementById(tableID);
+            var html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><style>th,td{border:1px solid #000;padding:4px}</style></head><body>' + table.outerHTML + '</body></html>';
+            var blob = new Blob(['\ufeff', html], {type: 'application/vnd.ms-excel'});
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (filename || 'export') + '.xls';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
         }
     </script>
-
-    <style>
-        @media print {
-            .no-print {
-                display: none;
-            }
-            body {
-                margin: 0;
-                padding: 10px;
-            }
-            .container {
-                max-width: 100%;
-            }
-        }
-    </style>
 </body>
 </html>

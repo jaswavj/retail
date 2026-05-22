@@ -16,41 +16,23 @@ String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 <%@ include file="/assets/common/head.jsp" %>
     
 
-    <style>
-        body {
-            background: #f5f7fa;
-        }
-        .navbar {
-            background-color: #4e73df;
-        }
-        .navbar-brand {
-            color: #fff !important;
-        }
-        .table td, .table th {
-            vertical-align: middle;
-        }
-        .btn-edit, .btn-delete {
-            margin: 0 2px;
-        }
-
-    </style>
-
 </head>
-<body onload="document.form.opregInput.focus();">
-
-    <!--%@ include file="../menu/reportMenu.jsp" %-->
+<body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
-    <!-- Top Navbar -->
+<%
+    request.setAttribute("pageTitle",    "Supplier Payment");
+    request.setAttribute("pageSubtitle", "Product — Supplier Payments");
+    request.setAttribute("pageIcon",     "fa-solid fa-hand-holding-dollar");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-
-    <div class="container mt-4 ">
-        <h3 class="mb-4">Supplier Payment</h3>
+    <div class="container-fluid mt-3 mst-page">
 
     <form action="<%=contextPath%>/product/supplierPayment/page1.jsp" method="get" class="row g-3">
         
         <div class="col-md-3">
             <label for="fromDate" class="form-label">Supplier:</label>
-            <select name="supId" class="form-select" >
+            <select name="supId" class="form-select fg-inp">
                 <option value="0">Select Supplier</option>
                 <%
                     Vector vec		= prod.GetSupplier();
@@ -71,7 +53,7 @@ String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         
 
         <div class="col-md-4 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Get Pending Supplier Payment</button>
+            <button type="submit" class="bb bb-primary w-100">Get Pending Supplier Payment</button>
         </div>
     </form>
 </div>

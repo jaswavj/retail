@@ -29,20 +29,17 @@ Vector billDetails = bill.getSupplierBillAmount(billId);
     <title>Pay Balance - Billing App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <%@ include file="/assets/common/head.jsp" %>
-    <style>
-        body { background: #f8f9fa; }
-        h4 { font-weight: 600; }
-        .form-label { font-weight: 500; }
-    </style>
 </head>
 <body>
-<div class="container-fluid  d-flex flex-column">
-
-    <!-- Navbar -->
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Pay Balance");
+    request.setAttribute("pageSubtitle", "Product — Supplier Payment");
+    request.setAttribute("pageIcon",     "fa-solid fa-money-bill-wave");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container mt-4">
-        <h4 class="mb-4">Pay Balance</h4>
+<div class="container-fluid mt-3 mst-page">
 
         <form id="payForm" action="<%= request.getContextPath() %>/product/supplierPayment/saveDuePayment.jsp" method="post" class="row g-3">
             <input type="hidden" name="billId" value="<%=billId%>">
@@ -51,26 +48,26 @@ Vector billDetails = bill.getSupplierBillAmount(billId);
             <!-- Totals -->
             <div class="col-md-4">
                 <label class="form-label">Total</label>
-                <input type="text" class="form-control" name="total" id="total"
+                <input type="text" class="form-control fg-inp" name="total" id="total"
                        value="<%=total%>" readonly>
             </div>
 
             <div class="col-md-4">
                 <label class="form-label">Paid</label>
-                <input type="text" class="form-control" name="paid" id="paid"
+                <input type="text" class="form-control fg-inp" name="paid" id="paid"
                        value="<%=paid%>" readonly>
             </div>
 
             <div class="col-md-4">
                 <label class="form-label">Balance</label>
-                <input type="text" class="form-control" name="balance" id="balance"
+                <input type="text" class="form-control fg-inp" name="balance" id="balance"
                        value="<%=balance%>" readonly>
             </div>
 
             <!-- Payment Mode -->
             <div class="col-md-4">
                 <label class="form-label">Payment Mode</label>
-                <select class="form-select" id="mode" name="mode">
+                <select class="form-select fg-inp" id="mode" name="mode">
                     <option value="1">Cash</option>
                     <option value="2">Bank</option>
                 </select>
@@ -79,7 +76,7 @@ Vector billDetails = bill.getSupplierBillAmount(billId);
             <!-- Bank Options -->
             <div class="col-md-4">
                 <label class="form-label">Bank Options</label>
-                <select class="form-select" id="bankOption" name="bankOption" disabled>
+                <select class="form-select fg-inp" id="bankOption" name="bankOption" disabled>
                     <option value="0">--Select--</option>
                     <%
                         Vector paymentTypes = prodBean.getBillPaymentTypes();
@@ -101,25 +98,25 @@ Vector billDetails = bill.getSupplierBillAmount(billId);
             <!-- Pay Now -->
             <div class="col-md-4">
                 <label class="form-label">Amount to Pay</label>
-                <input type="number" class="form-control" name="payNow" id="payNow"
+                <input type="number" class="form-control fg-inp" name="payNow" id="payNow"
                        min="0" step="0.001" placeholder="Enter amount" required>
             </div>
 
             
 
             <div class="col-12">
-                <button type="submit" class="btn btn-primary w-25">Submit Payment</button>
+                <button type="submit" class="bb bb-primary">Submit Payment</button>
             </div>
         </form>
-    </div>
-</div>
-<br>
-        <div class="card">
-            <div class="card-body">
-                <h5>Due Paid List</h5>
 
-                <table class="table table-bordered" >
-                    <thead class="table-primary">
+        <div class="card mst-card mt-4">
+            <div class="card-header mst-card-header">
+                <h6>Due Paid List</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                <table class="table mst-table mb-0">
+                    <thead>
                         <tr>
                             <th>#</th>
                             <th>Name</th>
@@ -171,8 +168,10 @@ Vector billDetails = bill.getSupplierBillAmount(billId);
                         <%-- Dynamic rows will come here --%>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
+</div>
 <script>
     const payNowInput = document.getElementById("payNow");
     const balanceInput = document.getElementById("balance");

@@ -22,9 +22,14 @@ String firstDayOfMonth = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime()
 <body>
 
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Profit & Loss");
+    request.setAttribute("pageSubtitle", "Reports — Financial Summary");
+    request.setAttribute("pageIcon",     "fa-solid fa-scale-balanced");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container mt-4">
-    <h3 class="mb-4">Profit & Loss Report</h3>
+<div class="container-fluid mt-3 mst-page">
 
     <form action="<%=contextPath%>/reports/profitLoss/page0.jsp" method="post" class="row g-3">
         <!-- From Date -->
@@ -51,7 +56,7 @@ String firstDayOfMonth = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime()
 
         <!-- Submit -->
         <div class="col-md-3 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+            <button type="submit" class="bb bb-primary w-100">Generate Report</button>
         </div>
     </form>
 </div>

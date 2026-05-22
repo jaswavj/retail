@@ -42,17 +42,20 @@ if (billInfo != null && !billInfo.isEmpty()) {
     
  
 </head>
-<body onload="document.form.opregInput.focus();">
+<body>
 
 <!--%@ include file="../menu/reportMenu.jsp" %-->
     <%@ include file="/assets/navbar/navbar.jsp" %>
-    <!-- Top Navbar -->
+<%
+    request.setAttribute("pageTitle",    "Bill Details");
+    request.setAttribute("pageSubtitle", "Sales — Bill #" + billId);
+    request.setAttribute("pageIcon",     "fa-solid fa-file-invoice");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-
-    <div class="container mt-4 ">
-        <h4>Bill Details (Bill No: <%= billId %>)</h4>
-    <table class="table table-bordered table-sm mt-3">
-        <thead class="table-dark">
+    <div class="container-fluid mt-3 mst-page">
+    <table class="table mst-table mt-3">
+        <thead>
             <tr>
                 <th>S.No</th>
                 <th>Product</th>
@@ -99,25 +102,25 @@ if (billInfo != null && !billInfo.isEmpty()) {
                     <th>Payable</th>
                     <td><%= payable %></td>
                 </tr>
-                <tr class="table-success">
+                <tr>
                     <th>Paid</th>
-                    <td><%= paid %></td>
+                    <td style="color:var(--bill-green)"><%= paid %></td>
                 </tr>
-                <tr class="table-success">
+                <tr>
                     <th>Cash Paid</th>
-                    <td><%= cash %></td>
+                    <td style="color:var(--bill-green)"><%= cash %></td>
                 </tr>
-                <tr class="table-success">
+                <tr>
                     <th>Bank Paid</th>
-                    <td><%= bank %></td>
+                    <td style="color:var(--bill-green)"><%= bank %></td>
                 </tr>
-                <tr class="table-danger">
+                <tr>
                     <th>Balance</th>
-                    <td><%= balance %></td>
+                    <td style="color:var(--bill-red)"><%= balance %></td>
                 </tr>
-                <tr class="table-danger">
+                <tr>
                     <th>Pending Balance</th>
-                    <td><%= currentBalance %></td>
+                    <td style="color:var(--bill-red)"><%= currentBalance %></td>
                 </tr>
             </table>
         </div>

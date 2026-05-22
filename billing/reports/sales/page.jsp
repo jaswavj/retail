@@ -4,7 +4,6 @@
 <jsp:useBean id="prod" class="product.productBean" />
 <%
 String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-String contextPath = request.getContextPath();
 // Fetch product list for dropdown
 Vector productList = prod.getAllProduct(); 
 // (Assuming productBean has a method getAllProducts() returning Vector<Vector> with id + name)
@@ -13,17 +12,21 @@ Vector productList = prod.getAllProduct();
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CASH BANK</title>
+    <title>Sales Report</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <jsp:include page="/assets/common/head.jsp" />
+    <%@ include file="/assets/common/head.jsp" %>
 </head>
 <body>
 
-<!--%@ include file="../menu/reportMenu.jsp" %-->
     <jsp:include page="/assets/navbar/navbar.jsp" />
+<%
+    request.setAttribute("pageTitle",    "Sales Report");
+    request.setAttribute("pageSubtitle", "Reports — Cash/Bank Collection");
+    request.setAttribute("pageIcon",     "fa-solid fa-cash-register");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container mt-4 ">
-    <h3 class="mb-4">Collection Report</h3>
+<div class="container-fluid mt-3 mst-page">
 
     <form action="<%=contextPath%>/reports/sales/page0.jsp" method="post" class="row g-3">
         <!-- From Date -->
@@ -84,7 +87,7 @@ Vector productList = prod.getAllProduct();
 
         <!-- Submit -->
         <div class="col-md-3 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+            <button type="submit" class="bb bb-primary w-100">Generate Report</button>
         </div>
     </form>
 </div>

@@ -36,20 +36,20 @@
 <head>
     <title>Select User</title>
     <%@ include file="/assets/common/head.jsp" %>
-    <style>
-        body { background: #f5f7fa; }
-        .navbar { background-color: #4e73df; }
-        .navbar-brand { color: #fff !important; }
-        .table td, .table th { vertical-align: middle; }
-        .badge-add { background: #28a745; color: white; }
-        .badge-remove { background: #dc3545; color: white; }
-    </style>
 </head>
-<body class="bg-light">
+<body>
     <!--%@ include file="../menu/adminMenu.jsp" %-->
         <%@ include file="/assets/navbar/navbar.jsp" %>
-    <div class="container mt-4">
-<h3>Manage Permissions for User ID: <%=userId1%></h3>
+<%
+    request.setAttribute("pageTitle",    "Manage Permissions");
+    request.setAttribute("pageSubtitle", "Admin — User Permissions");
+    request.setAttribute("pageIcon",     "fa-solid fa-shield-halved");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
+
+<div class="container-fluid mt-3 mst-page">
+    <div class="card mst-card p-4" style="max-width: 500px; margin: 0 auto;">
+    <p class="text-muted mb-3">User ID: <%=userId1%></p>
 
 <form action="<%= request.getContextPath() %>/admin/permission/page2.jsp" method="post">
     <input type="hidden" name="userId1" value="<%=userId1%>">
@@ -83,9 +83,11 @@
         }
     %>
 
-    <br>
-    <button type="submit" class="btn btn-primary">Update Permissions</button>
+    <div class="mt-3">
+        <button type="submit" class="bb bb-primary">Update Permissions</button>
+    </div>
 </form>
+    </div>
 </div>
 </body>
 </html>

@@ -32,30 +32,19 @@
 <head>
     <title>Special Permissions</title>
     <%@ include file="/assets/common/head.jsp" %>
-    <style>
-        body { background: #f5f7fa; }
-        .navbar { background-color: #4e73df; }
-        .navbar-brand { color: #fff !important; }
-        .permission-card {
-            border-left: 4px solid #4e73df;
-        }
-        .form-check {
-            padding: 0.75rem;
-            margin-bottom: 0.5rem;
-            background: #f8f9fa;
-            border-radius: 0.25rem;
-        }
-    </style>
 </head>
-<body class="bg-light">
+<body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
-    
-    <div class="container mt-4">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card shadow-lg border-0 rounded-3 permission-card">
-                    <div class="card-body p-4">
-                        <h3 class="card-title mb-4">Manage Special Permissions for User ID: <%=userId%></h3>
+<%
+    request.setAttribute("pageTitle",    "Special Permissions");
+    request.setAttribute("pageSubtitle", "Admin — Manage User Permissions");
+    request.setAttribute("pageIcon",     "fa-solid fa-lock");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
+
+<div class="container-fluid mt-3 mst-page">
+    <div class="card mst-card p-4" style="max-width: 600px; margin: 0 auto;">
+        <p class="text-muted mb-3">User ID: <%=userId%></p>
                         
                         <form action="<%= request.getContextPath() %>/admin/specialPermission/page2.jsp" method="post">
                             <input type="hidden" name="userId" value="<%=userId%>">
@@ -86,18 +75,15 @@
                             </div>
                             
                             <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-save me-2"></i>Update Permissions
+                                <button type="submit" class="bb bb-primary">
+                                    <i class="fa-solid fa-floppy-disk me-2"></i>Update Permissions
                                 </button>
-                                <a href="<%=request.getContextPath()%>/admin/specialPermission/page.jsp" class="btn btn-secondary btn-lg">
-                                    <i class="fas fa-arrow-left me-2"></i>Back
+                                <a href="<%=request.getContextPath()%>/admin/specialPermission/page.jsp" class="bb bb-outline">
+                                    <i class="fa-solid fa-arrow-left me-2"></i>Back
                                 </a>
                             </div>
                         </form>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
+</div>
 </body>
 </html>

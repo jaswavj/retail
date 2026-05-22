@@ -4,8 +4,7 @@
 <jsp:useBean id="bill" class="billing.billingBean" />
 <jsp:useBean id="prod" class="product.productBean" />
 <%
-String contextPath = request.getContextPath();
-    String fromDate = request.getParameter("fromDate");  
+String fromDate = request.getParameter("fromDate");  
     String toDate   = request.getParameter("toDate");
     
     String modeParam = request.getParameter("mode");
@@ -32,7 +31,7 @@ String contextPath = request.getContextPath();
     
     <meta charset="UTF-8">
     <title>Collection Report</title>
-<jsp:include page="/assets/common/head.jsp" />
+<%@ include file="/assets/common/head.jsp" %>
 
 
 
@@ -41,36 +40,38 @@ String contextPath = request.getContextPath();
 <body > 
 
     <jsp:include page="/assets/navbar/navbar.jsp" />
+<%
+    request.setAttribute("pageTitle",    "Sales Report");
+    request.setAttribute("pageSubtitle", "Reports — Cash/Bank Collection");
+    request.setAttribute("pageIcon",     "fa-solid fa-cash-register");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-
-
-<div class="container mt-4 ">
-<p ><strong>Collection Report From:</strong> <%= fromDate %> - <%= toDate %></p>
-    <div class="mb-3 no-print">
-        <a href="<%=contextPath%>/reports/sales/page.jsp" class="btn btn-secondary btn-sm me-2">⬅ Back</a>
-        <button class="btn btn-primary btn-sm" onclick="printReport()">🖨 Print</button>
-        <button class="btn btn-success btn-sm" onclick="exportTableToExcel('printTable', 'Sales_Report')">📊 Export to Excel</button>
+<div class="container-fluid mt-3 mst-page">
+<p class="mb-1 text-muted"><strong>Collection Report From:</strong> <%= fromDate %> — <%= toDate %></p>
+    <div class="d-flex gap-2 mb-3 no-print">
+        <a href="<%=contextPath%>/reports/sales/page.jsp" class="bb bb-outline"><i class="fa-solid fa-arrow-left me-1"></i>Back</a>
+        <button class="bb bb-navy" onclick="printReport()"><i class="fa-solid fa-print me-1"></i>Print</button>
+        <button class="bb bb-green" onclick="exportTableToExcel('printTable', 'Sales_Report')"><i class="fa-solid fa-file-excel me-1"></i>Export</button>
     </div>
 <div class="table-responsive">
-<table id="printTable" class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; font-size: 12px;">
-    <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
+<table id="printTable" class="table mb-0 mst-table">
+    <thead>
         <tr>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">S.No</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Bill No</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Patient Name</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Total</th>
+            <th>S.No</th>
+            <th>Bill No</th>
+            <th>Patient Name</th>
+            <th>Total</th>
             <!--th>Discount</th-->
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Payable</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Paid</th>
-            <% if(modeId !=2) { %><th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">cash</th><%}%>
-            <% if(modeId !=1) { %><th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Bank</th><% } %>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Balance</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Pending Balance</th>
-           <!--<% if(modeId !=1) { %><th>Mode</th><% } %>-->
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Date</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Time</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Biller</th>
-            
+            <th>Payable</th>
+            <th>Paid</th>
+            <% if(modeId !=2) { %><th>Cash</th><%}%>
+            <% if(modeId !=1) { %><th>Bank</th><% } %>
+            <th>Balance</th>
+            <th>Pending Balance</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Biller</th>
         </tr>
     </thead>
     <tbody>
@@ -110,69 +111,64 @@ String contextPath = request.getContextPath();
 
 
         %>
-        <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
-            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=i+1%></td>
-            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;">
-                <a href="<%=contextPath%>/billing/print.jsp?billNo=<%=billNo%>" target="_blank" name="billNo" class="btn btn-sm btn-edit" style="background-color:hsl(222, 86%, 89%); color:#000000;"><%=row.elementAt(0)%></a>
-                <button onclick="directPrint('<%=billNo%>')" class="btn btn-sm ms-1" title="Thermal Print" style="background-color:#10b981; color:#fff; padding: 0.25rem 0.5rem; font-size: 0.85rem;">
+        <tr>
+            <td><%=i+1%></td>
+            <td>
+                <a href="<%=contextPath%>/billing/print.jsp?billNo=<%=billNo%>" target="_blank" name="billNo" class="inv-link"><%=row.elementAt(0)%></a>
+                <button onclick="directPrint('<%=billNo%>')" class="bb bb-green ms-1" title="Thermal Print" style="padding:0.15rem 0.4rem;font-size:0.8rem">
                     <i class="fas fa-receipt"></i>
                 </button>
-            </td>
-            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><a href="https://wa.me/<%=cusPhone%>" target="_blank" style="color: #25D366; text-decoration: none; font-weight: 500;"><%=row.elementAt(14)%></a></td>
-            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(1)%></td>
+            <td><a href="https://wa.me/<%=cusPhone%>" target="_blank" style="color:#25D366;text-decoration:none;font-weight:500"><%=row.elementAt(14)%></a></td>
+            <td><%=row.elementAt(1)%></td>
             <!--td><%=row.elementAt(2)%></td-->
-            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(3)%></td>
-            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(4)%></td>
-            <% if(modeId !=2) { %><td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(10)%></td><%}%>
-            <% if(modeId !=1) { %><td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(11)%></td><%}%>
-            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(12)%></td>
-            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(13)%></td>
+            <td><%=row.elementAt(3)%></td>
+            <td><%=row.elementAt(4)%></td>
+            <% if(modeId !=2) { %><td><%=row.elementAt(10)%></td><%}%>
+            <% if(modeId !=1) { %><td><%=row.elementAt(11)%></td><%}%>
+            <td><%=row.elementAt(12)%></td>
+            <td><%=row.elementAt(13)%></td>
             <!--<% if(modeId !=1) { %><td><%=row.elementAt(9)%></td><%}%>-->
-            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(5)%></td>
-            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(6)%></td>
-            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=row.elementAt(7)%></td>
-            
+            <td><%=row.elementAt(5)%></td>
+            <td><%=row.elementAt(6)%></td>
+            <td><%=row.elementAt(7)%></td>
         </tr>
         <%
     
 }
         %>
-        <tr style="background: #f7fafc; border-top: 2px solid #4a5568;">
-            <td colspan="3" style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong>Grand Total</strong></td>
-            <td style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong><%=String.format("%.3f", finTotal)%></strong></td>
+        <tr style="background:var(--bill-bg);font-weight:700">
+            <td colspan="3"><strong>Grand Total</strong></td>
+            <td><strong><%=String.format("%.3f", finTotal)%></strong></td>
             <!--td><strong><%=String.format("%.3f", finDiscount)%></strong></td-->
-            <td style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong><%=String.format("%.3f", finPayable)%></strong></td>
-            <td style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong><%=String.format("%.3f", finPaid)%></strong></td>
-            <% if(modeId !=2) { %><td style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong><%=String.format("%.3f", finCash)%></strong></td><%}%>
-            <% if(modeId !=1) { %><td style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong><%=String.format("%.3f", finBank)%></strong></td><%}%>
-            <td style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong><%=finBalance%></strong></td>
-            <td style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.9rem;"><strong><%=finCurBalance%></strong></td>
-            <% if(modeId !=1) { %><td style="padding: 0.4rem; border: none;"></td><%}%>
-            <td style="padding: 0.4rem; border: none;"></td>
-            <td style="padding: 0.4rem; border: none;"></td>
-            
-            <!--td></td-->
+            <td><strong><%=String.format("%.3f", finPayable)%></strong></td>
+            <td><strong><%=String.format("%.3f", finPaid)%></strong></td>
+            <% if(modeId !=2) { %><td><strong><%=String.format("%.3f", finCash)%></strong></td><%}%>
+            <% if(modeId !=1) { %><td><strong><%=String.format("%.3f", finBank)%></strong></td><%}%>
+            <td><strong><%=finBalance%></strong></td>
+            <td><strong><%=finCurBalance%></strong></td>
+            <% if(modeId !=1) { %><td></td><%}%>
+            <td></td><td></td>
         </tr>
     </tbody>
 </table>
 </div>
-<p><strong>Due Collection Report From:</strong> <%= fromDate %> - <%= toDate %></p>
+<p class="mt-3 text-muted"><strong>Due Collection Report From:</strong> <%= fromDate %> — <%= toDate %></p>
 
 <div class="table-responsive">
-<table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; font-size: 12px;">
-   <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
+<table class="table mb-0 mst-table">
+   <thead>
     <tr>
-        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">S.No</th>
-        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Bill No</th>
-        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Customer Name</th>
-        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Balance</th>
-        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Cash Paid</th>
-        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Bank Paid</th>
-        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Mode</th>
-        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Bank Option</th>
-        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Date</th>
-        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Time</th>
-        <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Biller</th>
+        <th>S.No</th>
+        <th>Bill No</th>
+        <th>Customer Name</th>
+        <th>Balance</th>
+        <th>Cash Paid</th>
+        <th>Bank Paid</th>
+        <th>Mode</th>
+        <th>Bank Option</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Biller</th>
     </tr>
 </thead>
 <tbody>
@@ -200,23 +196,23 @@ String contextPath = request.getContextPath();
         totalBankPaid += bankPaid;
         double totalPaid = cashPaid + bankPaid;
 %>
-    <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
-        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= j + 1 %></td>
-        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= billDisplay %></td>
-        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= cusName %></td>
-        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= balance %></td>
-        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= cashPaid %></td>
-        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= bankPaid %></td>
-        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= mode %></td>
-        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= bank %></td>
-        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= date %></td>
-        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= time %></td>
-        <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%= userName %></td>
+    <tr style="border-bottom:1px solid var(--bill-border-lt)">
+        <td><%= j + 1 %></td>
+        <td><%= billDisplay %></td>
+        <td><%= cusName %></td>
+        <td><%= balance %></td>
+        <td><%= cashPaid %></td>
+        <td><%= bankPaid %></td>
+        <td><%= mode %></td>
+        <td><%= bank %></td>
+        <td><%= date %></td>
+        <td><%= time %></td>
+        <td><%= userName %></td>
     </tr>
 <%
     } // end for
 %>
-    <tr class="table-secondary">
+    <tr style="background:var(--bill-bg);font-weight:700">
         <td colspan="4"><strong>Grand Total</strong></td>
         <td><strong><%= String.format("%.3f", totalCashPaid) %></strong></td>
         <td><strong><%= String.format("%.3f", totalBankPaid) %></strong></td>
@@ -232,52 +228,17 @@ String contextPath = request.getContextPath();
 </div>
 
 <style>
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes slideOut {
-    from {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    to {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-}
-
 @media print {
-    @page {
-        margin: 0.3cm;
-        size: portrait;
-    }
-    body {
-        margin: 0;
-        padding: 0;
-    }
-    .no-print {
-        display: none !important;
-    }
-    body * {
-        visibility: hidden;
-    }
-    #printArea, #printArea * {
-        visibility: visible;
-    }
-    #printArea {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        margin: 0;
+    @page { margin: 0.3cm; size: portrait; }
+    body { margin: 0; padding: 0; }
+    .no-print { display: none !important; }
+    body * { visibility: hidden; }
+    #printArea, #printArea * { visibility: visible; }
+    #printArea { position: absolute; left: 0; top: 0; width: 100%; }
+    #printArea table { width: 100% !important; font-size: 8px !important; }
+    #printArea th, #printArea td { padding: 1px 2px !important; font-size: 8px !important; }
+}
+</style>
         padding: 0;
     }
     #printArea .container {
@@ -376,7 +337,7 @@ function printReport() {
             printArea.innerHTML = headerHtml;
             
             // Add the table content
-            var tableContainer = document.querySelector('.container');
+            var tableContainer = document.querySelector('.mst-page');
             var tableClone = tableContainer.cloneNode(true);
             
             // Remove the button div from clone

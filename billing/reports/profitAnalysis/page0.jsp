@@ -3,8 +3,7 @@
 <%@ page language="java" import= "java.util.*,java.text.*" %>
 <jsp:useBean id="bill" class="billing.billingBean" />
 <%
-String contextPath = request.getContextPath();
-    String fromDate = request.getParameter("fromDate");  
+String fromDate = request.getParameter("fromDate");  
     String toDate   = request.getParameter("toDate");
 %>
 <!DOCTYPE html>
@@ -12,17 +11,23 @@ String contextPath = request.getContextPath();
 <head>
     <meta charset="UTF-8">
     <title>Profit Analysis Report</title>
-    <jsp:include page="/assets/common/head.jsp" />
+    <%@ include file="/assets/common/head.jsp" %>
 </head>
 <body > 
     <jsp:include page="/assets/navbar/navbar.jsp" />
+<%
+    request.setAttribute("pageTitle",    "Profit Analysis");
+    request.setAttribute("pageSubtitle", "Reports — Profit by Bill");
+    request.setAttribute("pageIcon",     "fa-solid fa-chart-line");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container mt-4 ">
-<p><strong>Profit Analysis Report From:</strong> <%= fromDate %> - <%= toDate %></p>
-    <div class="mb-3 no-print">
-        <a href="<%=contextPath%>/reports/profitAnalysis/page.jsp" class="btn btn-secondary btn-sm me-2">⬅ Back</a>
-        <button class="btn btn-primary btn-sm" onclick="printReport()">🖨 Print</button>
-        <button class="btn btn-success btn-sm" onclick="exportTableToExcel('printTable', 'Profit_Analysis_Report')">📊 Export to Excel</button>
+<div class="container-fluid mt-3 mst-page">
+<p class="mb-1 text-muted"><strong>Period:</strong> <%= fromDate %> — <%= toDate %></p>
+    <div class="d-flex gap-2 mb-3 no-print">
+        <a href="<%=contextPath%>/reports/profitAnalysis/page.jsp" class="bb bb-outline"><i class="fa-solid fa-arrow-left me-1"></i>Back</a>
+        <button class="bb bb-navy" onclick="printReport()"><i class="fa-solid fa-print me-1"></i>Print</button>
+        <button class="bb bb-green" onclick="exportTableToExcel('printTable', 'Profit_Analysis_Report')"><i class="fa-solid fa-file-excel me-1"></i>Export</button>
     </div>
 
 <%
@@ -47,53 +52,53 @@ String contextPath = request.getContextPath();
 <!-- Summary Cards -->
 <div class="row mb-4 g-3">
     <div class="col-md-3">
-        <div class="card border-info">
+        <div class="card mst-card">
             <div class="card-body">
                 <h6 class="text-muted">Total Cost</h6>
-                <h4 class="text-info">&#8377; <%= String.format("%,.2f", totalCostSum) %></h4>
+                <h4 style="color:var(--bill-navy)">&#8377; <%= String.format("%,.2f", totalCostSum) %></h4>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-primary">
+        <div class="card mst-card">
             <div class="card-body">
                 <h6 class="text-muted">Total Sales</h6>
-                <h4 class="text-primary">&#8377; <%= String.format("%,.2f", totalSaleSum) %></h4>
+                <h4 style="color:var(--bill-navy-mid)">&#8377; <%= String.format("%,.2f", totalSaleSum) %></h4>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-success">
+        <div class="card mst-card">
             <div class="card-body">
                 <h6 class="text-muted">Total Profit</h6>
-                <h4 class="<%= totalProfitSum >= 0 ? "text-success" : "text-danger" %>">&#8377; <%= String.format("%,.2f", totalProfitSum) %></h4>
+                <h4 style="color:<%= totalProfitSum >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>">&#8377; <%= String.format("%,.2f", totalProfitSum) %></h4>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="card border-warning">
+        <div class="card mst-card">
             <div class="card-body">
                 <h6 class="text-muted">Profit Margin</h6>
-                <h4 class="<%= overallProfitPercent >= 0 ? "text-success" : "text-danger" %>"><%= String.format("%.1f", overallProfitPercent) %>%</h4>
+                <h4 style="color:<%= overallProfitPercent >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>"><%= String.format("%.1f", overallProfitPercent) %>%</h4>
             </div>
         </div>
     </div>
 </div>
 
 <div class="table-responsive">
-<table id="printTable" class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; font-size: 12px;">
-    <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
+<table id="printTable" class="table mb-0 mst-table">
+    <thead>
         <tr>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">S.No</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Bill No</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Product</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Qty</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Cost Price</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Total Cost</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Sale Total</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Profit</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Profit %</th>
-            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Date</th>
+            <th>S.No</th>
+            <th>Bill No</th>
+            <th>Product</th>
+            <th class="text-center">Qty</th>
+            <th class="text-end">Cost Price</th>
+            <th class="text-end">Total Cost</th>
+            <th class="text-end">Sale Total</th>
+            <th class="text-end">Profit</th>
+            <th class="text-end">Profit %</th>
+            <th>Date</th>
         </tr>
     </thead>
     <tbody>
@@ -115,28 +120,30 @@ String contextPath = request.getContextPath();
             //totalProfitSum += profit;
             
             String rowColor = (i % 2 == 0) ? "#ffffff" : "#f8f9fa";
-        %><td style="padding: 0.5rem; border: none; border-bottom: 1px solid #e2e8f0;"><%= i + 1 %></td>
-            <td style="padding: 0.5rem; border: none; border-bottom: 1px solid #e2e8f0;"><%= billNo %></td>
-            <td style="padding: 0.5rem; border: none; border-bottom: 1px solid #e2e8f0;"><%= productName %></td>
-            <td style="padding: 0.5rem; border: none; border-bottom: 1px solid #e2e8f0; text-align: center;"><%= qty %></td>
-            <td style="padding: 0.5rem; border: none; border-bottom: 1px solid #e2e8f0; text-align: right;">&#8377; <%= String.format("%.3f", costPrice) %></td>
-            <td style="padding: 0.5rem; border: none; border-bottom: 1px solid #e2e8f0; text-align: right;">&#8377; <%= String.format("%.3f", totalCost) %></td>
-            <td style="padding: 0.5rem; border: none; border-bottom: 1px solid #e2e8f0; text-align: right;">&#8377; <%= String.format("%.3f", saleTotal) %></td>
-            <td style="padding: 0.5rem; border: none; border-bottom: 1px solid #e2e8f0; text-align: right; color: <%= profit >= 0 ? "#10b981" : "#ef4444" %>; font-weight: 600;">&#8377; <%= String.format("%.3f", profit) %></td>
-            <td style="padding: 0.5rem; border: none; border-bottom: 1px solid #e2e8f0; text-align: right; color: <%= profitPercent >= 0 ? "#10b981" : "#ef4444" %>"><%= String.format("%.1f", profitPercent) %>%</td>
-            <td style="padding: 0.5rem; border: none; border-bottom: 1px solid #e2e8f0;"><%= billDate %></td>
+        %><tr>
+            <td><%= i + 1 %></td>
+            <td><%= billNo %></td>
+            <td><%= productName %></td>
+            <td class="text-center"><%= qty %></td>
+            <td class="text-end">&#8377; <%= String.format("%.3f", costPrice) %></td>
+            <td class="text-end">&#8377; <%= String.format("%.3f", totalCost) %></td>
+            <td class="text-end">&#8377; <%= String.format("%.3f", saleTotal) %></td>
+            <td class="text-end" style="color:<%= profit >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>;font-weight:600;">&#8377; <%= String.format("%.3f", profit) %></td>
+            <td class="text-end" style="color:<%= profitPercent >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>"><%= String.format("%.1f", profitPercent) %>%</td>
+            <td><%= billDate %></td>
         </tr>
         <%
         }
         %>
     </tbody>
-    <tfoot style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); font-weight: 700;">
-            <td colspan="5" style="padding: 0.75rem; text-align: right; border: none; font-size: 0.9rem;">Grand Total:</td>
-            <td style="padding: 0.75rem; text-align: right; border: none; font-size: 0.9rem;">&#8377; <%= String.format("%,.2f", totalCostSum) %></td>
-            <td style="padding: 0.75rem; text-align: right; border: none; font-size: 0.9rem;">&#8377; <%= String.format("%,.2f", totalSaleSum) %></td>
-            <td style="padding: 0.75rem; text-align: right; border: none; font-size: 0.9rem; color: <%= totalProfitSum >= 0 ? "#10b981" : "#ef4444" %>">&#8377; <%= String.format("%,.2f", totalProfitSum) %></td>
-            <td style="padding: 0.75rem; text-align: right; border: none; font-size: 0.9rem; color: <%= overallProfitPercent >= 0 ? "#10b981" : "#ef4444" %>"><%= String.format("%.1f", overallProfitPercent) %>%</td>
-            <td style="border: none;"></td>
+    <tfoot style="background:var(--bill-bg);font-weight:700">
+        <tr>
+            <td colspan="5" class="text-end">Grand Total:</td>
+            <td class="text-end">&#8377; <%= String.format("%,.2f", totalCostSum) %></td>
+            <td class="text-end">&#8377; <%= String.format("%,.2f", totalSaleSum) %></td>
+            <td class="text-end" style="color:<%= totalProfitSum >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>">&#8377; <%= String.format("%,.2f", totalProfitSum) %></td>
+            <td class="text-end" style="color:<%= overallProfitPercent >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>"><%= String.format("%.1f", overallProfitPercent) %>%</td>
+            <td></td>
         </tr>
     </tfoot>
 </table>
@@ -148,44 +155,34 @@ String contextPath = request.getContextPath();
 
 <script>
 function printReport() {
-    window.print();
+    fetch('<%=contextPath%>/printHeader.jsp')
+        .then(r => r.text())
+        .then(h => {
+            const pa = document.createElement('div');
+            pa.id = 'printArea';
+            pa.innerHTML = h;
+            const c = document.querySelector('.mst-page').cloneNode(true);
+            c.querySelectorAll('.no-print').forEach(el => el.remove());
+            pa.appendChild(c);
+            document.body.appendChild(pa);
+            window.print();
+            document.body.removeChild(pa);
+        });
 }
 
-function exportTableToExcel(tableID, filename = '') {
-    var downloadLink;
-    var dataType = 'application/vnd.ms-excel';
-    var tableSelect = document.getElementById(tableID);
-    var tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
-    
-    filename = filename ? filename + '.xls' : 'excel_data.xls';
-    
-    downloadLink = document.createElement("a");
-    
-    document.body.appendChild(downloadLink);
-    
-    if(navigator.msSaveOrOpenBlob){
-        var blob = new Blob(['\ufeff', tableHTML], {
-            type: dataType
-        });
-        navigator.msSaveOrOpenBlob( blob, filename);
-    } else {
-        downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
-        downloadLink.download = filename;
-        downloadLink.click();
-    }
+function exportTableToExcel(tableID, filename) {
+    var table = document.getElementById(tableID);
+    var html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><style>th,td{border:1px solid #000;padding:4px}</style></head><body>' + table.outerHTML + '</body></html>';
+    var blob = new Blob(['\ufeff', html], {type: 'application/vnd.ms-excel'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (filename || 'export') + '.xls';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
 }
 </script>
-
-<style>
-@media print {
-    .no-print, .btn, .navbar, .sidebar {
-        display: none !important;
-    }
-    .container {
-        max-width: 100% !important;
-    }
-}
-</style>
 
 </body>
 </html>

@@ -9,41 +9,22 @@ String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title> Billing App</title>
+    <title>Sales by Department</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Bootstrap CSS -->
 <%@ include file="/assets/common/head.jsp" %>
-    
-
-    <style>
-        body {
-            background: #f5f7fa;
-        }
-        .navbar {
-            background-color: #4e73df;
-        }
-        .navbar-brand {
-            color: #fff !important;
-        }
-        .table td, .table th {
-            vertical-align: middle;
-        }
-        .btn-edit, .btn-delete {
-            margin: 0 2px;
-        }
-
-    </style>
-
 </head>
-<body onload="document.form.opregInput.focus();">
+<body>
 
-    <!--%@ include file="../menu/reportMenu.jsp" %-->
     <%@ include file="/assets/navbar/navbar.jsp" %>
-    <!-- Top Navbar -->
+<%
+    request.setAttribute("pageTitle",    "Sales by " + head2);
+    request.setAttribute("pageSubtitle", "Reports — Department Sales");
+    request.setAttribute("pageIcon",     "fa-solid fa-building");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-
-    <div class="container mt-4 ">
-        <h3 class="mb-4">Billing Report by <%=head2%></h3>
+<div class="container-fluid mt-3 mst-page">
 
     <form action="<%=contextPath%>/reports/salesByDept/page0.jsp" method="get" class="row g-3">
         <div class="col-md-3">
@@ -73,7 +54,7 @@ String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         
 
         <div class="col-md-4 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+            <button type="submit" class="bb bb-primary w-100">Generate Report</button>
         </div>
     </form>
 </div>

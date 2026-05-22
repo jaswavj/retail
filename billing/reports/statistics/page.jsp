@@ -19,7 +19,7 @@ Vector brands = prod.getBrandsName();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sales Statistics - Billing App</title>
-    <jsp:include page="/assets/common/head.jsp" />
+    <%@ include file="/assets/common/head.jsp" %>
     <style>
         .stat-card {
             border-radius: 8px;

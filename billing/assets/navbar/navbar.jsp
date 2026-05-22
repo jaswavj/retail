@@ -126,10 +126,11 @@ for (int i = 0; i < vecPer.size(); i++) {
       <div class="collapse sidebar-submenu" id="inventoryMenu">
         <a href="<%=request.getContextPath()%>/product/master/supplier/page.jsp" class="sidebar-subitem">Supplier</a>
         <a href="<%=request.getContextPath()%>/product/purchase/page.jsp" class="sidebar-subitem">Purchase Entry</a>
-        <a href="<%=request.getContextPath()%>/product/purchase/report/purchaseRegister/page.jsp" class="sidebar-subitem">Purchase Report</a>
         <a href="<%=request.getContextPath()%>/product/purchase/purchaseReturn/page.jsp" class="sidebar-subitem">Purchase Return</a>
+        <a href="<%=request.getContextPath()%>/product/purchase/report/purchaseRegister/page.jsp" class="sidebar-subitem">Purchase Report</a>
         <a href="<%=request.getContextPath()%>/product/purchase/purchaseReturn/report.jsp" class="sidebar-subitem">Purchase Return Report</a>
-      </div>
+        <a href="<%=request.getContextPath()%>/product/supplierPayment/report/page.jsp" class="sidebar-subitem">Supplier Payment Report</a>
+        </div>
     </div>
     <% } %>
 <% if (permissions.contains(8)) { %>
@@ -198,17 +199,7 @@ for (int i = 0; i < vecPer.size(); i++) {
           </div>
         </div>
         
-        <!-- Purchase Reports Submenu -->
-        <div class="sidebar-submenu-item">
-          <a href="#" class="sidebar-subitem" data-bs-toggle="collapse" data-bs-target="#purchaseReportMenu">
-            <i class="fas fa-file-invoice me-2"></i>Purchase Reports
-            <i class="fas fa-chevron-down ms-auto"></i>
-          </a>
-          <div class="collapse sidebar-submenu" id="purchaseReportMenu">
-            <a href="<%=request.getContextPath()%>/product/purchase/report/purchaseRegister/page.jsp" class="sidebar-subitem">Purchase Report</a>
-            <a href="<%=request.getContextPath()%>/product/supplierPayment/report/page.jsp" class="sidebar-subitem">Supplier Payment Report</a>
-          </div>
-        </div>
+        
         
         <!-- GST Reports Submenu -->
         <div class="sidebar-submenu-item">
@@ -217,16 +208,7 @@ for (int i = 0; i < vecPer.size(); i++) {
             <i class="fas fa-chevron-down ms-auto"></i>
           </a>
           <div class="collapse sidebar-submenu" id="gstReportMenu">
-            <a href="<%=request.getContextPath()%>/reports/GST/gstr1/page.jsp" class="sidebar-subitem">
-              <i class="fas fa-file-invoice me-2"></i>GSTR-1 Return
-            </a>
-            <a href="<%=request.getContextPath()%>/reports/GST/GSTR3B/page.jsp" class="sidebar-subitem">
-              <i class="fas fa-file-invoice-dollar me-2"></i>GSTR-3B Monthly Return
-            </a>
-            <a href="<%=request.getContextPath()%>/reports/GST/validation/page.jsp" class="sidebar-subitem">
-              <i class="fas fa-check-double me-2"></i>GSTR-1 vs GSTR-3B Validation
-            </a>
-            <a href="<%=request.getContextPath()%>/reports/GST/salesGST/page.jsp" class="sidebar-subitem">Sales(GSTR-1)</a>
+            
             <a href="<%=request.getContextPath()%>/reports/GST/GSTSummary/page.jsp" class="sidebar-subitem">Sales Summary</a>
             <a href="<%=request.getContextPath()%>/reports/GST/purchaseGST/page.jsp" class="sidebar-subitem">Purchase GST</a>
             <a href="<%=request.getContextPath()%>/reports/GST/purchaseGSTSummary/page.jsp" class="sidebar-subitem">Purchase GST Summary</a>

@@ -25,24 +25,23 @@
     <title>Commission Report</title>
     <%@ include file="/assets/common/head.jsp" %>
     <style>
-        body { background: #f5f7fa; }
         .table td, .table th { vertical-align: middle; font-size: 0.85rem; }
         .bill-group-header td {
-            background: #e8f0fe;
+            background: var(--bill-bg);
             font-weight: 600;
-            color: #2d3748;
+            color: var(--bill-navy);
             font-size: 0.85rem;
             padding: 0.3rem 0.4rem;
         }
         .bill-subtotal td {
-            background: #f0fdf4;
+            background: rgba(5,150,105,0.08);
             font-weight: 600;
-            color: #276749;
+            color: var(--bill-green);
             font-size: 0.85rem;
             padding: 0.3rem 0.4rem;
         }
         .grand-total-row td {
-            background: #2d3748;
+            background: var(--bill-navy);
             color: #fff;
             font-weight: 700;
             font-size: 0.9rem;
@@ -56,41 +55,41 @@
 </head>
 <body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Commission Report");
+    request.setAttribute("pageSubtitle", "Reports — Customer Commission");
+    request.setAttribute("pageIcon",     "fa-solid fa-percent");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h5 class="mb-0">Commission Report</h5>
-            <p class="mb-0 text-muted" style="font-size:0.85rem;">
-                <strong>Customer:</strong> <%=customerName%> &nbsp;|&nbsp;
-                <strong>Period:</strong> <%=fromDate%> to <%=toDate%>
-            </p>
+<div class="container-fluid mt-3 mst-page">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="mb-0 text-muted"><strong>Customer:</strong> <%=customerName%> &nbsp;|&nbsp; <strong>Period:</strong> <%=fromDate%> to <%=toDate%></p>
+            <div class="d-flex gap-2 no-print">
+                <a href="<%=contextPath%>/reports/commissionReport/page.jsp" class="bb bb-outline"><i class="fa-solid fa-arrow-left me-1"></i>Back</a>
+                <button class="bb bb-navy" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
+                <button class="bb bb-green" onclick="exportTableToExcel('commTable','Commission_Report')"><i class="fa-solid fa-file-excel me-1"></i>Export</button>
+            </div>
         </div>
-        <div class="no-print">
-            <a href="<%=contextPath%>/reports/commissionReport/page.jsp" class="btn btn-secondary btn-sm me-2">&#8592; Back</a>
-            <button class="btn btn-primary btn-sm me-2" onclick="window.print()">&#128424; Print</button>
-            <button class="btn btn-success btn-sm" onclick="exportTableToExcel('commTable','Commission_Report')">&#128202; Export</button>
-        </div>
-    </div>
 
     <% if (rows == null || rows.size() == 0) { %>
     <div class="alert alert-info">No commission records found for the selected period and customer.</div>
     <% } else { %>
 
     <div class="table-responsive">
-    <table id="commTable" class="table table-bordered mb-0" style="font-size:0.85rem;">
-        <thead style="background: linear-gradient(135deg,#f7fafc 0%,#edf2f7 100%);">
+    <table id="commTable" class="table mb-0 mst-table">
+        <thead>
             <tr>
-                <th style="padding:0.4rem;color:#4a5568;font-size:0.85rem;">#</th>
-                <th style="padding:0.4rem;color:#4a5568;font-size:0.85rem;">Bill No</th>
-                <th style="padding:0.4rem;color:#4a5568;font-size:0.85rem;">Date</th>
-                <th style="padding:0.4rem;color:#4a5568;font-size:0.85rem;">Product</th>
-                <th style="padding:0.4rem;color:#4a5568;font-size:0.85rem;text-align:right;">Qty</th>
-                <th style="padding:0.4rem;color:#4a5568;font-size:0.85rem;text-align:right;">Price</th>
-                <th style="padding:0.4rem;color:#4a5568;font-size:0.85rem;text-align:right;">Disc</th>
-                <th style="padding:0.4rem;color:#4a5568;font-size:0.85rem;text-align:right;">Total</th>
-                <th style="padding:0.4rem;color:#4a5568;font-size:0.85rem;text-align:right;">Comm/Unit</th>
-                <th style="padding:0.4rem;color:#4a5568;font-size:0.85rem;text-align:right;">Commission</th>
+                <th>#</th>
+                <th>Bill No</th>
+                <th>Date</th>
+                <th>Product</th>
+                <th class="text-end">Qty</th>
+                <th class="text-end">Price</th>
+                <th class="text-end">Disc</th>
+                <th class="text-end">Total</th>
+                <th class="text-end">Comm/Unit</th>
+                <th class="text-end">Commission</th>
             </tr>
         </thead>
         <tbody>
@@ -133,17 +132,17 @@
             grandCommTotal += commAmt;
             grandSaleTotal += rowTotal;
         %>
-        <tr style="border-bottom:1px solid #f1f5f9;">
-            <td style="padding:0.4rem;color:#718096;border:none;"><%=serial%></td>
-            <td style="padding:0.4rem;color:#718096;border:none;"><%=billNo%></td>
-            <td style="padding:0.4rem;color:#718096;border:none;"><%=billDate%></td>
-            <td style="padding:0.4rem;color:#2d3748;border:none;"><%=prodName%></td>
-            <td style="padding:0.4rem;color:#718096;border:none;text-align:right;"><%=String.format("%.2f", qty)%></td>
-            <td style="padding:0.4rem;color:#718096;border:none;text-align:right;">&#8377;<%=String.format("%.2f", price)%></td>
-            <td style="padding:0.4rem;color:#718096;border:none;text-align:right;">&#8377;<%=String.format("%.2f", disc)%></td>
-            <td style="padding:0.4rem;color:#718096;border:none;text-align:right;">&#8377;<%=String.format("%.2f", rowTotal)%></td>
-            <td style="padding:0.4rem;color:#718096;border:none;text-align:right;">&#8377;<%=String.format("%.2f", commPerUnit)%></td>
-            <td style="padding:0.4rem;font-weight:600;color:#276749;border:none;text-align:right;">&#8377;<%=String.format("%.2f", commAmt)%></td>
+        <tr style="border-bottom:1px solid var(--bill-border-lt);">
+            <td><%=serial%></td>
+            <td><%=billNo%></td>
+            <td><%=billDate%></td>
+            <td><%=prodName%></td>
+            <td class="text-end"><%=String.format("%.2f", qty)%></td>
+            <td class="text-end">&#8377;<%=String.format("%.2f", price)%></td>
+            <td class="text-end">&#8377;<%=String.format("%.2f", disc)%></td>
+            <td class="text-end">&#8377;<%=String.format("%.2f", rowTotal)%></td>
+            <td class="text-end">&#8377;<%=String.format("%.2f", commPerUnit)%></td>
+            <td class="text-end" style="color:var(--bill-green);font-weight:600;">&#8377;<%=String.format("%.2f", commAmt)%></td>
         </tr>
         <% } %>
 
@@ -173,12 +172,15 @@
 <script>
 function exportTableToExcel(tableId, filename) {
     var table = document.getElementById(tableId);
-    var html  = table.outerHTML;
-    var url   = 'data:application/vnd.ms-excel,' + escape(html);
-    var a     = document.createElement('a');
-    a.href    = url;
+    var html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><style>th,td{border:1px solid #000;padding:4px}</style></head><body>' + table.outerHTML + '</body></html>';
+    var blob = new Blob(['\ufeff', html], {type: 'application/vnd.ms-excel'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
     a.download = filename + '.xls';
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
 }
 </script>
 </body>

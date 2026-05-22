@@ -4,7 +4,6 @@
 <jsp:useBean id="prod" class="product.productBean" />
 <%
 String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-String contextPath = request.getContextPath();
 Vector attenderList = prod.getActiveAttenders();
 %>
 <!DOCTYPE html>
@@ -13,13 +12,18 @@ Vector attenderList = prod.getActiveAttenders();
     <meta charset="UTF-8">
     <title>Attender-Wise Sales Report</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <jsp:include page="/assets/common/head.jsp" />
+    <%@ include file="/assets/common/head.jsp" %>
 </head>
 <body>
     <jsp:include page="/assets/navbar/navbar.jsp" />
+<%
+    request.setAttribute("pageTitle",    "Attender-Wise Sales");
+    request.setAttribute("pageSubtitle", "Reports — Attender Performance");
+    request.setAttribute("pageIcon",     "fa-solid fa-person-chalkboard");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container mt-4">
-        <h3 class="mb-4">Attender-Wise Sales Report</h3>
+    <div class="container-fluid mt-3 mst-page">
 
         <form action="<%=contextPath%>/reports/attenderSales/page0.jsp" method="post" class="row g-3">
             <!-- From Date -->
@@ -57,7 +61,7 @@ Vector attenderList = prod.getActiveAttenders();
 
             <!-- Submit -->
             <div class="col-md-3 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+                <button type="submit" class="bb bb-primary w-100">Generate Report</button>
             </div>
         </form>
     </div>
