@@ -19,21 +19,8 @@ if (userId == null) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <%@ include file="/assets/common/head.jsp" %>
     <style>
-        body {
-            background: #f5f7fa;
-        }
-        .navbar {
-            background-color: #4e73df;
-        }
-        .navbar-brand {
-            color: #fff !important;
-        }
-        .table td, .table th {
-            vertical-align: middle;
-        }
-        .btn-edit, .btn-delete {
-            margin: 0 2px;
-        }
+        .table td, .table th { vertical-align: middle; }
+        .btn-edit, .btn-delete { margin: 0 2px; }
     </style>
 </head>
 <body>
@@ -51,27 +38,33 @@ String type = request.getParameter("type"); // success / danger / warning
 
     <%@ include file="/assets/navbar/navbar.jsp" %>
     <!-- Top Navbar -->
+<%
+    request.setAttribute("pageTitle",    "Brands");
+    request.setAttribute("pageSubtitle", "Product Master — Brands");
+    request.setAttribute("pageIcon",     "fa-solid fa-tag");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container-fluid mt-2" style="max-width: 1400px;">
+    <div class="container-fluid mt-2 mst-page" style="max-width: 1400px;">
         <div class="row g-2">
             <!-- Left Column - Add Brand Form -->
             <div class="col-md-7">
-                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07); border-radius: 8px; height: 100%;">
-                    <div class="card-header" style="background: var(--page-header-card-bg); color: white; border-radius: 8px 8px 0 0; padding: 0.75rem 1rem;">
-                        <h6 class="mb-0" style="font-weight: 600; font-size: 0.95rem;"><i class="fas fa-plus-circle me-2"></i>Add New <%=head2%></h6>
+                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0,0,0,.07); border-radius: 8px; height: 100%;">
+                    <div class="mst-card-header">
+                        <h6 class="mb-0" style="font-size: 0.95rem;"><i class="fas fa-plus-circle me-2"></i>Add New <%=head2%></h6>
                     </div>
                     <div class="card-body" style="padding: 1rem;">
                         <form action="<%=contextPath%>/product/master/brands/brands1.jsp" method="post">
                             <div class="mb-3">
                                 <div class="input-outline">
-                                    <input type="text" name="catName" class="form-control" placeholder="" style="padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem;" required>
-                                    <label style="background: white; padding: 0 6px; font-size: 0.85rem;"><%=head2%> Name</label>
+                                    <input type="text" name="catName" class="form-control" placeholder="" required>
+                                    <label><%=head2%> Name</label>
                                 </div>
                             </div>
                             <%
                             out.print(contextPath);
                             %>
-                            <button type="submit" class="btn btn-primary w-100" style="padding: 8px 10px; font-size: 0.9rem;">
+                            <button type="submit" class="bb bb-primary w-100">
                                 <i class="fas fa-save me-1"></i>Add <%=head2%>
                             </button>
                         </form>
@@ -81,18 +74,18 @@ String type = request.getParameter("type"); // success / danger / warning
 
             <!-- Right Column - Brand List Table -->
             <div class="col-md-5">
-                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07); border-radius: 8px;">
-                    <div class="card-header" style="background: white; border-bottom: 1px solid #f7fafc; border-radius: 8px 8px 0 0; padding: 0.75rem 1rem;">
-                        <h6 class="mb-0" style="color: #2d3748; font-weight: 600; font-size: 0.95rem;"><i class="fas fa-list me-2"></i><%=head2%> List</h6>
+                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0,0,0,.07); border-radius: 8px;">
+                    <div class="mst-card-header-light">
+                        <h6 class="mb-0" style="font-size: 0.95rem;"><i class="fas fa-list me-2"></i><%=head2%> List</h6>
                     </div>
                     <div class="card-body" style="padding: 0;">
 
-                <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
-                    <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
+                <table class="table table-hover mb-0 mst-table">
+                    <thead>
                         <tr>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">#</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;"><i class="fas fa-tag me-1"></i>Name</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; text-align: center; border: none; font-size: 0.85rem;"><i class="fas fa-cog me-1"></i>Actions</th>
+                            <th>#</th>
+                            <th><i class="fas fa-tag me-1"></i>Name</th>
+                            <th style="text-align: center;"><i class="fas fa-cog me-1"></i>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -109,11 +102,11 @@ String type = request.getParameter("type"); // success / danger / warning
                                     String brandsName = vec1.elementAt(0).toString();
                                     int brandsId = Integer.parseInt(vec1.elementAt(1).toString());
                         %>
-                        <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=i+1%></td>
-                            <td style="padding: 0.4rem; color: #2d3748; font-weight: 500; border: none; font-size: 0.9rem;"><%=brandsName%></td>
-                            <td style="padding: 0.4rem; text-align: center; border: none;">
-                                <button onclick="openEditModal('<%=brandsName.replace("'", "\\'")%>', <%=brandsId%>)" class="btn btn-sm" style="background: var(--primary-gradient); color: white; border-radius: 8px 8px 0 0; padding: 0.75rem 1rem;">
+                        <tr>
+                            <td><%=i+1%></td>
+                            <td style="font-weight: 500;"><%=brandsName%></td>
+                            <td style="text-align: center;">
+                                <button onclick="openEditModal('<%=brandsName.replace("'", "\\'")%>', <%=brandsId%>)" class="btn btn-sm btn-outline-violet">
                                     <i class="fas fa-edit me-1"></i>Edit
                                 </button>
                             </td>
@@ -123,7 +116,7 @@ String type = request.getParameter("type"); // success / danger / warning
                             } else {
                         %>
                         <tr>
-                            <td colspan="3" class="text-center" style="padding: 2rem; color: #718096;">
+                            <td colspan="3" class="text-center" style="padding: 2rem;">
                                 <i class="fas fa-inbox fa-3x mb-3" style="opacity: 0.3;"></i>
                                 <p class="mb-0">No brands found. Add your first brand above.</p>
                             </td>
@@ -147,7 +140,7 @@ String type = request.getParameter("type"); // success / danger / warning
     <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="border-radius: 8px; border: none; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);">
-                <div class="modal-header" style="background: var(--page-header-card-bg); color: white; border-radius: 8px 8px 0 0; padding: 0.75rem 1rem;">
+                <div class="modal-header mst-card-header">
                     <h6 class="modal-title mb-0" style="font-size: 0.95rem;"><i class="fas fa-edit me-2"></i>Edit <%=head2%></h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -156,14 +149,14 @@ String type = request.getParameter("type"); // success / danger / warning
                         <input type="hidden" name="brandsId" id="editBrandsId">
                         
                         <div class="mb-2">
-                            <label class="form-label" style="color: #4a5568; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">Current Name</label>
-                            <input type="text" id="currentName" class="form-control" disabled style="background: #f7fafc; border: 2px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; font-size: 0.9rem;">
+                            <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.3rem;">Current Name</label>
+                            <input type="text" id="currentName" class="form-control" disabled>
                         </div>
                         
                         <div class="mb-2">
                             <div class="input-outline">
-                                <input type="text" name="newBrands" id="editBrandsName" class="form-control" placeholder="" style="padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem;" required>
-                                <label style="background: white; padding: 0 6px; font-size: 0.85rem;">New <%=head2%> Name</label>
+                                <input type="text" name="newBrands" id="editBrandsName" class="form-control" placeholder="" required>
+                                <label>New <%=head2%> Name</label>
                             </div>
                         </div>
                         
@@ -178,10 +171,10 @@ String type = request.getParameter("type"); // success / danger / warning
                         </div>
                         
                         <div class="d-flex gap-2 justify-content-end">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 6px 16px; border-radius: 6px; font-size: 0.85rem;">
+                            <button type="button" class="bb bb-outline" data-bs-dismiss="modal">
                                 <i class="fas fa-times me-1"></i>Cancel
                             </button>
-                            <button type="submit" class="btn btn-primary" style="padding: 6px 16px; border-radius: 6px; background: var(--primary-gradient); border: none; font-size: 0.85rem;">
+                            <button type="submit" class="bb bb-primary">
                                 <i class="fas fa-save me-1"></i>Update
                             </button>
                         </div>

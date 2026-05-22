@@ -14,22 +14,8 @@
     <%@ include file="/assets/common/head.jsp" %>
 
     <style>
-        body {
-            background: #f5f7fa;
-        }
-        .navbar {
-            background-color: #4e73df;
-        }
-        .navbar-brand {
-            color: #fff !important;
-        }
-        .table td, .table th {
-            vertical-align: middle;
-        }
-        .btn-edit, .btn-delete {
-            margin: 0 2px;
-        }
-
+        .table td, .table th { vertical-align: middle; }
+        .btn-edit, .btn-delete { margin: 0 2px; }
     </style>
     
 </head>
@@ -37,6 +23,12 @@
 
     <%@ include file="/assets/navbar/navbar.jsp" %>
     <!-- Top Navbar -->
+<%
+    request.setAttribute("pageTitle",    "Suppliers");
+    request.setAttribute("pageSubtitle", "Product Master — Suppliers");
+    request.setAttribute("pageIcon",     "fa-solid fa-truck");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 <%
 String msg  = request.getParameter("msg");
 String type = request.getParameter("type");
@@ -50,8 +42,7 @@ String type = request.getParameter("type");
 <% } %>
 
 
-    <div class="container mt-4 ">
-        <h3>Supplier Details</h3>
+    <div class="container mt-4 mst-page">
         
         <!-- Add Category Form -->
         <div class="card mb-4">
@@ -80,7 +71,7 @@ String type = request.getParameter("type");
                     </div>
                     
                     <div class="col-md-12">
-                        <button type="submit" class="btn btn-primary">Add Supplier</button>
+                <button type="submit" class="bb bb-primary">Add Supplier</button>
                     </div>
                 </form>
             </div>
@@ -90,19 +81,19 @@ String type = request.getParameter("type");
         
         <div class="card">
             <div class="card-body">
-                <h5>Supplier List</h5>
+                <h5 class="mb-3">Supplier List</h5>
                 
                 <div class="table-responsive">
-                <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; min-width: 700px;">
-                    <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
+                <table class="table table-hover mb-0 mst-table" style="min-width: 700px;">
+                    <thead>
                         <tr>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">#</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Name</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Phone Number</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">GST Status</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">GSTIN</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Description</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Functions</th>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Phone Number</th>
+                            <th>GST Status</th>
+                            <th>GSTIN</th>
+                            <th>Description</th>
+                            <th>Functions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -121,21 +112,21 @@ String type = request.getParameter("type");
 
 
                         %>
-                        <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=i+1%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=Name%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=vec1.elementAt(3)%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;">
+                        <tr>
+                            <td><%=i+1%></td>
+                            <td><%=Name%></td>
+                            <td><%=vec1.elementAt(3)%></td>
+                            <td>
                                 <% if (isGst == 1) { %>
                                     <span class="badge bg-success">Registered</span>
                                 <% } else { %>
                                     <span class="badge bg-secondary">Not Registered</span>
                                 <% } %>
                             </td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=gstin%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=vec1.elementAt(2)%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;">
-                                <a href="<%=contextPath%>/product/master/supplier/edit.jsp?Name=<%=Name%>&id=<%=id%>&desc=<%=desc%>&phn=<%=phn%>&gstin=<%=gstin%>&isGst=<%=isGst%>" class="btn btn-warning btn-sm btn-edit">Edit</a>
+                            <td><%=gstin%></td>
+                            <td><%=vec1.elementAt(2)%></td>
+                            <td>
+                                <a href="<%=contextPath%>/product/master/supplier/edit.jsp?Name=<%=Name%>&id=<%=id%>&desc=<%=desc%>&phn=<%=phn%>&gstin=<%=gstin%>&isGst=<%=isGst%>" class="btn btn-sm btn-outline-warning btn-edit">Edit</a>
                                  
                             </td>
                         </tr>

@@ -12,20 +12,22 @@
     <%@ include file="/assets/common/head.jsp" %>
 
     <style>
-        body { background-color: #f8f9fa; }
-        .table th { background-color: #4e73df; color: white; }
-        
+        /* BC (Barcode) Page – structural only, colors in theme.css */
+        .bc-page { padding: 20px; }
+        .bc-toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .bc-search  { flex: 1; min-width: 200px; }
+        .bc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         @media (max-width: 768px) {
-            .row.mb-3 .col-md-6 {
-                margin-bottom: 0.5rem;
-            }
-            .row.mb-3 .col-md-6.text-end {
-                text-align: left !important;
-            }
-            .row.mb-3 .col-md-6.text-end button {
-                width: 100%;
-                margin-bottom: 0.5rem;
-            }
+            .bc-toolbar  { flex-direction: column; align-items: stretch; }
+            .bc-search   { min-width: 0; }
+            .bc-actions  { flex-direction: column; }
+            .bc-actions .bb { justify-content: center; width: 100%; }
         }
     </style>
 </head>
@@ -33,35 +35,40 @@
 
 <%@ include file="/assets/navbar/navbar.jsp" %>
 
-<div class="container mt-5">
-    <h3 class="text-center mb-4">Item Report</h3>
-    
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <input type="text" class="form-control" id="searchBox" placeholder="🔍 Search by item name, code, or barcode..." onkeyup="filterTable()">
+<%
+    request.setAttribute("pageTitle",    "Item Report");
+    request.setAttribute("pageSubtitle", "Product Barcodes — Print Queue");
+    request.setAttribute("pageIcon",     "fa-solid fa-barcode");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
+
+<div class="container bc-page">
+    <div class="bc-toolbar">
+        <div class="bc-search">
+            <input type="text" class="form-control fg-inp" id="searchBox" placeholder="Search by item name, code, or barcode..." onkeyup="filterTable()">
         </div>
-        <div class="col-md-6 text-end">
-            <button id="printQueueBtn" class="btn btn-success" onclick="printAllQueued()">
+        <div class="bc-actions">
+            <button id="printQueueBtn" class="bb bb-primary" onclick="printAllQueued()">
                 <i class="fas fa-print"></i> Print All Queued (<span id="queueCount">0</span>)
             </button>
-            <button class="btn btn-warning" onclick="clearQueue()">
+            <button class="bb bb-outline" onclick="clearQueue()">
                 <i class="fas fa-trash"></i> Clear Queue
             </button>
         </div>
     </div>
 
     <div class="table-responsive">
-    <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; min-width: 700px;">
-        <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
+    <table class="table table-hover bc-table mb-0" style="min-width: 700px;">
+        <thead>
             <tr>
-                <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;" class="text-center">S.No</th>
-                <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;" class="text-center">Item Name</th>
-                <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;" class="text-center">Item Code</th>
-                <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;" class="text-center">Barcode</th>
-                <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;" class="text-center">Price (MRP)</th>
-                <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;" class="text-center">Size/Unit</th>
-                <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;" class="text-center">Quantity</th>
-                <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;" class="text-center">Action</th>
+                <th class="text-center">S.No</th>
+                <th class="text-center">Item Name</th>
+                <th class="text-center">Item Code</th>
+                <th class="text-center">Barcode</th>
+                <th class="text-center">Price (MRP)</th>
+                <th class="text-center">Size/Unit</th>
+                <th class="text-center">Quantity</th>
+                <th class="text-center">Action</th>
             </tr>
         </thead>
         <tbody id="itemTable"></tbody>
@@ -152,8 +159,8 @@ products.forEach((p, index) => {
       <td><svg id="barcode-${index}"></svg></td>
       <td>₹${parseFloat(mrp).toFixed(2)}</td>
       <td>${unit}</td>
-      <td><input type="number" class="form-control form-control-sm" value="10" min="1"></td>
-      <td><button class="btn btn-sm btn-primary" onclick="addToQueue(${index}, '${code}')">Add to Queue</button></td>
+      <td><input type="number" class="form-control form-control-sm tbl-inp" value="10" min="1"></td>
+      <td><button class="btn btn-sm btn-outline-violet" onclick="addToQueue(${index}, '${code}')">Add to Queue</button></td>
     `;
 
     tableBody.appendChild(row);
@@ -178,13 +185,13 @@ function addToQueue(index, code) {
     const btn = row.cells[7].querySelector("button");
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-check"></i> Added!';
-    btn.classList.add('btn-success');
-    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-outline-success');
+    btn.classList.remove('btn-outline-violet');
     
     setTimeout(() => {
         btn.innerHTML = originalText;
-        btn.classList.remove('btn-success');
-        btn.classList.add('btn-primary');
+        btn.classList.remove('btn-outline-success');
+        btn.classList.add('btn-outline-violet');
     }, 1000);
 }
 

@@ -92,11 +92,11 @@ html,body {
 }
 
 .form-control {
-    border-color: rgb(96, 52, 114);
+    border-color: #c9a227;
 }
 .btn-primary {
-    background: linear-gradient(135deg, #570a57, #570a57, #570a57) !important;
-    border-color: #6a1b9a !important;
+    background: linear-gradient(135deg, #c9a227, #a07c1a) !important;
+    border-color: #c9a227 !important;
 }
 
 /* Remove old sidebar styles - now in navbar.jsp */
@@ -127,17 +127,17 @@ table.table, table.table-striped, table.table-bordered {
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    background-color: #2a0d3d; /* Dark Violet background */
-    color: #e0d9ff; /* Light text color */
+    background-color: #1a2540; /* Dark Navy background */
+    color: #e8eaf0; /* Light text color */
 }
 
 table.table thead th, table.table-striped thead th, table.table-bordered thead th {
-    background: linear-gradient(135deg, #570a57, #570a57, #570a57); 
+    background: linear-gradient(135deg, #1a2540, #1e2d55); 
     color: #fff;
     font-weight: 400;
     text-transform: uppercase;
     font-size: 11px;
-    border-color: #6a1b9a; 
+    border-color: rgba(201, 162, 39, 0.3); 
     padding: 7px 15px;
 }
 .container {
@@ -156,12 +156,12 @@ table.table thead th, table.table-striped thead th, table.table-bordered thead t
     }
 }
 .btn-outline-violet {
-    color: #570a57;           /* Violet text */
-    border-color: #570a57;    /* Violet border */
+    color: #1a2540;           /* Navy text */
+    border-color: #1a2540;    /* Navy border */
 }
 
 .btn-outline-violet:hover {
     color: #fff;
-    background: linear-gradient(135deg, #570a57, #570a57, #570a57); 
-    border-color: #570a57;
+    background: linear-gradient(135deg, #1a2540, #1e2d55); 
+    border-color: #1a2540;
 }

@@ -14,31 +14,11 @@
     <%@ include file="/assets/common/head.jsp" %>
 
     <style>
-        body {
-            background: #f5f7fa;
-        }
-        .navbar {
-            background-color: #4e73df;
-        }
-        .navbar-brand {
-            color: #fff !important;
-        }
-        .table td, .table th {
-            vertical-align: middle;
-        }
-        .btn-edit, .btn-delete {
-            margin: 0 2px;
-        }
+        .table td, .table th { vertical-align: middle; }
+        .btn-edit, .btn-delete { margin: 0 2px; }
         @media (max-width: 768px) {
-            .container {
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-            }
-            h3 {
-                font-size: 1.25rem;
-            }
+            .container { padding-left: 0.5rem; padding-right: 0.5rem; }
         }
-
     </style>
     
 </head>
@@ -46,6 +26,12 @@
 
     <%@ include file="/assets/navbar/navbar.jsp" %>
     <!-- Top Navbar -->
+<%
+    request.setAttribute("pageTitle",    "Customers");
+    request.setAttribute("pageSubtitle", "Customer Management");
+    request.setAttribute("pageIcon",     "fa-solid fa-users");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 <%
 String msg  = request.getParameter("msg");
 String type = request.getParameter("type");
@@ -59,8 +45,7 @@ String type = request.getParameter("type");
 <% } %>
 
 
-    <div class="container mt-4 ">
-        <h3>Customer Details</h3>
+    <div class="container mt-4 mst-page">
         
         <!-- Add Customer Form -->
         <div class="card mb-4">
@@ -103,8 +88,8 @@ String type = request.getParameter("type");
                     
                     <div class="col-md-12">
                         <input type="hidden" name="customerId" id="customerId" value="">
-                        <button type="submit" id="submitBtn" class="btn btn-primary">Add Customer</button>
-                        <button type="button" id="cancelBtn" class="btn btn-secondary ms-2" style="display:none;" onclick="resetFormToAdd()">Cancel</button>
+                        <button type="submit" id="submitBtn" class="bb bb-primary">Add Customer</button>
+                        <button type="button" id="cancelBtn" class="bb bb-outline ms-2" style="display:none;" onclick="resetFormToAdd()">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -220,17 +205,17 @@ String type = request.getParameter("type");
         
         <div class="card">
             <div class="card-body">
-                <h5>Customer List</h5>
+                <h5 class="mb-3">Customer List</h5>
                 <div class="table-responsive">
-                <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; min-width: 600px;">
-                    <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
+                <table class="table table-hover mb-0 mst-table" style="min-width: 600px;">
+                    <thead>
                         <tr>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">#</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Name</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Phone Number</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">GSTIN</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Address</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Functions</th>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Phone Number</th>
+                            <th>GSTIN</th>
+                            <th>Address</th>
+                            <th>Functions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -254,14 +239,14 @@ String type = request.getParameter("type");
 
 
                         %>
-                        <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=i+1%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=Name%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=phn%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=gstin%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=address%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;">
-                                <button type="button" class="btn btn-warning btn-sm btn-edit" onclick="populateForm(<%=id%>, '<%=safeName%>', '<%=safePhn%>', '<%=safeAddress%>', '<%=safeGstin%>', <%=isGstStr%>, <%=isEligibleStr%>)">Edit</button>
+                        <tr>
+                            <td><%=i+1%></td>
+                            <td><%=Name%></td>
+                            <td><%=phn%></td>
+                            <td><%=gstin%></td>
+                            <td><%=address%></td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-warning btn-edit" onclick="populateForm(<%=id%>, '<%=safeName%>', '<%=safePhn%>', '<%=safeAddress%>', '<%=safeGstin%>', <%=isGstStr%>, <%=isEligibleStr%>)">Edit</button>
                                  
                             </td>
                         </tr>

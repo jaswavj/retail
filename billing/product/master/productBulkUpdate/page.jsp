@@ -24,46 +24,17 @@ if (filterCategory == null) filterCategory = "";
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <%@ include file="/assets/common/head.jsp" %>
     <style>
-        body {
-            background: #f5f7fa;
-        }
-        .filter-card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-        .product-table {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
-        }
-        .table-header {
-            background: var(--page-header-card-bg);
-            color: white;
-            padding: 0.75rem 1rem;
-            border-radius: 8px 8px 0 0;
-        }
-        .editable-input {
-            border: 1px solid #ddd;
-            padding: 5px 8px;
-            border-radius: 4px;
-            width: 100%;
-            font-size: 0.9rem;
-        }
-        .btn-update {
-            padding: 5px 15px;
-            font-size: 0.85rem;
-        }
-        .table td, .table th {
-            vertical-align: middle;
-            font-size: 0.9rem;
-        }
+        .table td, .table th { vertical-align: middle; font-size: 0.9rem; }
     </style>
 </head>
 <body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Bulk Update");
+    request.setAttribute("pageSubtitle", "Product Master — Bulk Price Update");
+    request.setAttribute("pageIcon",     "fa-solid fa-pen-to-square");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
 <%
 String msg = request.getParameter("msg");
@@ -77,17 +48,17 @@ String type = request.getParameter("type");
 </div>
 <% } %>
 
-    <div class="container-fluid mt-2" style="max-width: 1800px;">
+    <div class="container-fluid mt-2 mst-page" style="max-width: 1800px;">
         <!-- Filter Section -->
-        <div class="filter-card">
+        <div class="mst-filter-card">
             <form method="get" action="<%=contextPath%>/product/master/productBulkUpdate/page.jsp" class="row g-2 align-items-end">
                 <div class="col-md-4">
                     <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Filter by <%=head3%> Name</label>
-                    <input type="text" name="filterName" class="form-control" placeholder="Enter product name..." value="<%=filterName%>" style="padding: 7px 10px; font-size: 0.9rem;">
+                    <input type="text" name="filterName" class="form-control" placeholder="Enter product name..." value="<%=filterName%>">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Filter by <%=head1%></label>
-                    <select name="filterCategory" class="form-select" style="padding: 7px 10px; font-size: 0.9rem;">
+                    <select name="filterCategory" class="form-select">
                         <option value="">All Categories</option>
                         <%
                             Vector categories = prod.getCategoryName();
@@ -107,12 +78,12 @@ String type = request.getParameter("type");
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100" style="padding: 7px 10px; font-size: 0.9rem;">
+                    <button type="submit" class="bb bb-primary w-100">
                         <i class="fas fa-filter me-1"></i> Filter
                     </button>
                 </div>
                 <div class="col-md-2">
-                    <a href="<%=contextPath%>/product/master/productBulkUpdate/page.jsp" class="btn btn-secondary w-100" style="padding: 7px 10px; font-size: 0.9rem;">
+                    <a href="<%=contextPath%>/product/master/productBulkUpdate/page.jsp" class="bb bb-outline w-100">
                         <i class="fas fa-redo me-1"></i> Reset
                     </a>
                 </div>
@@ -120,11 +91,11 @@ String type = request.getParameter("type");
         </div>
 
         <!-- Products Table -->
-        <div class="product-table">
+        <div class="card border-0 shadow-sm">
             
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead style="background-color: #f8f9fa;">
+                <table class="table table-hover mb-0 mst-table">
+                    <thead>
                         <tr>
                             <th style="width: 5%;">#</th>
                             <th style="width: 20%;"><%=head3%> Name</th>
@@ -169,7 +140,7 @@ String type = request.getParameter("type");
                                 <input type="number" step="1" class="editable-input" id="gst-<%=productId%>" value="<%=gst%>" min="0" max="100">
                             </td>
                             <td>
-                                <button class="btn btn-success btn-sm btn-update" onclick="updateProduct(<%=productId%>, <%=batchId%>)">
+                                <button class="btn btn-sm btn-outline-success btn-update" onclick="updateProduct(<%=productId%>, <%=batchId%>)">
                                     <i class="fas fa-save me-1"></i> Update
                                 </button>
                             </td>

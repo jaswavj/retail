@@ -20,29 +20,22 @@ if (userId == null) {
     <!-- Bootstrap CSS -->
     <%@ include file="/assets/common/head.jsp" %>
     <style>
-        body {
-            background: #f5f7fa;
-        }
-        .table td, .table th {
-            vertical-align: middle;
-        }
+        .table td, .table th { vertical-align: middle; }
         @media (max-width: 768px) {
-            .card-header .input-group {
-                width: 100% !important;
-                margin-top: 0.5rem;
-            }
-            .card-header .d-flex {
-                flex-direction: column;
-                align-items: stretch !important;
-            }
-            .card-header h6 {
-                margin-bottom: 0.5rem;
-            }
+            .card-header .input-group { width: 100% !important; margin-top: 0.5rem; }
+            .card-header .d-flex { flex-direction: column; align-items: stretch !important; }
+            .card-header h6 { margin-bottom: 0.5rem; }
         }
     </style>
 </head>
 <body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Products");
+    request.setAttribute("pageSubtitle", "Product Master — Products");
+    request.setAttribute("pageIcon",     "fa-solid fa-box");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 <%
 String msg = request.getParameter("msg");
 String type = request.getParameter("type"); // success / warning / danger / info
@@ -55,13 +48,13 @@ String type = request.getParameter("type"); // success / warning / danger / info
 </div>
 <% } %>
 
-    <div class="container-fluid mt-2" style="max-width: 1600px;">
+    <div class="container-fluid mt-2 mst-page" style="max-width: 1600px;">
         <div class="row g-2">
             <!-- Left Column - Add Product Form -->
             <div class="col-md-5">
-                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07); border-radius: 8px;">
-                    <div class="card-header" style="background: var(--page-header-card-bg); color: white; border-radius: 8px 8px 0 0; padding: 0.75rem 1rem;">
-                        <h6 class="mb-0" style="font-weight: 600; font-size: 0.95rem;"><i class="fas fa-plus-circle me-2"></i>Add New <%=head3%></h6>
+                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0,0,0,.07); border-radius: 8px;">
+                    <div class="mst-card-header">
+                        <h6 class="mb-0" style="font-size: 0.95rem;"><i class="fas fa-plus-circle me-2"></i>Add New <%=head3%></h6>
                     </div>
                     <div class="card-body" style="padding: 1rem;">
                         <form id="productForm" action="<%=contextPath%>/product/master/product/product1.jsp" method="post" class="row g-2">
@@ -185,10 +178,10 @@ String type = request.getParameter("type"); // success / warning / danger / info
                                 </select>
                             </div>
                             <div class="col-md-12 mt-2 d-flex gap-2">
-                                <button type="submit" id="submitBtn" class="btn btn-primary flex-grow-1" style="padding: 8px 10px; font-size: 0.9rem;">
+                                <button type="submit" id="submitBtn" class="bb bb-primary flex-grow-1">
                                     <i class="fas fa-save me-1" id="submitBtnIcon"></i><span id="submitBtnText">Add <%=head3%></span>
                                 </button>
-                                <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="padding: 8px 10px; font-size: 0.9rem; display: none;" onclick="resetForm()">
+                                <button type="button" id="cancelEditBtn" class="bb bb-outline" style="display: none;" onclick="resetForm()">
                                     <i class="fas fa-times me-1"></i>Cancel
                                 </button>
                             </div>
@@ -199,28 +192,28 @@ String type = request.getParameter("type"); // success / warning / danger / info
 
             <!-- Right Column - Product List Table -->
             <div class="col-md-7">
-                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07); border-radius: 8px;">
-                    <div class="card-header" style="background: white; border-bottom: 1px solid #f7fafc; border-radius: 8px 8px 0 0; padding: 0.75rem 1rem;">
+                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0,0,0,.07); border-radius: 8px;">
+                    <div class="mst-card-header-light">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0" style="color: #2d3748; font-weight: 600; font-size: 0.95rem;"><i class="fas fa-list me-2"></i><%=head3%> List</h6>
+                            <h6 class="mb-0" style="font-size: 0.95rem;"><i class="fas fa-list me-2"></i><%=head3%> List</h6>
                             <div class="input-group" style="width: 300px;">
-                                <span class="input-group-text" style="background: #f8f9fa; border: 1px solid #dee2e6;"><i class="fas fa-search"></i></span>
-                                <input type="text" id="productSearch" class="form-control" placeholder="Search products..." style="border-left: none; font-size: 0.85rem;">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="productSearch" class="form-control mst-search-input" placeholder="Search products...">
                             </div>
                         </div>
                     </div>
                     <div class="card-body" style="padding: 0; max-height: 380px; overflow-y: auto; overflow-x: auto;">
                         <div class="table-responsive">
-                        <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; font-size: 0.85rem; table-layout: fixed; width: 100%; min-width: 600px;">
-                            <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); position: sticky; top: 0; z-index: 10;">
+                        <table class="table table-hover mb-0 mst-table" style="table-layout: fixed; width: 100%; min-width: 600px;">
+                            <thead style="position: sticky; top: 0; z-index: 10;">
                                 <tr>
-                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 5%;">#</th>
-                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; text-align: center; border: none; font-size: 0.8rem; width: 10%;">Action</th>
-                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 18%;">Name</th>
-                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 10%;">Code</th>
-                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 12%;"><%=head1%></th>
-                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 10%;">MRP</th>
-                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 10%;">Stock</th>
+                                    <th style="width: 5%;">#</th>
+                                    <th style="text-align: center; width: 10%;">Action</th>
+                                    <th style="width: 18%;">Name</th>
+                                    <th style="width: 10%;">Code</th>
+                                    <th style="width: 12%;"><%=head1%></th>
+                                    <th style="width: 10%;">MRP</th>
+                                    <th style="width: 10%;">Stock</th>
                                 </tr>
                             </thead>
                             <tbody id="productTableBody">

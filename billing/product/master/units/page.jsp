@@ -11,15 +11,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <%@ include file="/assets/common/head.jsp" %>
     <style>
-        body { background: #f5f7fa; }
-        .navbar { background-color: #4e73df; }
-        .navbar-brand { color: #fff !important; }
         .table td, .table th { vertical-align: middle; }
         .badge { padding: 0.35em 0.65em; }
     </style>
 </head>
 <body>
     <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Units");
+    request.setAttribute("pageSubtitle", "Product Master — Units & Conversion");
+    request.setAttribute("pageIcon",     "fa-solid fa-ruler");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
 <%
 String msg = request.getParameter("msg");
@@ -33,8 +36,7 @@ String type = request.getParameter("type");
 </div>
 <% } %>
 
-    <div class="container mt-4">
-        <h3>Units Management</h3>
+    <div class="container mt-4 mst-page">
         
         <!-- Add Unit Form -->
         <div class="card mb-4">
@@ -55,7 +57,7 @@ String type = request.getParameter("type");
                     </div>
                     
                     <div class="col-md-12">
-                        <button type="submit" class="btn btn-primary">Add Unit</button>
+                            <button type="submit" class="bb bb-primary">Add Unit</button>
                     </div>
                 </form>
             </div>
@@ -64,17 +66,17 @@ String type = request.getParameter("type");
         <!-- Units List Table -->
         <div class="card">
             <div class="card-body">
-                <h5>Units List</h5>
+                <h5 class="mb-3">Units List</h5>
 
-                <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
-                    <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);">
+                <table class="table table-hover mb-0 mst-table">
+                    <thead>
                         <tr>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">#</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Name</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Convertion Unit</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Convertion Calculation</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Status</th>
-                            <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.85rem;">Actions</th>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Convertion Unit</th>
+                            <th>Convertion Calculation</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -88,24 +90,24 @@ String type = request.getParameter("type");
                                 String convertionCalculation = vec1.elementAt(3) != null ? vec1.elementAt(3).toString() : "-";
                                 int isActive = Integer.parseInt(vec1.elementAt(4).toString());
                         %>
-                        <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;">
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=i+1%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=name%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=convertionUnit%></td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;"><%=convertionCalculation%></td>
-                            <td style="padding: 0.4rem; border: none; font-size: 0.9rem;">
+                        <tr>
+                            <td><%=i+1%></td>
+                            <td><%=name%></td>
+                            <td><%=convertionUnit%></td>
+                            <td><%=convertionCalculation%></td>
+                            <td>
                                 <% if (isActive == 1) { %>
                                     <span class="badge bg-success">Active</span>
                                 <% } else { %>
                                     <span class="badge bg-danger">Blocked</span>
                                 <% } %>
                             </td>
-                            <td style="padding: 0.4rem; color: #718096; border: none; font-size: 0.9rem;">
-                                <a href="<%=contextPath%>/product/master/units/edit.jsp?id=<%=id%>" class="btn btn-warning btn-sm">Edit</a>
+                            <td>
+                                <a href="<%=contextPath%>/product/master/units/edit.jsp?id=<%=id%>" class="btn btn-sm btn-outline-warning">Edit</a>
                                 <% if (isActive == 1) { %>
-                                    <a href="<%=contextPath%>/product/master/units/block.jsp?id=<%=id%>&action=block" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to block this unit?')">Block</a>
+                                    <a href="<%=contextPath%>/product/master/units/block.jsp?id=<%=id%>&action=block" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to block this unit?')">Block</a>
                                 <% } else { %>
-                                    <a href="<%=contextPath%>/product/master/units/block.jsp?id=<%=id%>&action=unblock" class="btn btn-success btn-sm" onclick="return confirm('Are you sure you want to unblock this unit?')">Unblock</a>
+                                    <a href="<%=contextPath%>/product/master/units/block.jsp?id=<%=id%>&action=unblock" class="btn btn-sm btn-outline-success" onclick="return confirm('Are you sure you want to unblock this unit?')">Unblock</a>
                                 <% } %>
                             </td>
                         </tr>

@@ -20,12 +20,7 @@ if (userId == null) {
     <%@ include file="/assets/common/head.jsp" %>
 
     <style>
-        body {
-            background: #f5f7fa;
-        }
-        .table td, .table th {
-            vertical-align: middle;
-        }
+        .table td, .table th { vertical-align: middle; }
     </style>
 
     <script>
@@ -95,9 +90,15 @@ $(document).ready(function(){
 
     <%@ include file="/assets/navbar/navbar.jsp" %>
     <!-- Top Navbar -->
+<%
+    request.setAttribute("pageTitle",    "Stock");
+    request.setAttribute("pageSubtitle", "Product Master — Stock Management");
+    request.setAttribute("pageIcon",     "fa-solid fa-warehouse");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
 
-    <div class="container-fluid mt-2" style="max-width: 1400px;">
+    <div class="container-fluid mt-2 mst-page" style="max-width: 1400px;">
         <div class="row g-2">
             <!-- Product List -->
             <div class="col-md-12">
@@ -105,26 +106,26 @@ $(document).ready(function(){
                     <input type="hidden" id="catId" name="catId">
                     <input type="hidden" id="catName" name="catName">
                 </form>
-                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07); border-radius: 8px;">
-                    <div class="card-header" style="background: white; border-bottom: 1px solid #f7fafc; border-radius: 8px 8px 0 0; padding: 0.75rem 1rem;">
+                <div class="card" style="border: none; box-shadow: 0 2px 4px rgba(0,0,0,.07); border-radius: 8px;">
+                    <div class="mst-card-header-light">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0" style="color: #2d3748; font-weight: 600; font-size: 0.95rem;"><i class="fas fa-list me-2"></i><%=head3%> List</h6>
+                            <h6 class="mb-0" style="font-size: 0.95rem;"><i class="fas fa-list me-2"></i><%=head3%> List</h6>
                             <div class="input-group" style="width: 300px;">
-                                <span class="input-group-text" style="background: #f8f9fa; border: 1px solid #dee2e6;"><i class="fas fa-search"></i></span>
-                                <input type="text" id="searchInput" class="form-control" placeholder="Search products..." style="border-left: none; font-size: 0.85rem;">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="searchInput" class="form-control mst-search-input" placeholder="Search products...">
                             </div>
                         </div>
                     </div>
                     <div class="card-body" style="padding: 0; max-height: 600px; overflow-y: auto; overflow-x: auto;">
                         <div class="table-responsive">
-                        <table id="productTable" class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0; font-size: 0.85rem; table-layout: fixed; width: 100%; min-width: 600px;">
-                            <thead style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); position: sticky; top: 0; z-index: 10;">
+                        <table id="productTable" class="table table-hover mb-0 mst-table" style="table-layout: fixed; width: 100%; min-width: 600px;">
+                            <thead>
                                 <tr>
-                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 5%;">#</th>
-                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 25%;"><i class="fas fa-box me-1"></i>Name</th>
-                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 15%;">Code</th>
-                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 15%;"><%=head1%></th>
-                                    <th style="padding: 0.4rem; font-weight: 600; color: #4a5568; border: none; font-size: 0.8rem; width: 15%;"><%=head2%></th>
+                                    <th style="width: 5%;">#</th>
+                                    <th style="width: 25%;"><i class="fas fa-box me-1"></i>Name</th>
+                                    <th style="width: 15%;">Code</th>
+                                    <th style="width: 15%;"><%=head1%></th>
+                                    <th style="width: 15%;"><%=head2%></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -142,12 +143,12 @@ $(document).ready(function(){
                                                 String prodCode = row.elementAt(4).toString();
                                                 String safeProductName = productName.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;");
                                 %>
-                                <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s; cursor: pointer;" data-id="<%=productId%>" data-name="<%=safeProductName%>" onclick="selectProduct(this)">
-                                    <td style="padding: 0.4rem; color: #718096; border: none; width: 5%;"><%=i+1%></td>
-                                    <td style="padding: 0.4rem; color: #2d3748; font-weight: 500; border: none; width: 25%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%=productName%>"><%=productName%></td>
-                                    <td style="padding: 0.4rem; color: #718096; border: none; width: 15%;"><%=prodCode%></td>
-                                    <td style="padding: 0.4rem; color: #718096; border: none; width: 15%;"><%=categoryName%></td>
-                                    <td style="padding: 0.4rem; color: #718096; border: none; width: 15%;"><%=brandName%></td>
+                                <tr style="cursor: pointer;" data-id="<%=productId%>" data-name="<%=safeProductName%>" onclick="selectProduct(this)">
+                                    <td style="width: 5%;"><%=i+1%></td>
+                                    <td style="font-weight: 500; width: 25%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%=productName%>"><%=productName%></td>
+                                    <td style="width: 15%;"><%=prodCode%></td>
+                                    <td style="width: 15%;"><%=categoryName%></td>
+                                    <td style="width: 15%;"><%=brandName%></td>
                                 </tr>
                                 <%
                                             }

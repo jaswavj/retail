@@ -20,24 +20,11 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
            PROFESSIONAL BILLING LAYOUT â€” ONE PAGE, NO SCROLL
            ===================================================== */
         :root {
-            --navy:        #2e2347;
-            --navy-dark:   #1e1630;
-            --blue:        #4a3d6e;
-            --violet:      #5c4d8a;
-            --violet-dark: #4a3d78;
-            --bg:          #f0eef5;
-            --card:        #ffffff;
-            --border:      #d1d9e6;
-            --border-light:#e8edf5;
-            --text:        #0f172a;
-            --muted:       #64748b;
-            --input-bg:    #f8fafc;
-            --red:         #dc2626;
-            --green:       #059669;
-            --shadow-sm:   0 1px 4px rgba(0,0,0,.07);
-            --shadow:      0 2px 10px rgba(0,0,0,.10);
-            --r:           7px;
-            --r-sm:        5px;
+            /* Layout & spacing only – all colors are in theme.css */
+            --shadow-sm: 0 1px 4px rgba(0,0,0,.07);
+            --shadow:    0 2px 10px rgba(0,0,0,.10);
+            --r:         7px;
+            --r-sm:      5px;
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,8 +34,6 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
             overflow: hidden;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             font-size: 13px;
-            background: var(--bg);
-            color: var(--text);
         }
 
         /* â”€â”€ WRAPPER â”€â”€ */
@@ -63,11 +48,11 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
         /* â”€â”€ NAVBAR ZONE â”€â”€ */
         .bw-nav { flex-shrink: 0; }
 
-        /* â”€â”€ TOP PANEL â”€â”€ */
+        /* ── TOP PANEL ── */
         .top-panel {
             flex-shrink: 0;
-            background: var(--card);
-            border-bottom: 2px solid var(--border-light);
+            border-bottom-width: 2px;
+            border-bottom-style: solid;
             padding: 7px 14px 8px;
             box-shadow: var(--shadow-sm);
         }
@@ -91,7 +76,6 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
         .fg-lbl {
             font-size: 10px;
             font-weight: 700;
-            color: var(--muted);
             text-transform: uppercase;
             letter-spacing: .5px;
             white-space: nowrap;
@@ -100,40 +84,27 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
 
         .fg-inp {
             height: 33px;
-            border: 1.5px solid var(--border);
+            border-width: 1.5px;
+            border-style: solid;
             border-radius: var(--r-sm);
             padding: 0 9px;
-            background: var(--input-bg);
-            color: var(--text);
             font-size: 13px;
             transition: border-color .15s, box-shadow .15s;
             outline: none;
             width: 100%;
         }
 
-        .fg-inp:focus {
-            border-color: var(--violet);
-            box-shadow: 0 0 0 3px rgba(92,77,138,.18);
-            background: #fff;
-        }
-
         .fg-sel {
             height: 33px;
-            border: 1.5px solid var(--border);
+            border-width: 1.5px;
+            border-style: solid;
             border-radius: var(--r-sm);
             padding: 0 7px;
-            background: var(--input-bg);
-            color: var(--text);
             font-size: 13px;
             cursor: pointer;
             outline: none;
             transition: border-color .15s;
             width: 100%;
-        }
-
-        .fg-sel:focus {
-            border-color: var(--violet);
-            box-shadow: 0 0 0 3px rgba(92,77,138,.18);
         }
 
         /* â”€â”€ TOGGLE CHIPS â”€â”€ */
@@ -143,29 +114,25 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
             gap: 5px;
             height: 33px;
             padding: 0 11px;
-            border: 1.5px solid var(--border);
+            border-width: 1.5px;
+            border-style: solid;
             border-radius: var(--r-sm);
-            background: var(--input-bg);
             cursor: pointer;
             user-select: none;
             white-space: nowrap;
             transition: border-color .15s, background .15s;
         }
 
-        .tog:hover { border-color: var(--violet); background: #f2eff8; }
-
         .tog input[type="checkbox"] {
             width: 32px;
             height: 17px;
             cursor: pointer;
-            accent-color: var(--violet);
             flex-shrink: 0;
         }
 
         .tog-lbl {
             font-size: 12px;
             font-weight: 600;
-            color: var(--muted);
             cursor: pointer;
         }
 
@@ -186,33 +153,7 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
             letter-spacing: .2px;
         }
 
-        .bb-primary {
-            background: var(--violet);
-            color: #fff;
-            border-color: var(--violet);
-        }
-        .bb-primary:hover { background: var(--violet-dark); border-color: var(--violet-dark); }
-
-        .bb-outline {
-            background: #fff;
-            color: var(--violet);
-            border-color: var(--violet);
-        }
-        .bb-outline:hover { background: var(--violet); color: #fff; }
-
-        .bb-navy {
-            background: var(--navy);
-            color: #fff;
-            border-color: var(--navy);
-        }
-        .bb-navy:hover { background: var(--navy-dark); border-color: var(--navy-dark); }
-
-        .bb-green {
-            background: var(--green);
-            color: #fff;
-            border-color: var(--green);
-        }
-        .bb-green:hover { background: #047857; border-color: #047857; }
+        /* button colors defined in theme.css */
 
         /* â”€â”€ EXCHANGE BANNER â”€â”€ */
         #exchangePointBanner {
@@ -238,8 +179,8 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
             display: flex;
             flex-direction: column;
             margin: 5px 10px;
-            background: var(--card);
-            border: 1px solid var(--border);
+            border-width: 1px;
+            border-style: solid;
             border-radius: var(--r);
             box-shadow: var(--shadow-sm);
             overflow: hidden;
@@ -274,73 +215,53 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
         }
 
         .btbl thead th {
-            background: var(--navy);
-            color: #e8f0fe;
             padding: 8px 7px;
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .4px;
             border: none;
-            border-right: 1px solid rgba(255,255,255,.12);
+            border-right-width: 1px;
+            border-right-style: solid;
         }
 
         .btbl thead th:last-child { border-right: none; }
 
         .btbl tbody td {
             padding: 5px 6px;
-            border-bottom: 1px solid var(--border-light);
-            border-right: 1px solid var(--border-light);
+            border-bottom-width: 1px;
+            border-bottom-style: solid;
+            border-right-width: 1px;
+            border-right-style: solid;
             vertical-align: middle;
         }
 
         .btbl tbody td:last-child { border-right: none; }
 
-        .btbl tbody tr:hover td { background: #f0edf8; }
-        .btbl tbody tr:nth-child(even) td { background: #f7f5fb; }
-        .btbl tbody tr:nth-child(even):hover td { background: #f0edf8; }
-
-        .btbl::-webkit-scrollbar { width: 5px; }
+        .btbl::-webkit-scrollbar       { width: 5px; }
         .btbl tbody::-webkit-scrollbar { width: 5px; }
-        .btbl tbody::-webkit-scrollbar-track { background: #f1f5f9; }
-        .btbl tbody::-webkit-scrollbar-thumb { background: var(--violet); border-radius: 3px; }
 
         /* Inline edit inputs in table */
         .tbl-inp {
             width: 100%;
             height: 26px;
-            border: 1px solid var(--border);
+            border-width: 1px;
+            border-style: solid;
             border-radius: 3px;
             padding: 0 4px;
             font-size: 12px;
-            background: #fff;
         }
-        .tbl-inp:focus { border-color: var(--violet); outline: none; }
 
         /* â”€â”€ BOOTSTRAP BTN COMPAT FOR BILLING.JS ROWS â”€â”€ */
-        .btn { display: inline-flex; align-items: center; gap: 3px; cursor: pointer; border: 1px solid transparent; border-radius: 4px; padding: 2px 8px; font-size: 11.5px; font-weight: 600; transition: all .15s; }
+        /* Bootstrap btn compat – structural only (colors in theme.css) */
+        .btn    { display: inline-flex; align-items: center; gap: 3px; cursor: pointer; border: 1px solid transparent; border-radius: 4px; padding: 2px 8px; font-size: 11.5px; font-weight: 600; transition: all .15s; }
         .btn-sm { padding: 2px 7px; font-size: 11px; }
-        .btn-outline-violet {
-            background: #fff;
-            color: var(--violet);
-            border-color: var(--violet);
-        }
-        .btn-outline-violet:hover { background: var(--violet); color: #fff; }
-        .btn-outline-danger { background:#fff; color:var(--red); border-color:var(--red); }
-        .btn-outline-danger:hover { background:var(--red); color:#fff; }
-        .btn-outline-warning { background:#fff; color:var(--muted); border-color:#d97706; }
-        .btn-outline-warning:hover { background:#d97706; color:#fff; }
-        .btn-outline-info { background:#fff; color:#0891b2; border-color:#0891b2; }
-        .btn-outline-info:hover { background:#0891b2; color:#fff; }
-        .btn-outline-secondary { background:#fff; color:var(--muted); border-color:var(--border); }
-        .btn-outline-success { background:#fff; color:var(--green); border-color:var(--green); }
-        .btn-outline-success:hover { background:var(--green); color:#fff; }
 
         /* â”€â”€ BOTTOM PANEL â”€â”€ */
         .bot-panel {
             flex-shrink: 0;
-            background: var(--card);
-            border-top: 2px solid var(--border-light);
+            border-top-width: 2px;
+            border-top-style: solid;
             padding: 7px 14px;
             box-shadow: 0 -2px 8px rgba(0,0,0,.06);
         }
@@ -363,22 +284,17 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
         .grp-pay    { flex: 1.8; }
         .grp-act    { flex: 1; justify-content: flex-end; }
 
-        /* Payable highlight */
+        /* Payable highlight – structural only, colors in theme.css */
         .fg-inp.payable {
             font-size: 19px !important;
             font-weight: 800 !important;
-            color: var(--red) !important;
             text-align: center;
-            background: #fff5f5 !important;
-            border-color: var(--red) !important;
         }
 
-        .fg-inp.amt { color: var(--red); font-weight: 600; }
+        .fg-inp.amt { font-weight: 600; }
 
-        /* Bill number badge */
+        /* Bill number badge – colors in theme.css */
         .bill-badge {
-            background: linear-gradient(135deg, var(--navy-dark) 0%, var(--violet) 100%);
-            color: #fff;
             padding: 5px 14px;
             border-radius: var(--r-sm);
             font-size: 12px;
@@ -426,8 +342,8 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
                 left: 0;
                 right: 0;
                 z-index: 200;
-                background: var(--card);
-                border-top: 2px solid var(--border-light);
+                border-top-width: 2px;
+                border-top-style: solid;
                 box-shadow: 0 -3px 10px rgba(0,0,0,.12);
                 padding: 6px 8px;
                 display: grid !important;
