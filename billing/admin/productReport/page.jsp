@@ -5,7 +5,6 @@
         response.sendRedirect(request.getContextPath() + "/index.jsp");
         return;
     }
-    String ctx = request.getContextPath();
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -16,137 +15,120 @@
     <%@ include file="/assets/common/head.jsp" %>
     <style>
         :root {
-            --sales-color:    #0d6efd;
-            --salesret-color: #fd7e14;
-            --purchase-color: #198754;
-            --purret-color:   #6f42c1;
-            --exchange-color: #0dcaf0;
-            --cancel-color:   #dc3545;
-            --stockadj-color: #6610f2;
+            --sales-color:    var(--bill-navy);
+            --salesret-color: #f59e0b;
+            --purchase-color: var(--bill-green);
+            --purret-color:   #7c3aed;
+            --exchange-color: #0891b2;
+            --cancel-color:   var(--bill-red);
+            --stockadj-color: #6d28d9;
         }
         @media print {
             .no-print { display: none !important; }
-            .card { box-shadow: none !important; }
             body { font-size: 11px; }
         }
-
         /* ── Product Search ── */
         .prod-search-wrap { position: relative; }
         .prod-ac-list {
-            position: absolute; z-index: 9999; background: #fff;
-            border: 1px solid #dee2e6; border-top: none;
+            position: absolute; z-index: 9999; background: var(--bill-card);
+            border: 1.5px solid var(--bill-border); border-top: none;
             width: 100%; max-height: 240px; overflow-y: auto;
             list-style: none; padding: 0; margin: 0;
             box-shadow: 0 6px 16px rgba(0,0,0,.12);
-            border-radius: 0 0 6px 6px;
+            border-radius: 0 0 8px 8px;
         }
         .prod-ac-list li {
             padding: 9px 14px; cursor: pointer; font-size: .88rem;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid var(--bill-border-lt);
         }
         .prod-ac-list li:hover, .prod-ac-list li.active {
-            background: #0d6efd; color: #fff;
+            background: var(--bill-navy); color: #fff;
         }
-
         /* ── Summary Cards ── */
         .summary-card { border-left: 5px solid; border-radius: 8px; transition: transform .15s; }
         .summary-card:hover { transform: translateY(-2px); }
-        .sc-sales    { border-color: var(--sales-color);    background: #e8f0fe; }
-        .sc-salesret { border-color: var(--salesret-color); background: #fff3e0; }
-        .sc-purchase { border-color: var(--purchase-color); background: #e6f4ea; }
-        .sc-purret   { border-color: var(--purret-color);   background: #f3e5f5; }
-        .sc-exchange { border-color: var(--exchange-color); background: #e0f7fa; }
-        .sc-cancel   { border-color: var(--cancel-color);   background: #fdecea; }
-        .sc-stockadj { border-color: var(--stockadj-color); background: #f0ebff; }
-        .sc-value { font-size: 1.2rem; font-weight: 700; }
-        .sc-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+        .sc-sales    { border-color: var(--sales-color);    background: rgba(26,37,64,.07); }
+        .sc-salesret { border-color: var(--salesret-color); background: rgba(245,158,11,.08); }
+        .sc-purchase { border-color: var(--purchase-color); background: rgba(5,150,105,.07); }
+        .sc-purret   { border-color: var(--purret-color);   background: rgba(124,58,237,.07); }
+        .sc-exchange { border-color: var(--exchange-color); background: rgba(8,145,178,.07); }
+        .sc-cancel   { border-color: var(--cancel-color);   background: rgba(220,38,38,.07); }
+        .sc-stockadj { border-color: var(--stockadj-color); background: rgba(109,40,217,.07); }
+        .sc-value { font-size: 1.2rem; font-weight: 700; line-height: 1.1; }
+        .sc-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; opacity: .8; }
         @media (min-width: 992px) {
             #summaryCards { flex-wrap: nowrap; }
             #summaryCards > .sum-col { flex: 0 0 auto; width: 14.2857%; min-width: 0; }
         }
-
         /* ── Tabs ── */
         .nav-tabs .nav-link { font-weight: 600; font-size: .88rem; }
-        .nav-tabs .nav-link.active { border-bottom: 3px solid #0d6efd; }
-
-        /* ── Tables ── */
-        .rpt-table thead th { background: #343a40; color: #fff; font-size: .8rem; white-space: nowrap; }
-        .rpt-table tbody tr:hover { background: #f8f9fa; }
-        .rpt-table td { font-size: .83rem; vertical-align: middle; }
-        .badge-out { background: #fdecea; color: #c62828; font-size: .75rem; padding: 2px 8px; border-radius: 20px; }
-        .badge-in  { background: #e6f4ea; color: #1b5e20; font-size: .75rem; padding: 2px 8px; border-radius: 20px; }
-        .badge-bill { background: #fdecea; color: #c62828; font-size: .75rem; padding: 2px 8px; border-radius: 20px; }
-        .badge-item { background: #fff3e0; color: #e65100; font-size: .75rem; padding: 2px 8px; border-radius: 20px; }
-
+        .nav-tabs .nav-link.active { border-bottom: 3px solid var(--bill-navy); }
+        /* ── Badges ── */
+        .badge-out  { background: rgba(220,38,38,.12);  color: var(--bill-red);   font-size:.75rem; padding:2px 8px; border-radius:20px; }
+        .badge-in   { background: rgba(5,150,105,.12);  color: var(--bill-green); font-size:.75rem; padding:2px 8px; border-radius:20px; }
+        .badge-bill { background: rgba(220,38,38,.12);  color: var(--bill-red);   font-size:.75rem; padding:2px 8px; border-radius:20px; }
+        .badge-item { background: rgba(245,158,11,.15); color: #b45309;           font-size:.75rem; padding:2px 8px; border-radius:20px; }
         /* ── Print header ── */
         .print-header { display: none; }
         @media print { .print-header { display: block; text-align: center; margin-bottom: 12px; } }
-
-        /* ── Tfoot totals ── */
-        tfoot td { font-weight: 700; background: #f1f3f5 !important; font-size: .83rem; }
-
+        /* ── Tfoot ── */
+        tfoot td { font-weight: 700; background: var(--bill-bg) !important; font-size: .83rem; }
         /* ── Empty state ── */
-        .empty-state { text-align: center; padding: 40px; color: #adb5bd; }
+        .empty-state { text-align: center; padding: 40px; color: var(--bill-muted); }
         .empty-state i { font-size: 3rem; display: block; margin-bottom: 10px; }
-
-        /* ── Profit chip ── */
-        .profit-positive { color: #198754; font-weight: 600; }
-        .profit-negative { color: #dc3545; font-weight: 600; }
+        /* ── Profit ── */
+        .profit-positive { color: var(--bill-green); font-weight: 600; }
+        .profit-negative { color: var(--bill-red);   font-weight: 600; }
     </style>
 </head>
 <body>
-    <%@ include file="/assets/navbar/navbar.jsp" %>
+<%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Product Analysis Report");
+    request.setAttribute("pageSubtitle", "Admin \u2014 Sales, Purchases, Returns &amp; Cancellations by Product");
+    request.setAttribute("pageIcon",     "fa-solid fa-cube");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container-fluid mt-4 px-4">
+<div class="container-fluid mt-3 mst-page">
 
-        <!-- ── Page Header ── -->
-        <div class="d-flex align-items-center justify-content-between mb-4 no-print">
-            <div>
-                <h4 class="mb-0 fw-bold"><i class="fas fa-cube me-2 text-primary"></i>Product Analysis Report</h4>
-                <small class="text-muted">Complete sales, purchase, returns, exchanges &amp; cancellations by product</small>
-            </div>
-            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-print me-1"></i>Print
-            </button>
-        </div>
-
-        <!-- ── Filter Card ── -->
-        <div class="card shadow-sm mb-4 no-print">
-            <div class="card-body">
-                <div class="row g-3 align-items-end">
-                    <!-- Product Search -->
-                    <div class="col-lg-4 col-md-6">
-                        <label class="form-label fw-semibold">Product <span class="text-danger">*</span></label>
-                        <div class="prod-search-wrap">
-                            <input type="text" id="prodSearch" class="form-control"
-                                   placeholder="Type name or code to search…" autocomplete="off">
-                            <ul class="prod-ac-list d-none" id="prodAcList"></ul>
-                        </div>
-                        <input type="hidden" id="prodId" value="">
-                        <div id="selectedProdBadge" class="mt-1"></div>
-                    </div>
-                    <!-- From Date -->
-                    <div class="col-lg-2 col-md-3">
-                        <label class="form-label fw-semibold">From Date</label>
-                        <input type="date" id="fromDate" class="form-control" value="">
-                    </div>
-                    <!-- To Date -->
-                    <div class="col-lg-2 col-md-3">
-                        <label class="form-label fw-semibold">To Date</label>
-                        <input type="date" id="toDate" class="form-control" value="">
-                    </div>
-                    <!-- Actions -->
-                    <div class="col-lg-4 col-md-12 d-flex gap-2 flex-wrap">
-                        <button id="generateBtn" class="btn btn-primary flex-fill" onclick="generateReport()">
-                            <i class="fas fa-search me-1"></i>Generate Report
-                        </button>
-                        <button class="btn btn-outline-secondary" onclick="resetFilter()" title="Reset">
-                            <i class="fas fa-undo"></i>
-                        </button>
+    <!-- ── Filter ── -->
+    <div class="mst-filter-card mb-3 no-print">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-4 col-md-6">
+                <div class="input-outline">
+                    <label>Product <span style="color:var(--bill-red)">*</span></label>
+                    <div class="prod-search-wrap">
+                        <input type="text" id="prodSearch" class="form-control"
+                               placeholder="Type name or code to search…" autocomplete="off">
+                        <ul class="prod-ac-list d-none" id="prodAcList"></ul>
                     </div>
                 </div>
+                <input type="hidden" id="prodId" value="">
+                <div id="selectedProdBadge" class="mt-1"></div>
+            </div>
+            <div class="col-lg-2 col-md-3">
+                <div class="input-outline">
+                    <label>From Date</label>
+                    <input type="date" id="fromDate" class="form-control">
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-3">
+                <div class="input-outline">
+                    <label>To Date</label>
+                    <input type="date" id="toDate" class="form-control">
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-12 d-flex gap-2 flex-wrap align-items-end">
+                <button id="generateBtn" class="bb bb-primary flex-fill" onclick="generateReport()">
+                    <i class="fas fa-search me-1"></i>Generate Report
+                </button>
+                <button class="bb bb-outline" onclick="resetFilter()" title="Reset">
+                    <i class="fas fa-undo"></i>
+                </button>
             </div>
         </div>
+    </div>
 
         <!-- Print Header (only visible on print) -->
         <div class="print-header">
@@ -156,7 +138,7 @@
 
         <!-- ── Loading Spinner ── -->
         <div id="loadingDiv" class="text-center py-5 d-none">
-            <div class="spinner-border text-primary" role="status"></div>
+            <div class="spinner-border" style="color:var(--bill-navy)" role="status"></div>
             <p class="mt-2 text-muted">Loading report…</p>
         </div>
 
@@ -164,8 +146,8 @@
         <div id="reportArea" class="d-none">
 
             <!-- Product Info Banner -->
-            <div class="alert alert-primary d-flex align-items-center mb-4" id="productBanner">
-                <i class="fas fa-cube me-2 fs-5"></i>
+            <div class="d-flex align-items-center p-3 mb-3" style="background:var(--bill-bg);border-radius:8px;border-left:4px solid var(--bill-navy);" id="productBanner">
+                <i class="fas fa-cube me-2" style="color:var(--bill-navy);font-size:1.2rem;"></i>
                 <div>
                     <strong id="bannerProdName"></strong>
                     <span class="ms-3 text-muted small" id="bannerDateRange"></span>
@@ -229,8 +211,8 @@
             <ul class="nav nav-tabs mb-3 no-print" id="reportTabs">
                 <li class="nav-item">
                     <a class="nav-link active" data-bs-toggle="tab" href="#tabSales">
-                        <i class="fas fa-shopping-cart me-1 text-primary"></i>Sales
-                        <span class="badge bg-primary ms-1" id="badge-sales">0</span>
+                        <i class="fas fa-shopping-cart me-1" style="color:var(--sales-color)"></i>Sales
+                        <span class="badge ms-1" style="background:var(--sales-color)" id="badge-sales">0</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -241,8 +223,8 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" data-bs-toggle="tab" href="#tabPurchase">
-                        <i class="fas fa-truck me-1 text-success"></i>Purchase
-                        <span class="badge bg-success ms-1" id="badge-pur">0</span>
+                        <i class="fas fa-truck me-1" style="color:var(--purchase-color)"></i>Purchase
+                        <span class="badge ms-1" style="background:var(--purchase-color)" id="badge-pur">0</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -254,7 +236,7 @@
                 <li class="nav-item">
                     <a class="nav-link" data-bs-toggle="tab" href="#tabExchange">
                         <i class="fas fa-exchange-alt me-1" style="color:var(--exchange-color)"></i>Exchanges
-                        <span class="badge ms-1" style="background:var(--exchange-color);color:#000" id="badge-exc">0</span>
+                        <span class="badge ms-1" style="background:var(--exchange-color)" id="badge-exc">0</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -265,8 +247,8 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" data-bs-toggle="tab" href="#tabCancel">
-                        <i class="fas fa-ban me-1 text-danger"></i>Cancelled
-                        <span class="badge bg-danger ms-1" id="badge-can">0</span>
+                        <i class="fas fa-ban me-1" style="color:var(--cancel-color)"></i>Cancelled
+                        <span class="badge ms-1" style="background:var(--cancel-color)" id="badge-can">0</span>
                     </a>
                 </li>
             </ul>
@@ -275,14 +257,14 @@
 
                 <!-- ── SALES TAB ── -->
                 <div class="tab-pane fade show active" id="tabSales">
-                    <div class="card shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center py-2">
-                            <span class="fw-semibold text-primary"><i class="fas fa-shopping-cart me-1"></i>Sales Details</span>
+                    <div class="mst-filter-card p-0">
+                        <div class="mst-card-header-light d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold" style="color:var(--sales-color)"><i class="fas fa-shopping-cart me-1"></i>Sales Details</span>
                             <small class="text-muted" id="sales-subtitle"></small>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-hover mb-0 rpt-table" id="salesTable">
+                                <table class="table mb-0 mst-table" id="salesTable">
                                     <thead><tr>
                                         <th>#</th><th>Bill No</th><th>Date</th><th>Customer</th>
                                         <th class="text-end">Qty</th><th class="text-end">Price</th>
@@ -300,14 +282,14 @@
 
                 <!-- ── SALES RETURNS TAB ── -->
                 <div class="tab-pane fade" id="tabSalesReturn">
-                    <div class="card shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center py-2">
+                    <div class="mst-filter-card p-0">
+                        <div class="mst-card-header-light d-flex justify-content-between align-items-center">
                             <span class="fw-semibold" style="color:var(--salesret-color)"><i class="fas fa-undo-alt me-1"></i>Sales Returns Details</span>
                             <small class="text-muted" id="ret-subtitle"></small>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-hover mb-0 rpt-table" id="retTable">
+                                <table class="table mb-0 mst-table" id="retTable">
                                     <thead><tr>
                                         <th>#</th><th>Bill No</th><th>Date</th><th>Customer</th>
                                         <th class="text-end">Qty</th><th class="text-end">Price</th>
@@ -323,14 +305,14 @@
 
                 <!-- ── PURCHASE TAB ── -->
                 <div class="tab-pane fade" id="tabPurchase">
-                    <div class="card shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center py-2">
-                            <span class="fw-semibold text-success"><i class="fas fa-truck me-1"></i>Purchase Details</span>
+                    <div class="mst-filter-card p-0">
+                        <div class="mst-card-header-light d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold" style="color:var(--purchase-color)"><i class="fas fa-truck me-1"></i>Purchase Details</span>
                             <small class="text-muted" id="pur-subtitle"></small>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-hover mb-0 rpt-table" id="purTable">
+                                <table class="table mb-0 mst-table" id="purTable">
                                     <thead><tr>
                                         <th>#</th><th>PR No</th><th>Invoice No</th><th>Date</th><th>Supplier</th>
                                         <th class="text-end">Qty</th><th class="text-end">Free</th>
@@ -349,14 +331,14 @@
 
                 <!-- ── PURCHASE RETURNS TAB ── -->
                 <div class="tab-pane fade" id="tabPurchaseReturn">
-                    <div class="card shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center py-2">
+                    <div class="mst-filter-card p-0">
+                        <div class="mst-card-header-light d-flex justify-content-between align-items-center">
                             <span class="fw-semibold" style="color:var(--purret-color)"><i class="fas fa-truck-loading me-1"></i>Purchase Returns Details</span>
                             <small class="text-muted" id="prret-subtitle"></small>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-hover mb-0 rpt-table" id="prretTable">
+                                <table class="table mb-0 mst-table" id="prretTable">
                                     <thead><tr>
                                         <th>#</th><th>Return No</th><th>Date</th><th>Supplier</th>
                                         <th class="text-end">Qty</th><th class="text-end">Rate</th>
@@ -372,14 +354,14 @@
 
                 <!-- ── EXCHANGE TAB ── -->
                 <div class="tab-pane fade" id="tabExchange">
-                    <div class="card shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center py-2">
-                            <span class="fw-semibold" style="color:#0891b2"><i class="fas fa-exchange-alt me-1"></i>Exchange Details</span>
+                    <div class="mst-filter-card p-0">
+                        <div class="mst-card-header-light d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold" style="color:var(--exchange-color)"><i class="fas fa-exchange-alt me-1"></i>Exchange Details</span>
                             <small class="text-muted" id="exc-subtitle"></small>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-hover mb-0 rpt-table" id="excTable">
+                                <table class="table mb-0 mst-table" id="excTable">
                                     <thead><tr>
                                         <th>#</th><th>Bill No</th><th>Date</th><th>Customer</th>
                                         <th>Old Product</th><th>New Product</th>
@@ -394,14 +376,14 @@
 
                 <!-- ── STOCK ADJUSTMENT TAB ── -->
                 <div class="tab-pane fade" id="tabStockAdj">
-                    <div class="card shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center py-2">
+                    <div class="mst-filter-card p-0">
+                        <div class="mst-card-header-light d-flex justify-content-between align-items-center">
                             <span class="fw-semibold" style="color:var(--stockadj-color)"><i class="fas fa-sliders-h me-1"></i>Stock Adjustment Details</span>
                             <small class="text-muted" id="adj-subtitle"></small>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-hover mb-0 rpt-table" id="adjTable">
+                                <table class="table mb-0 mst-table" id="adjTable">
                                     <thead><tr>
                                         <th>#</th><th>Date</th><th>Time</th>
                                         <th class="text-center">Action</th>
@@ -418,14 +400,14 @@
 
                 <!-- ── CANCEL TAB ── -->
                 <div class="tab-pane fade" id="tabCancel">
-                    <div class="card shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center py-2">
-                            <span class="fw-semibold text-danger"><i class="fas fa-ban me-1"></i>Cancellation Details</span>
+                    <div class="mst-filter-card p-0">
+                        <div class="mst-card-header-light d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold" style="color:var(--cancel-color)"><i class="fas fa-ban me-1"></i>Cancellation Details</span>
                             <small class="text-muted" id="can-subtitle"></small>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-hover mb-0 rpt-table" id="canTable">
+                                <table class="table mb-0 mst-table" id="canTable">
                                     <thead><tr>
                                         <th>#</th><th>Bill No</th><th>Date</th><th>Customer</th>
                                         <th class="text-end">Qty</th><th class="text-end">Price</th>
@@ -443,10 +425,10 @@
             </div><!-- tab-content -->
         </div><!-- reportArea -->
 
-    </div><!-- container -->
+    </div><!-- /container -->
 
     <script>
-    const CTX = '<%=ctx%>';
+    const CTX = '<%=contextPath%>';
     let acTimer = null;
 
     // ── Default dates ────────────────────────────────────────────────────────
@@ -508,7 +490,7 @@
             if (parts.length > 6) {
                 document.getElementById('prodId').value = parts[6]; // prodsId
                 document.getElementById('selectedProdBadge').innerHTML =
-                    '<span class="badge bg-light text-dark border"><i class="fas fa-cube me-1 text-primary"></i>' +
+                    '<span class="badge" style="background:var(--bill-bg);color:var(--bill-text);border:1px solid var(--bill-border)"><i class="fas fa-cube me-1" style="color:var(--bill-navy)"></i>' +
                     escHtml(name) + (code ? ' <span class="text-muted">(' + escHtml(code) + ')</span>' : '') + '</span>';
             }
         }).catch(() => {});
@@ -679,7 +661,7 @@
                     <td class="text-end">${fmt2(r.disc)}%</td>
                     <td class="text-end">${fmt2(r.tax)}%</td>
                     <td class="text-end">₹${fmt2(r.total)}</td>
-                    <td class="text-end fw-semibold text-success">₹${fmt2(r.netamt)}</td>
+                    <td class="text-end fw-semibold" style="color:var(--purchase-color)">&#8377;${fmt2(r.netamt)}</td>
                     <td>${escHtml(r.user)}</td>
                 </tr>`;
                 pTotQty += r.qty; pTotAmt += r.netamt;
@@ -754,7 +736,7 @@
                     <td>${escHtml(r.cus)}</td>
                     <td class="text-end">${fmt2(r.qty)}</td>
                     <td class="text-end">₹${fmt2(r.price)}</td>
-                    <td class="text-end fw-semibold text-danger">₹${fmt2(r.total)}</td>
+                    <td class="text-end fw-semibold" style="color:var(--cancel-color)">&#8377;${fmt2(r.total)}</td>
                     <td class="text-center">${typeBadge}</td>
                     <td>${escHtml(r.user)}</td>
                 </tr>`;
@@ -765,7 +747,7 @@
         document.getElementById('canFoot').innerHTML = ca.rows.length > 0 ?
             `<tr><td colspan="4"><strong>Total</strong></td>
              <td class="text-end">${fmt2(cTotQty)}</td><td></td>
-             <td class="text-end">₹${fmt2(cTotAmt)}</td><td colspan="2"></td></tr>` : '';
+             <td class="text-end" style="color:var(--cancel-color)">${fmt2(cTotAmt)}</td><td colspan="2"></td></tr>` : '';
         set('can-subtitle', ca.rows.length + ' record(s) | Total: ₹' + fmt2(ca.totalAmt));
 
         // ── Stock Adj summary ───────────────────────────────────────────────

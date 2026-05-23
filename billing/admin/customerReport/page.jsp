@@ -5,7 +5,6 @@
         response.sendRedirect(request.getContextPath() + "/index.jsp");
         return;
     }
-    String ctx = request.getContextPath();
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -16,130 +15,113 @@
     <%@ include file="/assets/common/head.jsp" %>
     <style>
         :root {
-            --sales-color:    #0d6efd;
-            --return-color:   #fd7e14;
-            --exchange-color: #0dcaf0;
-            --points-color:   #198754;
+            --sales-color:    var(--bill-navy);
+            --return-color:   #f59e0b;
+            --exchange-color: #0891b2;
+            --points-color:   var(--bill-green);
         }
         @media print {
             .no-print { display: none !important; }
-            .card { box-shadow: none !important; }
             body { font-size: 11px; }
         }
-
         /* ── Customer Search ── */
         .cust-search-wrap { position: relative; }
         .cust-ac-list {
-            position: absolute; z-index: 9999; background: #fff;
-            border: 1px solid #dee2e6; border-top: none;
+            position: absolute; z-index: 9999; background: var(--bill-card);
+            border: 1.5px solid var(--bill-border); border-top: none;
             width: 100%; max-height: 260px; overflow-y: auto;
             list-style: none; padding: 0; margin: 0;
             box-shadow: 0 6px 16px rgba(0,0,0,.12);
-            border-radius: 0 0 6px 6px;
+            border-radius: 0 0 8px 8px;
         }
         .cust-ac-list li {
             padding: 9px 14px; cursor: pointer; font-size: .88rem;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid var(--bill-border-lt);
         }
         .cust-ac-list li .cust-name { font-weight: 600; }
-        .cust-ac-list li .cust-phone { font-size: .78rem; color: #6c757d; }
+        .cust-ac-list li .cust-phone { font-size: .78rem; color: var(--bill-muted); }
         .cust-ac-list li:hover, .cust-ac-list li.active {
-            background: #0d6efd; color: #fff;
+            background: var(--bill-navy); color: #fff;
         }
         .cust-ac-list li:hover .cust-phone,
-        .cust-ac-list li.active .cust-phone { color: #cfe2ff; }
-
+        .cust-ac-list li.active .cust-phone { color: rgba(255,255,255,.7); }
         /* ── Summary Cards ── */
         .summary-card { border-left: 5px solid; border-radius: 8px; transition: transform .15s; }
         .summary-card:hover { transform: translateY(-2px); }
-        .sc-sales    { border-color: var(--sales-color);    background: #e8f0fe; }
-        .sc-return   { border-color: var(--return-color);   background: #fff3e0; }
-        .sc-exchange { border-color: var(--exchange-color); background: #e0f7fa; }
-        .sc-points   { border-color: var(--points-color);   background: #e6f4ea; }
+        .sc-sales    { border-color: var(--sales-color);    background: rgba(26,37,64,.07); }
+        .sc-return   { border-color: var(--return-color);   background: rgba(245,158,11,.08); }
+        .sc-exchange { border-color: var(--exchange-color); background: rgba(8,145,178,.07); }
+        .sc-points   { border-color: var(--points-color);   background: rgba(5,150,105,.07); }
         .sc-value { font-size: 1.5rem; font-weight: 700; }
-        .sc-label { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; opacity: .7; }
-        .sc-sub   { font-size: .75rem; color: #6c757d; margin-top: 2px; }
-
+        .sc-label { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; opacity: .8; }
+        .sc-sub   { font-size: .75rem; color: var(--bill-muted); margin-top: 2px; }
         /* ── Tabs ── */
         .nav-tabs .nav-link { font-weight: 600; font-size: .88rem; }
-        .nav-tabs .nav-link.active { border-bottom: 3px solid #0d6efd; }
-
-        /* ── Tables ── */
-        .rpt-table thead th { background: #343a40; color: #fff; font-size: .8rem; white-space: nowrap; }
-        .rpt-table tbody tr:hover { background: #f8f9fa; }
-        .rpt-table td { font-size: .83rem; vertical-align: middle; }
-        tfoot td { font-weight: 700; background: #f1f3f5 !important; font-size: .83rem; }
-
+        .nav-tabs .nav-link.active { border-bottom: 3px solid var(--bill-navy); }
         /* ── Badges ── */
-        .badge-bill    { background: #e8f0fe; color: #1a56db; font-size: .75rem; padding: 2px 8px; border-radius: 20px; }
-        .badge-product { background: #fff3e0; color: #e65100; font-size: .75rem; padding: 2px 8px; border-radius: 20px; }
-
-        /* ── Points styling ── */
-        .pts-credit { color: #198754; font-weight: 600; }
-        .pts-debit  { color: #dc3545; font-weight: 600; }
-
+        .badge-bill    { background: rgba(26,37,64,.1);    color: var(--bill-navy);  font-size:.75rem; padding:2px 8px; border-radius:20px; }
+        .badge-product { background: rgba(245,158,11,.15); color: #b45309;            font-size:.75rem; padding:2px 8px; border-radius:20px; }
+        /* ── Points ── */
+        .pts-credit { color: var(--bill-green); font-weight: 600; }
+        .pts-debit  { color: var(--bill-red);   font-weight: 600; }
+        /* ── Tfoot ── */
+        tfoot td { font-weight: 700; background: var(--bill-bg) !important; font-size: .83rem; }
         /* ── Print header ── */
         .print-header { display: none; }
         @media print { .print-header { display: block; text-align: center; margin-bottom: 12px; } }
-
         /* ── Empty state ── */
-        .empty-state { text-align: center; padding: 40px; color: #adb5bd; }
+        .empty-state { text-align: center; padding: 40px; color: var(--bill-muted); }
         .empty-state i { font-size: 3rem; display: block; margin-bottom: 10px; }
     </style>
 </head>
 <body>
-    <%@ include file="/assets/navbar/navbar.jsp" %>
+<%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Customer Analysis Report");
+    request.setAttribute("pageSubtitle", "Admin \u2014 Sales, Returns, Exchanges &amp; Loyalty Points by Customer");
+    request.setAttribute("pageIcon",     "fa-solid fa-user");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-    <div class="container-fluid mt-4 px-4">
+<div class="container-fluid mt-3 mst-page">
 
-        <!-- Page Header -->
-        <div class="d-flex align-items-center justify-content-between mb-4 no-print">
-            <div>
-                <h4 class="mb-0 fw-bold"><i class="fas fa-user me-2 text-primary"></i>Customer Analysis Report</h4>
-                <small class="text-muted">Sales, returns, exchanges &amp; loyalty points by customer</small>
-            </div>
-            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-print me-1"></i>Print
-            </button>
-        </div>
-
-        <!-- Filter Card -->
-        <div class="card shadow-sm mb-4 no-print">
-            <div class="card-body">
-                <div class="row g-3 align-items-end">
-                    <!-- Customer Search -->
-                    <div class="col-lg-4 col-md-6">
-                        <label class="form-label fw-semibold">Customer <span class="text-danger">*</span></label>
-                        <div class="cust-search-wrap">
-                            <input type="text" id="custSearch" class="form-control"
-                                   placeholder="Type name or phone number…" autocomplete="off">
-                            <ul class="cust-ac-list d-none" id="custAcList"></ul>
-                        </div>
-                        <input type="hidden" id="custId" value="">
-                        <div id="selectedCustBadge" class="mt-1"></div>
-                    </div>
-                    <!-- From Date -->
-                    <div class="col-lg-2 col-md-3">
-                        <label class="form-label fw-semibold">From Date</label>
-                        <input type="date" id="fromDate" class="form-control">
-                    </div>
-                    <!-- To Date -->
-                    <div class="col-lg-2 col-md-3">
-                        <label class="form-label fw-semibold">To Date</label>
-                        <input type="date" id="toDate" class="form-control">
-                    </div>
-                    <!-- Actions -->
-                    <div class="col-lg-4 col-md-12 d-flex gap-2 flex-wrap">
-                        <button id="generateBtn" class="btn btn-primary flex-fill" onclick="generateReport()">
-                            <i class="fas fa-search me-1"></i>Generate Report
-                        </button>
-                        <button class="btn btn-outline-secondary" onclick="resetFilter()" title="Reset">
-                            <i class="fas fa-undo"></i>
-                        </button>
+    <!-- Filter -->
+    <div class="mst-filter-card mb-3 no-print">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-4 col-md-6">
+                <div class="input-outline">
+                    <label>Customer <span style="color:var(--bill-red)">*</span></label>
+                    <div class="cust-search-wrap">
+                        <input type="text" id="custSearch" class="form-control"
+                               placeholder="Type name or phone number…" autocomplete="off">
+                        <ul class="cust-ac-list d-none" id="custAcList"></ul>
                     </div>
                 </div>
+                <input type="hidden" id="custId" value="">
+                <div id="selectedCustBadge" class="mt-1"></div>
+            </div>
+            <div class="col-lg-2 col-md-3">
+                <div class="input-outline">
+                    <label>From Date</label>
+                    <input type="date" id="fromDate" class="form-control">
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-3">
+                <div class="input-outline">
+                    <label>To Date</label>
+                    <input type="date" id="toDate" class="form-control">
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-12 d-flex gap-2 flex-wrap align-items-end">
+                <button id="generateBtn" class="bb bb-primary flex-fill" onclick="generateReport()">
+                    <i class="fas fa-search me-1"></i>Generate Report
+                </button>
+                <button class="bb bb-outline" onclick="resetFilter()" title="Reset">
+                    <i class="fas fa-undo"></i>
+                </button>
             </div>
         </div>
+    </div>
 
         <!-- Print Header -->
         <div class="print-header">
@@ -152,28 +134,28 @@
             <div class="col-6 col-lg-3">
                 <div class="card summary-card sc-sales p-3">
                     <div class="sc-label">Total Sales</div>
-                    <div class="sc-value text-primary" id="scSalesAmt">₹0</div>
+                    <div class="sc-value" style="color:var(--sales-color)" id="scSalesAmt">&#8377;0</div>
                     <div class="sc-sub"><span id="scSalesCount">0</span> bills | Paid: <span id="scSalesPaid">₹0</span></div>
                 </div>
             </div>
             <div class="col-6 col-lg-3">
                 <div class="card summary-card sc-return p-3">
                     <div class="sc-label">Sales Returns</div>
-                    <div class="sc-value text-warning" id="scReturnAmt">₹0</div>
+                    <div class="sc-value" style="color:var(--return-color)" id="scReturnAmt">&#8377;0</div>
                     <div class="sc-sub"><span id="scReturnCount">0</span> items | Qty: <span id="scReturnQty">0</span></div>
                 </div>
             </div>
             <div class="col-6 col-lg-3">
                 <div class="card summary-card sc-exchange p-3">
                     <div class="sc-label">Exchanges</div>
-                    <div class="sc-value text-info" id="scExchangeCount">0</div>
+                    <div class="sc-value" style="color:var(--exchange-color)" id="scExchangeCount">0</div>
                     <div class="sc-sub">items exchanged in period</div>
                 </div>
             </div>
             <div class="col-6 col-lg-3">
                 <div class="card summary-card sc-points p-3">
                     <div class="sc-label">Exchange Points</div>
-                    <div class="sc-value text-success" id="scPointsCurrent">0</div>
+                    <div class="sc-value" style="color:var(--points-color)" id="scPointsCurrent">0</div>
                     <div class="sc-sub">Earned: <span id="scPointsEarned">0</span> | Used: <span id="scPointsUsed">0</span></div>
                 </div>
             </div>
@@ -184,26 +166,26 @@
             <ul class="nav nav-tabs mb-3" id="rptTabs">
                 <li class="nav-item">
                     <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabSales">
-                        <i class="fas fa-receipt me-1 text-primary"></i>Sales
-                        <span class="badge bg-primary ms-1" id="badgeSales">0</span>
+                        <i class="fas fa-receipt me-1" style="color:var(--sales-color)"></i>Sales
+                        <span class="badge ms-1" style="background:var(--sales-color)" id="badgeSales">0</span>
                     </button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabReturn">
-                        <i class="fas fa-undo me-1 text-warning"></i>Returns
-                        <span class="badge bg-warning text-dark ms-1" id="badgeReturn">0</span>
+                        <i class="fas fa-undo me-1" style="color:var(--return-color)"></i>Returns
+                        <span class="badge ms-1" style="background:var(--return-color)" id="badgeReturn">0</span>
                     </button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabExchange">
-                        <i class="fas fa-exchange-alt me-1 text-info"></i>Exchanges
-                        <span class="badge bg-info text-dark ms-1" id="badgeExchange">0</span>
+                        <i class="fas fa-exchange-alt me-1" style="color:var(--exchange-color)"></i>Exchanges
+                        <span class="badge ms-1" style="background:var(--exchange-color)" id="badgeExchange">0</span>
                     </button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPoints">
-                        <i class="fas fa-coins me-1 text-success"></i>Points Ledger
-                        <span class="badge bg-success ms-1" id="badgePoints">0</span>
+                        <i class="fas fa-coins me-1" style="color:var(--points-color)"></i>Points Ledger
+                        <span class="badge ms-1" style="background:var(--points-color)" id="badgePoints">0</span>
                     </button>
                 </li>
             </ul>
@@ -212,10 +194,10 @@
 
                 <!-- SALES TAB -->
                 <div class="tab-pane fade show active" id="tabSales">
-                    <div class="card shadow-sm">
-                        <div class="card-body p-2">
+                    <div class="mst-filter-card p-0">
+                        <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-bordered rpt-table mb-0" id="tblSales">
+                                <table class="table mb-0 mst-table" id="tblSales">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -239,10 +221,10 @@
 
                 <!-- RETURNS TAB -->
                 <div class="tab-pane fade" id="tabReturn">
-                    <div class="card shadow-sm">
-                        <div class="card-body p-2">
+                    <div class="mst-filter-card p-0">
+                        <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-bordered rpt-table mb-0" id="tblReturn">
+                                <table class="table mb-0 mst-table" id="tblReturn">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -265,10 +247,10 @@
 
                 <!-- EXCHANGE TAB -->
                 <div class="tab-pane fade" id="tabExchange">
-                    <div class="card shadow-sm">
-                        <div class="card-body p-2">
+                    <div class="mst-filter-card p-0">
+                        <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-bordered rpt-table mb-0" id="tblExchange">
+                                <table class="table mb-0 mst-table" id="tblExchange">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -289,10 +271,10 @@
 
                 <!-- POINTS LEDGER TAB -->
                 <div class="tab-pane fade" id="tabPoints">
-                    <div class="card shadow-sm">
-                        <div class="card-body p-2">
+                    <div class="mst-filter-card p-0">
+                        <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-bordered rpt-table mb-0" id="tblPoints">
+                                <table class="table mb-0 mst-table" id="tblPoints">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -322,10 +304,10 @@
             <p class="mb-0">Search for a customer and click <strong>Generate Report</strong></p>
         </div>
 
-    </div><!-- container -->
+    </div><!-- /container -->
 
     <script>
-    const ctx = '<%=ctx%>';
+    const ctx = '<%=contextPath%>';
     let acTimer = null;
     const custAcList = document.getElementById('custAcList');
     const custSearch = document.getElementById('custSearch');
@@ -394,8 +376,8 @@
         custSearch.value = c.name + (c.phone ? ' — ' + c.phone : '');
         hideAcList();
         const badge = document.getElementById('selectedCustBadge');
-        badge.innerHTML = `<span class="badge bg-success"><i class="fas fa-user me-1"></i>${escHtml(c.name)}</span>
-                           ${c.phone ? `<span class="badge bg-secondary ms-1">${escHtml(c.phone)}</span>` : ''}`;
+        badge.innerHTML = `<span class="badge" style="background:var(--bill-green);color:#fff"><i class="fas fa-user me-1"></i>${escHtml(c.name)}</span>
+                           ${c.phone ? `<span class="badge ms-1" style="background:var(--bill-bg);color:var(--bill-text);border:1px solid var(--bill-border)">${escHtml(c.phone)}</span>` : ''}`;
     }
 
     function hideAcList() { custAcList.classList.add('d-none'); custAcList.innerHTML = ''; }
@@ -525,7 +507,7 @@
                     <td><span class="badge-bill">${escHtml(r.bill)}</span></td>
                     <td>${escHtml(r.date)}</td>
                     <td><span class="badge-product">${escHtml(r.oldProd)}</span></td>
-                    <td><span class="badge-product" style="background:#e6f4ea;color:#1b5e20">${escHtml(r.newProd)}</span></td>
+                    <td><span class="badge-product" style="background:rgba(5,150,105,.12);color:var(--bill-green)">${escHtml(r.newProd)}</span></td>
                     <td>${escHtml(r.user)}</td>
                 </tr>`;
             });

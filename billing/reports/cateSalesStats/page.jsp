@@ -5,7 +5,6 @@
         response.sendRedirect(request.getContextPath() + "/index.jsp");
         return;
     }
-    String ctx = request.getContextPath();
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -14,116 +13,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Category Sales Statistics</title>
     <%@ include file="/assets/common/head.jsp" %>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        :root {
-            --clr-fast:   #16a34a;
-            --clr-mid:    #d97706;
-            --clr-slow:   #dc2626;
-            --clr-zero:   #9ca3af;
-        }
+        /* ── Speed badges ── */
+        .speed-fast { background: rgba(5,150,105,.12);  color: var(--bill-green); font-size:.72rem; padding:2px 8px; border-radius:20px; font-weight:600; }
+        .speed-mid  { background: rgba(201,162,39,.15); color: var(--bill-gold);  font-size:.72rem; padding:2px 8px; border-radius:20px; font-weight:600; }
+        .speed-slow { background: rgba(220,38,38,.10);  color: var(--bill-red);   font-size:.72rem; padding:2px 8px; border-radius:20px; font-weight:600; }
+        .speed-zero { background: var(--bill-border-lt);color: var(--bill-muted); font-size:.72rem; padding:2px 8px; border-radius:20px; font-weight:600; }
 
-        /* ── Summary bar ── */
-        .kpi-bar { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
-        .kpi { flex: 1 1 160px; background: #fff; border-radius: 10px;
-               padding: 14px 18px; box-shadow: 0 2px 8px rgba(0,0,0,.07);
-               border-top: 4px solid; }
-        .kpi.k1 { border-color: #6366f1; }
-        .kpi.k2 { border-color: #0ea5e9; }
-        .kpi.k3 { border-color: #10b981; }
-        .kpi.k4 { border-color: #f59e0b; }
-        .kpi-val { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
-        .kpi-lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; margin-top: 4px; }
-
-        /* ── Speed badge ── */
-        .speed-fast { background: #dcfce7; color: var(--clr-fast); font-size: .72rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
-        .speed-mid  { background: #fef3c7; color: var(--clr-mid);  font-size: .72rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
-        .speed-slow { background: #fee2e2; color: var(--clr-slow); font-size: .72rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
-        .speed-zero { background: #f3f4f6; color: var(--clr-zero); font-size: .72rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+        /* ── KPI bar ── */
+        .kpi-bar { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.2rem; }
+        .kpi { flex:1 1 160px; background:var(--bill-card); border-radius:10px;
+               padding:14px 18px; box-shadow:0 2px 8px rgba(0,0,0,.06); border-top:4px solid; }
+        .kpi.k1 { border-color: var(--bill-navy); }
+        .kpi.k2 { border-color: var(--bill-gold); }
+        .kpi.k3 { border-color: var(--bill-green); }
+        .kpi.k4 { border-color: var(--bill-navy-mid); }
+        .kpi-val { font-size:1.5rem; font-weight:700; line-height:1.1; color:var(--bill-text); }
+        .kpi-lbl { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--bill-muted); margin-top:4px; }
 
         /* ── Share bar ── */
-        .share-bar { height: 8px; border-radius: 4px; background: #e0e7ff; overflow: hidden; }
-        .share-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #6366f1, #0ea5e9); transition: width .5s; }
+        .share-bar  { height:8px; border-radius:4px; background:var(--bill-border-lt); overflow:hidden; }
+        .share-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--bill-navy),var(--bill-gold)); transition:width .5s; }
 
-        /* ── Category table ── */
-        #cateTable thead th { background: #1e293b; color: #fff; font-size: .78rem; white-space: nowrap; vertical-align: middle; }
-        #cateTable tbody td { font-size: .83rem; vertical-align: middle; }
-        #cateTable tbody tr:hover { background: #f8fafc; }
-        .rank-badge { display: inline-block; width: 24px; height: 24px; border-radius: 50%; line-height: 24px; text-align: center; font-size: .72rem; font-weight: 700; background: #e0e7ff; color: #4338ca; }
-        .rank-1 { background: #fef3c7; color: #92400e; }
-        .rank-2 { background: #f1f5f9; color: #334155; }
-        .rank-3 { background: #fce7f3; color: #9d174d; }
+        /* ── Rank badge ── */
+        .rank-badge { display:inline-block; width:24px; height:24px; border-radius:50%; line-height:24px; text-align:center; font-size:.72rem; font-weight:700; background:var(--bill-border-lt); color:var(--bill-navy); }
+        .rank-1 { background:rgba(201,162,39,.22); color:var(--bill-gold-dark); }
+        .rank-2 { background:var(--bill-bg);        color:var(--bill-navy); }
+        .rank-3 { background:rgba(5,150,105,.15);   color:var(--bill-green); }
 
         /* ── Detail panel ── */
-        .detail-panel { background: #f8fafc; border-top: 2px solid #e2e8f0; }
-        .detail-table thead th { background: #334155; color: #fff; font-size: .76rem; white-space: nowrap; }
-        .detail-table tbody td { font-size: .8rem; vertical-align: middle; }
-        .detail-table tbody tr:hover { background: #f0f9ff; }
+        .detail-panel { background:var(--bill-bg); border-top:2px solid var(--bill-border-lt); }
 
         /* ── Chart card ── */
-        .chart-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
-
-        /* ── Sort arrows ── */
-        .sortable { cursor: pointer; user-select: none; }
-        .sortable:hover { background: #374151 !important; }
-        .sort-icon { font-size: .65rem; opacity: .6; margin-left: 3px; }
+        .chart-card { background:var(--bill-card); border-radius:10px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
 
         /* ── Legend ── */
-        .legend-wrap { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; font-size: .78rem; }
-        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+        .legend-wrap { display:flex; gap:12px; flex-wrap:wrap; align-items:center; font-size:.78rem; }
+        .legend-dot  { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px; }
 
         @media print {
-            .no-print { display: none !important; }
-            .kpi { box-shadow: none; border: 1px solid #e5e7eb; }
+            .no-print { display:none !important; }
+            .kpi { box-shadow:none; border:1px solid var(--bill-border-lt); }
         }
     </style>
 </head>
 <body>
 <%@ include file="/assets/navbar/navbar.jsp" %>
+<%
+    request.setAttribute("pageTitle",    "Category Sales Statistics");
+    request.setAttribute("pageSubtitle", "Reports \u2014 Category Analysis");
+    request.setAttribute("pageIcon",     "fa-solid fa-layer-group");
+%>
+<jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container-fluid mt-4 px-4">
-
-    <!-- Page header -->
-    <div class="d-flex align-items-center justify-content-between mb-3 no-print">
-        <div>
-            <h4 class="mb-0 fw-bold"><i class="fas fa-layer-group me-2 text-primary"></i>Category Sales Statistics</h4>
-            <small class="text-muted">Analyse which categories are moving fast or slow</small>
-        </div>
-        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-print me-1"></i>Print
-        </button>
-    </div>
+<div class="container-fluid mt-3 mst-page">
 
     <!-- Filter -->
-    <div class="card shadow-sm mb-4 no-print">
-        <div class="card-body">
-            <div class="row g-2 align-items-end">
-                <div class="col-auto">
-                    <label class="form-label fw-semibold mb-1">From</label>
-                    <input type="date" id="fromDate" class="form-control form-control-sm">
+    <div class="mst-filter-card mb-3 no-print">
+        <div class="row g-3 align-items-end">
+            <div class="col-auto">
+                <div class="input-outline">
+                    <label>From Date</label>
+                    <input type="date" id="fromDate" class="form-control">
                 </div>
-                <div class="col-auto">
-                    <label class="form-label fw-semibold mb-1">To</label>
-                    <input type="date" id="toDate" class="form-control form-control-sm">
+            </div>
+            <div class="col-auto">
+                <div class="input-outline">
+                    <label>To Date</label>
+                    <input type="date" id="toDate" class="form-control">
                 </div>
-                <div class="col-auto d-flex gap-2">
-                    <button id="loadBtn" class="btn btn-primary btn-sm px-4" onclick="loadReport()">
-                        <i class="fas fa-search me-1"></i>Load
-                    </button>
-                    <div class="btn-group btn-group-sm no-print">
-                        <button class="btn btn-outline-secondary" onclick="setRange('today')">Today</button>
-                        <button class="btn btn-outline-secondary" onclick="setRange('week')">7d</button>
-                        <button class="btn btn-outline-secondary" onclick="setRange('month')">Month</button>
-                    </div>
+            </div>
+            <div class="col-auto d-flex gap-2 align-items-end">
+                <button id="loadBtn" class="bb bb-primary" onclick="loadReport()">
+                    <i class="fas fa-search"></i>Load
+                </button>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" onclick="setRange('today')">Today</button>
+                    <button class="btn btn-outline-secondary" onclick="setRange('week')">7d</button>
+                    <button class="btn btn-outline-secondary" onclick="setRange('month')">Month</button>
                 </div>
-                <div class="col-auto ms-auto no-print">
-                    <div class="legend-wrap">
-                        <span><span class="legend-dot" style="background:var(--clr-fast)"></span>Fast mover (top 33%)</span>
-                        <span><span class="legend-dot" style="background:var(--clr-mid)"></span>Mid</span>
-                        <span><span class="legend-dot" style="background:var(--clr-slow)"></span>Slow</span>
-                        <span><span class="legend-dot" style="background:var(--clr-zero)"></span>No sales</span>
-                    </div>
+            </div>
+            <div class="col-auto ms-auto">
+                <div class="legend-wrap text-muted">
+                    <span><span class="legend-dot" style="background:var(--bill-green)"></span>Fast mover (top 33%)</span>
+                    <span><span class="legend-dot" style="background:var(--bill-gold)"></span>Mid</span>
+                    <span><span class="legend-dot" style="background:var(--bill-red)"></span>Slow</span>
+                    <span><span class="legend-dot" style="background:var(--bill-muted)"></span>No sales</span>
                 </div>
             </div>
         </div>
@@ -131,7 +106,7 @@
 
     <!-- Loading -->
     <div id="loadingDiv" class="text-center py-5 d-none">
-        <div class="spinner-border text-primary"></div>
+        <div class="spinner-border" style="color:var(--bill-navy)"></div>
         <p class="text-muted mt-2">Fetching data…</p>
     </div>
 
@@ -158,15 +133,15 @@
             </div>
         </div>
 
-        <!-- Chart + sort controls -->
+        <!-- Charts -->
         <div class="row g-3 mb-3 no-print">
             <div class="col-lg-8">
                 <div class="chart-card">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="fw-semibold text-secondary small">TOP CATEGORIES BY REVENUE</span>
+                        <span class="fw-semibold small" style="color:var(--bill-muted);text-transform:uppercase;letter-spacing:.05em;">Top Categories by Revenue</span>
                         <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary active" id="chartAmtBtn" onclick="switchChart('amt')">Amount</button>
-                            <button class="btn btn-outline-primary"         id="chartQtyBtn" onclick="switchChart('qty')">Qty</button>
+                            <button class="btn btn-outline-secondary active" id="chartAmtBtn" onclick="switchChart('amt')">Amount</button>
+                            <button class="btn btn-outline-secondary"        id="chartQtyBtn" onclick="switchChart('qty')">Qty</button>
                         </div>
                     </div>
                     <canvas id="cateChart" height="220"></canvas>
@@ -174,7 +149,7 @@
             </div>
             <div class="col-lg-4">
                 <div class="chart-card h-100">
-                    <div class="fw-semibold text-secondary small mb-3">REVENUE SHARE</div>
+                    <div class="fw-semibold small mb-3" style="color:var(--bill-muted);text-transform:uppercase;letter-spacing:.05em;">Revenue Share</div>
                     <canvas id="pieChart" height="220"></canvas>
                 </div>
             </div>
@@ -189,41 +164,42 @@
                 <button class="btn btn-outline-secondary" onclick="sortTable('bills')">Bills</button>
                 <button class="btn btn-outline-secondary" onclick="sortTable('name')">Name</button>
             </div>
-            <div class="ms-auto no-print">
-                <input type="text" id="tableSearch" class="form-control form-control-sm" placeholder="Search category…" style="width:200px" oninput="filterTable(this.value)">
+            <div class="ms-auto">
+                <div class="input-outline" style="min-width:200px;">
+                    <input type="text" id="tableSearch" class="form-control" placeholder="Search category…" oninput="filterTable(this.value)">
+                </div>
             </div>
         </div>
 
         <!-- Category table -->
-        <div class="card shadow-sm">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0" id="cateTable">
-                        <thead>
-                            <tr>
-                                <th style="width:40px">#</th>
-                                <th>Category</th>
-                                <th class="text-end">Revenue (₹)</th>
-                                <th class="text-end">Qty Sold</th>
-                                <th class="text-end">Bills</th>
-                                <th class="text-end">Products</th>
-                                <th>Top Product</th>
-                                <th style="width:160px">Share</th>
-                                <th class="text-center">Speed</th>
-                                <th class="text-center no-print">Details</th>
-                            </tr>
-                        </thead>
-                        <tbody id="cateBody"></tbody>
-                    </table>
-                </div>
+        <div class="mst-filter-card p-0">
+            <div class="table-responsive">
+                <table class="table mb-0 mst-table" id="cateTable">
+                    <thead>
+                        <tr>
+                            <th style="width:40px">#</th>
+                            <th>Category</th>
+                            <th class="text-end">Revenue (&#8377;)</th>
+                            <th class="text-end">Qty Sold</th>
+                            <th class="text-end">Bills</th>
+                            <th class="text-end">Products</th>
+                            <th>Top Product</th>
+                            <th style="width:160px">Share</th>
+                            <th class="text-center">Speed</th>
+                            <th class="text-center no-print">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cateBody"></tbody>
+                </table>
             </div>
         </div>
 
     </div><!-- /reportArea -->
 </div>
 
+<script src="<%=contextPath%>/dist/js/chart.js"></script>
 <script>
-const CTX = '<%=ctx%>';
+const CTX = '<%=contextPath%>';
 let allRows = [];       // raw category data
 let grandAmt = 0;
 let chartInst = null;
@@ -354,7 +330,7 @@ function renderTable(rows) {
         tr.innerHTML = `
             <td><span class="rank-badge${rankCls}">${rank}</span></td>
             <td class="fw-semibold">${escHtml(row.catName)}</td>
-            <td class="text-end fw-semibold text-primary">₹${fmt2(row.totalAmt)}</td>
+            <td class="text-end fw-semibold" style="color:var(--bill-navy)">&#8377;${fmt2(row.totalAmt)}</td>
             <td class="text-end">${fmt2(row.totalQty)}</td>
             <td class="text-end">${row.billCount}</td>
             <td class="text-end">${row.productCount}</td>
@@ -367,7 +343,7 @@ function renderTable(rows) {
             </td>
             <td class="text-center">${speedBadge(tier)}</td>
             <td class="text-center no-print">
-                <button class="btn btn-sm btn-outline-primary py-0 px-2 det-btn" data-cat-id="${row.catId}" data-cat-name="${escHtml(row.catName)}" onclick="toggleDetail(this)">
+                <button class="btn btn-sm btn-outline-violet py-0 px-2 det-btn" data-cat-id="${row.catId}" data-cat-name="${escHtml(row.catName)}" onclick="toggleDetail(this)">
                     <i class="fas fa-chevron-down"></i>
                 </button>
             </td>`;
@@ -432,7 +408,7 @@ function toggleDetail(btn) {
                         <td class="fw-semibold">${escHtml(p.productName)}</td>
                         <td class="text-end">₹${fmt2(p.avgPrice)}</td>
                         <td class="text-end">${fmt2(p.totalQty)}</td>
-                        <td class="text-end fw-semibold text-primary">₹${fmt2(p.totalAmt)}</td>
+                        <td class="text-end fw-semibold" style="color:var(--bill-navy)">₹${fmt2(p.totalAmt)}</td>
                         <td class="text-end">${p.billCount}</td>
                         <td>
                             <div class="share-bar"><div class="share-fill" style="width:${pPct}%"></div></div>
@@ -441,11 +417,11 @@ function toggleDetail(btn) {
                     </tr>`;
                 });
                 content.innerHTML = `
-                    <div class="fw-semibold text-primary mb-2">
+                    <div class="fw-semibold mb-2" style="color:var(--bill-navy)">
                         <i class="fas fa-tag me-1"></i>${escHtml(catName)} — Product Breakdown
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-hover table-sm mb-0 detail-table">
+                        <table class="table table-sm mb-0 mst-table">
                             <thead><tr>
                                 <th>#</th><th>Product</th>
                                 <th class="text-end">Avg Price</th>
@@ -455,10 +431,10 @@ function toggleDetail(btn) {
                                 <th style="width:120px">Share</th>
                             </tr></thead>
                             <tbody>${rows}</tbody>
-                            <tfoot><tr style="background:#e2e8f0">
+                            <tfoot><tr style="background:var(--bill-bg)">
                                 <td colspan="3"><strong>Total</strong></td>
                                 <td class="text-end"><strong>${fmt2(totQty)}</strong></td>
-                                <td class="text-end text-primary"><strong>₹${fmt2(totAmt)}</strong></td>
+                                <td class="text-end" style="color:var(--bill-navy)"><strong>&#8377;${fmt2(totAmt)}</strong></td>
                                 <td colspan="2"></td>
                             </tr></tfoot>
                         </table>
