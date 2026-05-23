@@ -211,6 +211,9 @@ for (int i = 0; i < vecPer.size(); i++) {
           <div class="collapse sidebar-submenu" id="gstReportMenu">
             
             <a href="<%=request.getContextPath()%>/reports/GST/GSTSummary/page.jsp" class="sidebar-subitem">Sales Summary</a>
+            <a href="<%=request.getContextPath()%>/reports/GST/billWiseSalesGST/page.jsp" class="sidebar-subitem">Bill Wise Sales GST</a>
+            <a href="<%=request.getContextPath()%>/reports/GST/itemWiseSalesGST/page.jsp" class="sidebar-subitem">Item Wise Sales GST</a>
+            <a href="<%=request.getContextPath()%>/reports/GST/hsnSalesGST/page.jsp" class="sidebar-subitem">HSN Sales GST</a>
             <a href="<%=request.getContextPath()%>/reports/GST/purchaseGST/page.jsp" class="sidebar-subitem">Purchase GST</a>
             <a href="<%=request.getContextPath()%>/reports/GST/purchaseGSTSummary/page.jsp" class="sidebar-subitem">Purchase GST Summary</a>
           </div>

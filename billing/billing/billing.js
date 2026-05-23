@@ -347,10 +347,10 @@ function addProduct() {
     const productSubtotal = actualQty * price;
     
     const productDiscount = discount * actualQty;
-    const total = productSubtotal - productDiscount;
     const commissionAmount = (document.getElementById('isCommission') && document.getElementById('isCommission').checked)
         ? (productCommission * actualQty)
         : 0;
+    const total = productSubtotal - productDiscount - commissionAmount;
 
     prodTotal+=productSubtotal;
     
@@ -484,6 +484,7 @@ function getCommissionAmountForRow(row) {
 
 function refreshCommissionDisplay() {
     totalCommission = 0;
+    grandTotal = 0;
     const rows = document.querySelectorAll('#billBody .bill-item-row, #billBody .item-row');
     rows.forEach(row => {
         const commissionAmount = getCommissionAmountForRow(row);
@@ -493,6 +494,17 @@ function refreshCommissionDisplay() {
             commissionCell.textContent = '₹' + commissionAmount.toFixed(3);
         }
         totalCommission += commissionAmount;
+
+        // Recalculate row total with updated commission
+        const rowSubtotal = parseFloat(row.dataset.subtotal || 0);
+        const rowDiscount = parseFloat(row.dataset.discount || 0);
+        const newRowTotal = rowSubtotal - rowDiscount - commissionAmount;
+        row.dataset.total = newRowTotal;
+        grandTotal += newRowTotal;
+
+        // Update row total cell
+        const tds = row.querySelectorAll('td');
+        if (tds[7]) tds[7].textContent = '₹' + newRowTotal.toFixed(3);
     });
 
     updateTotals();
@@ -541,7 +553,8 @@ function updateRowDiscount(rowId) {
         discInput.value = newDisc.toFixed(2);
     }
 
-    const newTotal = productSubtotal - newDisc;
+    const commissionAmount = parseFloat(row.dataset.commissionAmount || 0);
+    const newTotal = productSubtotal - newDisc - commissionAmount;
     totalDiscount = totalDiscount - oldDiscount + newDisc;
     grandTotal = grandTotal - oldTotal + newTotal;
 

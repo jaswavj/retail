@@ -2014,6 +2014,153 @@ public Vector getSalesGSTReportInvoiceWise(String from, String to) throws Except
     return vec;
 }
 
+// ── Bill-wise Sales GST ──────────────────────────────────────────────────────
+public Vector getBillWiseSalesGST(String from, String to) throws Exception {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql =
+            "SELECT b.bill_display, b.date, b.cusName, " +
+            "  CASE WHEN c.gstin IS NULL OR c.gstin = '' THEN 'NA' ELSE c.gstin END AS gstin, " +
+            "  SUM(bd.total / (1 + bd.gst / 100)) AS taxable_amount, " +
+            "  SUM((bd.total - bd.total / (1 + bd.gst / 100)) / 2) AS cgst, " +
+            "  SUM((bd.total - bd.total / (1 + bd.gst / 100)) / 2) AS sgst, " +
+            "  SUM(bd.total - bd.total / (1 + bd.gst / 100)) AS total_gst, " +
+            "  SUM(bd.total) AS invoice_value " +
+            "FROM prod_bill b " +
+            "JOIN prod_bill_details bd ON b.id = bd.bill_id " +
+            "LEFT JOIN customers c ON b.customerId = c.id " +
+            "WHERE b.date BETWEEN ? AND ? AND b.is_cancelled = 0 AND bd.is_cancelled = 0 " +
+            "GROUP BY b.id, b.bill_display, b.date, b.cusName, c.gstin " +
+            "ORDER BY b.date DESC, b.bill_display";
+        ps = con.prepareStatement(sql);
+        ps.setString(1, from);
+        ps.setString(2, to);
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString("bill_display"));
+            row.addElement(rs.getString("date"));
+            row.addElement(rs.getString("cusName"));
+            row.addElement(rs.getString("gstin"));
+            row.addElement(String.format("%.2f", rs.getDouble("taxable_amount")));
+            row.addElement(String.format("%.2f", rs.getDouble("cgst")));
+            row.addElement(String.format("%.2f", rs.getDouble("sgst")));
+            row.addElement(String.format("%.2f", rs.getDouble("total_gst")));
+            row.addElement(String.format("%.2f", rs.getDouble("invoice_value")));
+            vec.add(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return vec;
+}
+
+// ── Item-wise Sales GST ──────────────────────────────────────────────────────
+public Vector getItemWiseSalesGST(String from, String to) throws Exception {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql =
+            "SELECT b.bill_display, b.date, b.cusName, p.name AS item_name, " +
+            "  CASE WHEN p.hsn IS NULL OR p.hsn = 0 THEN 'N/A' ELSE CAST(p.hsn AS CHAR) END AS hsn_code, " +
+            "  bd.gst AS gst_rate, bd.qty, bd.price, bd.total AS gross_amount, " +
+            "  bd.total / (1 + bd.gst / 100) AS taxable_amount, " +
+            "  (bd.total - bd.total / (1 + bd.gst / 100)) / 2 AS cgst, " +
+            "  (bd.total - bd.total / (1 + bd.gst / 100)) / 2 AS sgst, " +
+            "  (bd.total - bd.total / (1 + bd.gst / 100)) AS total_gst " +
+            "FROM prod_bill b " +
+            "JOIN prod_bill_details bd ON b.id = bd.bill_id " +
+            "JOIN prod_product p ON bd.prod_id = p.id " +
+            "WHERE b.date BETWEEN ? AND ? AND b.is_cancelled = 0 AND bd.is_cancelled = 0 " +
+            "ORDER BY b.date DESC, b.bill_display, p.name";
+        ps = con.prepareStatement(sql);
+        ps.setString(1, from);
+        ps.setString(2, to);
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString("bill_display"));
+            row.addElement(rs.getString("date"));
+            row.addElement(rs.getString("cusName"));
+            row.addElement(rs.getString("item_name"));
+            row.addElement(rs.getString("hsn_code"));
+            row.addElement(String.format("%.0f", rs.getDouble("gst_rate")));
+            row.addElement(rs.getString("qty"));
+            row.addElement(String.format("%.3f", rs.getDouble("price")));
+            row.addElement(String.format("%.2f", rs.getDouble("gross_amount")));
+            row.addElement(String.format("%.2f", rs.getDouble("taxable_amount")));
+            row.addElement(String.format("%.2f", rs.getDouble("cgst")));
+            row.addElement(String.format("%.2f", rs.getDouble("sgst")));
+            row.addElement(String.format("%.2f", rs.getDouble("total_gst")));
+            vec.add(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return vec;
+}
+
+// ── HSN-wise Sales GST ───────────────────────────────────────────────────────
+public Vector getHSNSalesGST(String from, String to) throws Exception {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql =
+            "SELECT " +
+            "  CASE WHEN p.hsn IS NULL OR p.hsn = 0 THEN 'N/A' ELSE CAST(p.hsn AS CHAR) END AS hsn_code, " +
+            "  GROUP_CONCAT(DISTINCT p.name ORDER BY p.name SEPARATOR ', ') AS description, " +
+            "  bd.gst AS gst_rate, " +
+            "  SUM(bd.qty) AS total_qty, " +
+            "  SUM(bd.total / (1 + bd.gst / 100)) AS taxable_amount, " +
+            "  SUM((bd.total - bd.total / (1 + bd.gst / 100)) / 2) AS cgst, " +
+            "  SUM((bd.total - bd.total / (1 + bd.gst / 100)) / 2) AS sgst, " +
+            "  SUM(bd.total - bd.total / (1 + bd.gst / 100)) AS total_gst, " +
+            "  SUM(bd.total) AS total_value " +
+            "FROM prod_bill b " +
+            "JOIN prod_bill_details bd ON b.id = bd.bill_id " +
+            "JOIN prod_product p ON bd.prod_id = p.id " +
+            "WHERE b.date BETWEEN ? AND ? AND b.is_cancelled = 0 AND bd.is_cancelled = 0 " +
+            "GROUP BY CASE WHEN p.hsn IS NULL OR p.hsn = 0 THEN 'N/A' ELSE CAST(p.hsn AS CHAR) END, bd.gst " +
+            "ORDER BY hsn_code, bd.gst";
+        ps = con.prepareStatement(sql);
+        ps.setString(1, from);
+        ps.setString(2, to);
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString("hsn_code"));
+            row.addElement(rs.getString("description"));
+            row.addElement(String.format("%.0f", rs.getDouble("gst_rate")));
+            row.addElement(String.format("%.2f", rs.getDouble("total_qty")));
+            row.addElement(String.format("%.2f", rs.getDouble("taxable_amount")));
+            row.addElement(String.format("%.2f", rs.getDouble("cgst")));
+            row.addElement(String.format("%.2f", rs.getDouble("sgst")));
+            row.addElement(String.format("%.2f", rs.getDouble("total_gst")));
+            row.addElement(String.format("%.2f", rs.getDouble("total_value")));
+            vec.add(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return vec;
+}
+
 public Vector getProfitAnalysisReport(String from, String to) throws Exception {
     Connection con = null;
     PreparedStatement ps = null;
