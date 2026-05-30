@@ -6334,5 +6334,84 @@ public void useExchangePoint(int customerId, int billId, double pointsUsed, int 
         if (con != null) try { con.close(); } catch (Exception e) { ; }
     }
 }
+public double getBalanceSummaryOpeningBalance(String fromDate) throws Exception {
+    Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
+    double opening = 0;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql =
+            "SELECT COALESCE(SUM(s.in_amt),0) - COALESCE(SUM(s.out_amt),0) AS bal FROM ("
+            + " SELECT payable AS in_amt, 0.0 AS out_amt FROM prod_bill WHERE date < ?"
+            + " UNION ALL"
+            + " SELECT 0.0, net FROM prod_purchase WHERE ent_date < ? AND is_cancelled=0 AND is_po=0"
+            + " UNION ALL"
+            + " SELECT 0.0, amount FROM expense_entry WHERE DATE(exc_date_time) < ? AND is_active=1"
+            + " UNION ALL"
+            + " SELECT 0.0, pb.payable FROM prod_bill_cancel bc JOIN prod_bill pb ON pb.id=bc.bill_id WHERE bc.date < ?"
+            + " UNION ALL"
+            + " SELECT total, 0.0 FROM prod_purchase_return WHERE DATE(date_time) < ?"
+            + ") s";
+        ps = con.prepareStatement(sql);
+        ps.setString(1, fromDate); ps.setString(2, fromDate); ps.setString(3, fromDate);
+        ps.setString(4, fromDate); ps.setString(5, fromDate);
+        rs = ps.executeQuery();
+        if (rs.next()) opening = rs.getDouble("bal");
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return opening;
+}
 
+public Vector getBalanceSummaryReport(String fromDate, String toDate) throws Exception {
+    Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql =
+            "SELECT t.txn_date, t.content, t.in_amt, t.out_amt, COALESCE(u.user_name,'?') AS uname, t.type"
+            + " FROM ("
+            + "  SELECT pb.date AS txn_date, pb.time AS txn_time,"
+            + "         CONCAT('Bill #',pb.bill_display) AS content,"
+            + "         pb.payable AS in_amt, 0.0 AS out_amt, pb.uid AS uid, 'Sale' AS type"
+            + "  FROM prod_bill pb WHERE pb.date BETWEEN ? AND ?"
+            + "  UNION ALL"
+            + "  SELECT pp.ent_date, pp.ent_time,"
+            + "         CONCAT('GRN #',pp.prno), 0.0, pp.net, pp.ent_uid, 'Purchase'"
+            + "  FROM prod_purchase pp WHERE pp.ent_date BETWEEN ? AND ? AND pp.is_cancelled=0 AND pp.is_po=0"
+            + "  UNION ALL"
+            + "  SELECT DATE(ee.exc_date_time), TIME(ee.exc_date_time),"
+            + "         ee.content, 0.0, ee.amount, ee.uid, 'Expense'"
+            + "  FROM expense_entry ee WHERE DATE(ee.exc_date_time) BETWEEN ? AND ? AND ee.is_active=1"
+            + "  UNION ALL"
+            + "  SELECT bc.date, bc.time,"
+            + "         CONCAT('Cancel #',pb2.bill_display), 0.0, pb2.payable, bc.uid, 'Cancel'"
+            + "  FROM prod_bill_cancel bc JOIN prod_bill pb2 ON pb2.id=bc.bill_id WHERE bc.date BETWEEN ? AND ?"
+            + "  UNION ALL"
+            + "  SELECT DATE(pr.date_time), TIME(pr.date_time),"
+            + "         CONCAT('Return #',COALESCE(pr.return_no,CAST(pr.id AS CHAR))), pr.total, 0.0, pr.uid, 'Purchase Return'"
+            + "  FROM prod_purchase_return pr WHERE DATE(pr.date_time) BETWEEN ? AND ?"
+            + " ) t LEFT JOIN users u ON u.id = t.uid"
+            + " ORDER BY t.txn_date, t.txn_time, t.type";
+        ps = con.prepareStatement(sql);
+        for (int i = 1; i <= 9; i += 2) { ps.setString(i, fromDate); ps.setString(i+1, toDate); }
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString("txn_date") != null ? rs.getString("txn_date") : "");
+            row.addElement(rs.getString("content")  != null ? rs.getString("content")  : "");
+            row.addElement(rs.getDouble("in_amt"));
+            row.addElement(rs.getDouble("out_amt"));
+            row.addElement(rs.getString("uname")    != null ? rs.getString("uname")    : "");
+            row.addElement(rs.getString("type"));
+            vec.addElement(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return vec;
+}
 }

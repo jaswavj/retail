@@ -124,14 +124,15 @@ CREATE TABLE `customers` (
   `local` int DEFAULT '1',
   `exchange_point` double(10,3) DEFAULT '0.000',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 /*Data for the table `customers` */
 
 insert  into `customers`(`id`,`name`,`phone_number`,`address`,`date`,`time`,`is_eligible_for_commission`,`is_active`,`gstin`,`is_gst`,`salesman`,`area`,`credit_limit`,`local`,`exchange_point`) values 
 (1,'Walk-in Customer','','','2026-05-14','16:06:39',0,1,'',0,NULL,NULL,0.00,1,0.000),
 (2,'cus','9595959595','','2026-05-14','16:52:46',0,1,'',0,NULL,NULL,0.00,1,0.000),
-(3,'jas','8888888888','','2026-05-14','16:59:07',0,1,'',0,NULL,NULL,0.00,1,0.000);
+(3,'jas','8888888888','','2026-05-14','16:59:07',0,1,'',0,NULL,NULL,0.00,1,0.000),
+(4,'jaswa','989898','','2026-05-23','13:41:55',1,1,'',0,NULL,NULL,0.00,1,0.000);
 
 /*Table structure for table `customers_exchange_point` */
 
@@ -268,15 +269,16 @@ CREATE TABLE `prod_batch` (
   KEY `prod` (`product_id`),
   KEY `disc` (`disc_type`),
   KEY `uid` (`uid`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 
 /*Data for the table `prod_batch` */
 
 insert  into `prod_batch`(`id`,`name`,`product_id`,`cost`,`mrp`,`commission`,`stock`,`disc_type`,`discount`,`date`,`time`,`added_stock`,`uid`) values 
-(1,'Z101',1,100.000,200.000,0.000,98.00,0,0.000,'2026-05-14','13:02:49',0.00,1),
-(2,'Z102',2,200.000,400.000,0.000,98.00,0,0.000,'2026-05-14','13:03:04',0.00,1),
+(1,'Z101',1,100.000,200.000,0.000,96.00,0,0.000,'2026-05-14','13:02:49',0.00,1),
+(2,'Z102',2,200.000,400.000,0.000,97.00,0,0.000,'2026-05-14','13:03:04',0.00,1),
 (3,'Z102',3,120.000,120.000,0.000,100.00,0,0.000,'2026-05-14','13:49:31',0.00,1),
-(4,'Z103',4,500.000,500.000,0.000,100.00,0,0.000,'2026-05-14','13:50:31',0.00,1);
+(4,'Z103',4,500.000,500.000,0.000,100.00,0,0.000,'2026-05-14','13:50:31',0.00,1),
+(5,'ZP101',5,150.000,150.000,20.000,97.00,0,0.000,'2026-05-23','13:41:09',100.00,1);
 
 /*Table structure for table `prod_batch_updated` */
 
@@ -369,7 +371,7 @@ CREATE TABLE `prod_bill` (
   KEY `mode` (`paymentMode`),
   KEY `type` (`paymentType`),
   KEY `idx_is_tax_bill` (`is_tax_bill`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
 
 /*Data for the table `prod_bill` */
 
@@ -380,7 +382,10 @@ insert  into `prod_bill`(`id`,`bill_display`,`is_tax_bill`,`is_receipt`,`total`,
 (4,'26-4',1,1,600.000,0.000,0.000,600.000,600.000,0.000,0.000,0,1,0,1,'2026-05-14','16:56:51',0,1,'cus','9595959595',2,3,NULL,NULL,NULL,NULL),
 (5,'26-5',1,1,1100.000,3.000,0.000,1097.000,1097.000,0.000,0.000,0,1,0,1,'2026-05-14','16:58:21',0,1,'cus','9595959595',2,3,NULL,NULL,NULL,NULL),
 (6,'26-6',1,1,200.000,0.000,0.000,200.000,200.000,0.000,0.000,0,1,0,1,'2026-05-14','16:59:08',0,1,'jas','8888888888',3,3,NULL,NULL,NULL,NULL),
-(7,'26-7',1,1,600.000,2.000,2.000,596.000,596.000,0.000,0.000,0,1,0,1,'2026-05-14','17:01:58',0,1,'cus','9595959595',2,3,NULL,NULL,NULL,NULL);
+(7,'26-7',1,1,600.000,2.000,2.000,596.000,596.000,0.000,0.000,0,1,0,1,'2026-05-14','17:01:58',0,1,'cus','9595959595',2,3,NULL,NULL,NULL,NULL),
+(8,'26-8',1,1,600.000,0.000,0.000,600.000,200.000,400.000,100.000,1,1,0,1,'2026-05-22','17:24:06',0,1,'cus','9595959595',2,3,NULL,NULL,NULL,NULL),
+(9,'26-9',1,1,150.000,0.000,0.000,150.000,150.000,0.000,0.000,0,1,0,1,'2026-05-23','13:41:55',0,1,'jaswa','989898',4,3,NULL,NULL,NULL,NULL),
+(10,'26-10',1,1,500.000,0.000,0.000,460.000,460.000,0.000,0.000,0,1,0,1,'2026-05-23','13:49:48',0,1,'jaswa','989898',4,3,NULL,NULL,NULL,NULL);
 
 /*Table structure for table `prod_bill_cancel` */
 
@@ -438,7 +443,7 @@ CREATE TABLE `prod_bill_details` (
   PRIMARY KEY (`id`),
   KEY `bill` (`bill_id`),
   KEY `prod` (`prod_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=latin1;
 
 /*Data for the table `prod_bill_details` */
 
@@ -455,7 +460,12 @@ insert  into `prod_bill_details`(`id`,`bill_id`,`prod_id`,`qty`,`price`,`disc`,`
 (10,5,4,1.00,500.000,1.000,499.000,500.000,0.000,12,0,NULL,0),
 (11,6,1,1.00,200.000,0.000,200.000,100.000,0.000,5,0,NULL,0),
 (12,7,1,1.00,200.000,1.000,199.000,100.000,0.000,5,0,NULL,0),
-(13,7,2,1.00,400.000,1.000,399.000,200.000,0.000,0,0,NULL,0);
+(13,7,2,1.00,400.000,1.000,399.000,200.000,0.000,0,0,NULL,0),
+(14,8,1,1.00,200.000,0.000,200.000,100.000,0.000,5,0,NULL,0),
+(15,8,2,1.00,400.000,0.000,400.000,200.000,0.000,0,0,NULL,0),
+(16,9,5,1.00,150.000,0.000,150.000,150.000,20.000,5,0,NULL,0),
+(17,10,1,1.00,200.000,0.000,200.000,100.000,0.000,5,0,NULL,0),
+(18,10,5,2.00,150.000,0.000,260.000,150.000,20.000,5,0,NULL,0);
 
 /*Table structure for table `prod_bill_due_collection` */
 
@@ -476,9 +486,13 @@ CREATE TABLE `prod_bill_due_collection` (
   `time` time DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `billId` (`bill_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 /*Data for the table `prod_bill_due_collection` */
+
+insert  into `prod_bill_due_collection`(`id`,`bill_id`,`balance`,`paid`,`finalBalance`,`mode`,`bankOption`,`uid`,`collectDate`,`collectTime`,`date`,`time`) values 
+(1,8,400.00,200.00,200.00,2,1,1,'2026-05-22','17:24:25','2026-05-22','17:24:25'),
+(2,8,200.00,100.00,100.00,1,0,1,'2026-05-22','17:24:32','2026-05-22','17:24:32');
 
 /*Table structure for table `prod_bill_payment` */
 
@@ -493,7 +507,7 @@ CREATE TABLE `prod_bill_payment` (
   PRIMARY KEY (`id`),
   KEY `billid` (`bill_id`),
   KEY `paymentType` (`paymentType`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
 
 /*Data for the table `prod_bill_payment` */
 
@@ -504,7 +518,10 @@ insert  into `prod_bill_payment`(`id`,`bill_id`,`cash`,`bank`,`paymentType`) val
 (4,4,600.00,0.00,0),
 (5,5,1097.00,0.00,0),
 (6,6,200.00,0.00,0),
-(7,7,596.00,0.00,0);
+(7,7,596.00,0.00,0),
+(8,8,200.00,0.00,0),
+(9,9,150.00,0.00,0),
+(10,10,460.00,0.00,0);
 
 /*Table structure for table `prod_bill_payment_mode` */
 
@@ -594,12 +611,13 @@ CREATE TABLE `prod_category` (
   `time` time NOT NULL,
   `is_active` int DEFAULT '1',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 /*Data for the table `prod_category` */
 
 insert  into `prod_category`(`id`,`name`,`date`,`time`,`is_active`) values 
-(1,'Dress','2026-05-14','13:02:23',1);
+(1,'Dress','2026-05-14','13:02:23',1),
+(2,'Wire','2026-05-23','13:40:32',1);
 
 /*Table structure for table `prod_cheque_allocation` */
 
@@ -698,7 +716,7 @@ CREATE TABLE `prod_lifecycle` (
   KEY `uid` (`uid`),
   KEY `stock` (`stockAdjType`),
   KEY `billId` (`bill_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=latin1;
 
 /*Data for the table `prod_lifecycle` */
 
@@ -727,7 +745,13 @@ insert  into `prod_lifecycle`(`id`,`bill_id`,`batch_id`,`product_id`,`stock_in`,
 (22,6,1,1,0.00,1.00,98.00,0,'WHILE BILLING','2026-05-14','16:59:08',1,1,0),
 (23,7,1,1,0.00,1.00,97.00,0,'WHILE BILLING','2026-05-14','17:01:58',1,1,0),
 (24,7,2,2,0.00,1.00,98.00,0,'WHILE BILLING','2026-05-14','17:01:58',1,1,0),
-(25,0,1,1,1.00,0.00,98.00,2,'While Stock Added Through Purchase Entry','2026-05-14','18:04:24',1,2,0);
+(25,0,1,1,1.00,0.00,98.00,2,'While Stock Added Through Purchase Entry','2026-05-14','18:04:24',1,2,0),
+(26,8,1,1,0.00,1.00,97.00,0,'WHILE BILLING','2026-05-22','17:24:07',1,1,0),
+(27,8,2,2,0.00,1.00,97.00,0,'WHILE BILLING','2026-05-22','17:24:07',1,1,0),
+(28,0,5,5,100.00,0.00,100.00,0,'WHILE ADD PRODUCT','2026-05-23','13:41:09',1,1,0),
+(29,9,5,5,0.00,1.00,99.00,0,'WHILE BILLING','2026-05-23','13:41:55',1,1,0),
+(30,10,1,1,0.00,1.00,96.00,0,'WHILE BILLING','2026-05-23','13:49:48',1,1,0),
+(31,10,5,5,0.00,2.00,97.00,0,'WHILE BILLING','2026-05-23','13:49:48',1,1,0);
 
 /*Table structure for table `prod_order` */
 
@@ -787,7 +811,7 @@ CREATE TABLE `prod_product` (
   KEY `brand` (`brand_id`),
   KEY `uid` (`uid`),
   KEY `unit` (`unit_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 
 /*Data for the table `prod_product` */
 
@@ -795,7 +819,8 @@ insert  into `prod_product`(`id`,`name`,`code`,`category_id`,`brand_id`,`unit_id
 (1,'Phant','101',1,1,1,NULL,1,'2026-05-14','13:02:49',1,5),
 (2,'Phant','102',1,1,1,NULL,1,'2026-05-14','13:03:04',1,0),
 (3,'Phant','102',1,1,1,NULL,1,'2026-05-14','13:49:31',1,0),
-(4,'dre','103',1,1,1,NULL,1,'2026-05-14','13:50:31',1,12);
+(4,'dre','103',1,1,1,NULL,1,'2026-05-14','13:50:31',1,12),
+(5,'PVC','P101',2,1,1,12321,1,'2026-05-23','13:41:09',1,5);
 
 /*Table structure for table `prod_product_components` */
 
@@ -1441,7 +1466,7 @@ CREATE TABLE `user_modules` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `module_name` varchar(255) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=latin1;
 
 /*Data for the table `user_modules` */
 
@@ -1456,7 +1481,8 @@ insert  into `user_modules`(`id`,`module_name`) values
 (8,'Statistics'),
 (10,'Credit Management'),
 (11,'order list'),
-(12,'Expense');
+(12,'Expense'),
+(13,'Balance Summary');
 
 /*Table structure for table `user_permission` */
 
@@ -1471,7 +1497,7 @@ CREATE TABLE `user_permission` (
   PRIMARY KEY (`id`),
   KEY `mod` (`module_id`),
   KEY `uid` (`uid`)
-) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=121 DEFAULT CHARSET=latin1;
 
 /*Data for the table `user_permission` */
 
@@ -1486,12 +1512,13 @@ insert  into `user_permission`(`id`,`module_id`,`uid`,`date`,`time`) values
 (77,8,1,'2025-09-19','11:43:23'),
 (81,8,1,'2025-09-19','11:51:25'),
 (102,10,1,'2026-01-16',NULL),
-(113,11,1,'2026-01-25',NULL),
+(113,11,1,'2026-01-25','17:40:35'),
 (115,1,23,'2026-02-19','12:25:37'),
 (116,12,1,'2026-02-19','12:00:00'),
 (117,1,22,'2026-02-27','11:51:13'),
 (118,12,22,'2026-02-27','11:51:13'),
-(119,1,24,'2026-03-05','17:40:35');
+(119,1,24,'2026-03-05','17:40:35'),
+(120,13,1,'2026-03-05','17:40:35');
 
 /*Table structure for table `user_special_permission` */
 

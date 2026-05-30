@@ -92,7 +92,12 @@ for (int i = 0; i < vecPer.size(); i++) {
       <span>Billing</span>
     </a>
     <% } %>
-  
+  <% if (permissions.contains(13)) { %>
+    <a href="<%=request.getContextPath()%>/reports/balanceSummary/page.jsp" class="sidebar-item">
+      <i class="fas fa-scale-balanced"></i>
+      <span>Balance Summary</span>
+    </a>
+    <% } %> 
 <% if (permissions.contains(2)) { %>
     <div class="sidebar-dropdown">
       <a href="#" class="sidebar-item" data-bs-toggle="collapse" data-bs-target="#productMenu">
