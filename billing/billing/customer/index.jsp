@@ -1,4 +1,21 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.*" %>
+<jsp:useBean id="bill" class="billing.billingBean" />
+<%
+long   totalCustomers = 0;
+double totalDue       = 0;
+double totalAdvance   = 0;
+Vector dueList        = new Vector();
+try {
+    Vector tots = bill.getCustomerAccountTotals();
+    if (tots != null && tots.size() >= 3) {
+        totalCustomers = Long.parseLong(tots.get(0).toString());
+        totalDue       = Double.parseDouble(tots.get(1).toString());
+        totalAdvance   = Double.parseDouble(tots.get(2).toString());
+    }
+    dueList = bill.getCustomersDueList();
+} catch(Exception _e) {}
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,9 +33,33 @@
 %>
 <jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container mt-5 mst-page" style="max-width:520px;">
-    <div class="card shadow-sm">
-        <div class="card-body p-4">
+<div class="container mt-4 mst-page" style="max-width:680px;">
+
+  <!-- Stat cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-4">
+      <div class="mst-card p-3 text-center">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.7;">Customers</div>
+        <div style="font-size:28px;font-weight:900;"><%=totalCustomers%></div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="mst-card p-3 text-center" onclick="document.getElementById('dueModal').style.display='flex'" style="cursor:pointer;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.7;">Total Due</div>
+        <div style="font-size:22px;font-weight:900;color:<%=totalDue > 0 ? "#dc2626" : "#16a34a"%>;">&#8377;<%=String.format("%,.2f", totalDue)%></div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="mst-card p-3 text-center">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.7;">Total Advance</div>
+        <div style="font-size:22px;font-weight:900;color:#16a34a;">&#8377;<%=String.format("%,.2f", totalAdvance)%></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search card -->
+  <div class="mst-card">
+    <div class="p-4">
             <h5 class="mb-4" style="font-weight:700;">
                 <i class="fa-solid fa-magnifying-glass me-2"></i>Search Customer
             </h5>
@@ -48,8 +89,8 @@
                     </button>
                 </div>
             </div>
-        </div>
     </div>
+  </div>
 </div>
 
 <script>
@@ -127,5 +168,58 @@ searchInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && selectedCustomerId) goToView();
 });
 </script>
+
+<!-- Due Customers Modal -->
+<div id="dueModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.45);align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:560px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.22);">
+
+    <!-- Modal header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e5e7eb;">
+      <div>
+        <div style="font-weight:800;font-size:15px;"><i class="fa-solid fa-triangle-exclamation me-2" style="color:#dc2626;"></i>Customers with Due</div>
+        <div style="font-size:12px;opacity:.6;margin-top:2px;"><%=dueList.size()%> customer<%=dueList.size() != 1 ? "s" : ""%> &nbsp;|&nbsp; Total: &#8377;<%=String.format("%,.2f", totalDue)%></div>
+      </div>
+      <button onclick="document.getElementById('dueModal').style.display='none'" style="border:none;background:none;font-size:20px;cursor:pointer;opacity:.5;line-height:1;">&times;</button>
+    </div>
+
+    <!-- Modal body -->
+    <div style="overflow-y:auto;flex:1;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="background:#f8fafc;position:sticky;top:0;">
+            <th style="padding:10px 16px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;">#</th>
+            <th style="padding:10px 16px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;">Customer</th>
+            <th style="padding:10px 16px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;">Phone</th>
+            <th style="padding:10px 16px;text-align:right;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;">Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (dueList.isEmpty()) { %>
+          <tr><td colspan="4" style="padding:24px;text-align:center;color:#888;">No customers with outstanding due.</td></tr>
+          <%
+          } else {
+            for (int i = 0; i < dueList.size(); i++) {
+              Vector dr = (Vector) dueList.get(i);
+              String dCustId  = dr.get(0).toString();
+              String dName    = dr.get(1).toString();
+              String dPhone   = dr.get(2) != null ? dr.get(2).toString() : "-";
+              double dBal     = 0; try { dBal = Double.parseDouble(dr.get(3).toString()); } catch(Exception ex){}
+          %>
+          <tr onclick="window.location.href='<%=request.getContextPath()%>/billing/customer/view.jsp?customerId=<%=dCustId%>'"
+              style="cursor:pointer;border-bottom:1px solid #f0f0f0;background:#fff1f1;"
+              onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fff1f1'">
+            <td style="padding:11px 16px;color:#888;"><%=i+1%></td>
+            <td style="padding:11px 16px;font-weight:700;"><%=dName%></td>
+            <td style="padding:11px 16px;color:#555;"><%=dPhone%></td>
+            <td style="padding:11px 16px;text-align:right;font-weight:800;color:#dc2626;font-size:14px;">&#8377;<%=String.format("%,.2f", dBal)%></td>
+          </tr>
+          <% } } %>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
 </body>
 </html>

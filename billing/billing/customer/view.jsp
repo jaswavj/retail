@@ -27,12 +27,73 @@ if (account != null && account.size() >= 4) {
     try { accBalance = Double.parseDouble(account.get(3).toString()); } catch(Exception e){}
 }
 
+// Due payment collections
+Vector duePayments = bill.getCustomerDuePayments(customerId);
+
 // Total pending from bills
 double totalPending = 0;
 for (int i = 0; i < billList.size(); i++) {
     Vector r = (Vector) billList.get(i);
-    try { double cb = Double.parseDouble(r.get(10).toString()); if (cb > 0) totalPending += cb; } catch(Exception e){}
+    try { double cb = Double.parseDouble(r.get(4).toString()); if (cb > 0) totalPending += cb; } catch(Exception e){}
 }
+
+// Build unified timeline (bills + due collections) sorted by date+time desc
+// Row layout: [0]type [1]billNo [2]col1 [3]col2 [4]col3 [5]balAfter [6]mode [7]payType [8]date [9]time [10]biller [11]billId [12]pendingD
+String[] _modeL = {"", "Cash", "Bank", "Mixed"};
+String[] _typeL = {"-", "UPI", "Debit Card", "Credit Card", "Net Banking", "Wallet"};
+java.util.ArrayList timeline = new java.util.ArrayList();
+for (int i = 0; i < billList.size(); i++) {
+    Vector r = (Vector) billList.get(i);
+    double pd = 0; try { pd = Double.parseDouble(r.get(4).toString()); } catch(Exception ex){}
+    Vector e = new Vector();
+    e.addElement("BILL");
+    e.addElement(r.get(8).toString());
+    e.addElement(r.get(2).toString());
+    e.addElement(r.get(3).toString());
+    e.addElement(r.get(4).toString());
+    e.addElement("");
+    e.addElement("");
+    e.addElement("");
+    e.addElement(r.get(5).toString());
+    e.addElement(r.get(6) != null ? r.get(6).toString() : "");
+    e.addElement(r.get(7).toString());
+    e.addElement(r.get(9).toString());
+    e.addElement(String.valueOf(pd));
+    timeline.add(e);
+}
+if (duePayments != null) {
+    for (int i = 0; i < duePayments.size(); i++) {
+        Vector dr = (Vector) duePayments.get(i);
+        int dM = 0; try { dM = Integer.parseInt(dr.get(5).toString()); } catch(Exception ex){}
+        int dT = 0; try { dT = Integer.parseInt(dr.get(6).toString()); } catch(Exception ex){}
+        Vector e = new Vector();
+        double dCashD = 0, dBankD = 0;
+        try { dCashD = Double.parseDouble(dr.get(2).toString()); } catch(Exception ex){}
+        try { dBankD = Double.parseDouble(dr.get(3).toString()); } catch(Exception ex){}
+        e.addElement("DUE");
+        e.addElement("");
+        e.addElement(dr.get(1).toString());       // teCol1 = amount
+        e.addElement(String.format("%.1f", dCashD + dBankD)); // teCol2 = cash+bank paid
+        e.addElement(dr.get(4).toString());       // teCol3 = balance after
+        e.addElement("");                         // teCol4 unused
+        e.addElement((dM >= 1 && dM <= 3) ? _modeL[dM] : "-");
+        e.addElement((dT >= 0 && dT <= 5) ? _typeL[dT] : "-");
+        e.addElement(dr.get(8).toString());
+        e.addElement(dr.get(9).toString());
+        e.addElement(dr.get(10).toString());
+        e.addElement("-1");
+        e.addElement("0");
+        timeline.add(e);
+    }
+}
+java.util.Collections.sort(timeline, new java.util.Comparator() {
+    public int compare(Object a, Object b) {
+        Vector va = (Vector) a; Vector vb = (Vector) b;
+        String dtA = va.get(8).toString() + " " + va.get(9).toString();
+        String dtB = vb.get(8).toString() + " " + vb.get(9).toString();
+        return dtB.compareTo(dtA);
+    }
+});
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -67,7 +128,13 @@ for (int i = 0; i < billList.size(); i++) {
 %>
 <jsp:include page="/assets/common/pageHeader.jsp" />
 
-<div class="container-fluid mt-3 mst-page">
+<div class="container-fluid px-3 pt-2 mst-page" style="max-width:100%;">
+  <a href="<%=contextPath%>/billing/customer/index.jsp" class="bb bb-outline" style="font-size:12px;height:30px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;">
+    <i class="fa-solid fa-arrow-left"></i> Back
+  </a>
+</div>
+
+<div class="container-fluid mt-2 mst-page">
 
   <!-- Main 2-column layout -->
   <div class="d-flex gap-3 align-items-start" style="flex-wrap:wrap;">
@@ -77,25 +144,19 @@ for (int i = 0; i < billList.size(); i++) {
 
       <!-- Stat cards above bills table -->
       <div class="row g-3 mb-3">
-        <div class="col-3">
+        <div class="col-4">
           <div class="mst-card p-3 text-center">
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.7;">Total Bills</div>
             <div style="font-size:26px;font-weight:900;"><%=billList.size()%></div>
           </div>
         </div>
-        <div class="col-3">
-          <div class="mst-card p-3 text-center">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.7;">Pending Due</div>
-            <div style="font-size:22px;font-weight:900;color:#dc2626;">&#8377;<%= String.format("%,.2f", totalPending)%></div>
-          </div>
-        </div>
-        <div class="col-3">
+        <div class="col-4">
           <div class="mst-card p-3 text-center">
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.7;">Advance</div>
             <div style="font-size:22px;font-weight:900;color:#16a34a;">&#8377;<%= String.format("%,.2f", accAdvance)%></div>
           </div>
         </div>
-        <div class="col-3">
+        <div class="col-4">
           <div class="mst-card p-3 text-center">
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.7;">Account Balance</div>
             <div style="font-size:22px;font-weight:900;color:<%=accBalance > 0 ? "#dc2626" : "#16a34a"%>;">&#8377;<%= String.format("%,.2f", accBalance)%></div>
@@ -105,51 +166,72 @@ for (int i = 0; i < billList.size(); i++) {
 
       <div class="mst-card">
         <div class="mst-card-header px-3 py-2 d-flex align-items-center justify-content-between">
-          <span style="font-weight:700;font-size:13px;"><i class="fa-solid fa-file-invoice me-2"></i>All Bills</span>
-          <a href="<%=contextPath%>/billing/customer/index.jsp" class="bb bb-outline" style="font-size:11px;height:28px;padding:0 10px;">
-            <i class="fa-solid fa-arrow-left me-1"></i>Back
-          </a>
+          <span style="font-weight:700;font-size:13px;"><i class="fa-solid fa-receipt me-2"></i>Transactions</span>
         </div>
         <div class="table-responsive">
           <table class="table mst-table mb-0" style="font-size:12.5px;">
             <thead>
               <tr>
                 <th>#</th>
+                <th>Type</th>
                 <th>Bill No</th>
-                <th class="text-end">Payable</th>
+                <th class="text-end">Payable / Amt</th>
                 <th class="text-end">Paid</th>
                 <th class="text-end">Pending</th>
-                <th>Date</th>
+                <th>Date / Time</th>
                 <th>Biller</th>
               </tr>
             </thead>
-            <tbody id="billTableBody">
-              <% if (billList.isEmpty()) { %>
-              <tr><td colspan="7" class="text-center py-4 text-muted">No bills found for this customer.</td></tr>
+            <tbody>
+              <% if (timeline.isEmpty()) { %>
+              <tr><td colspan="8" class="text-center py-4 text-muted">No transactions found.</td></tr>
               <%
               } else {
-                for (int i = 0; i < billList.size(); i++) {
-                  Vector row = (Vector) billList.get(i);
-                  String payable  = row.get(2).toString();
-                  String paid     = row.get(3).toString();
-                  String curBal   = row.get(10).toString();
-                  String date     = row.get(5).toString();
-                  String biller   = row.get(7).toString();
-                  String billNo   = row.get(8).toString();
-                  int    billId   = Integer.parseInt(row.get(9).toString());
-                  double curBalD  = 0;
-                  try { curBalD = Double.parseDouble(curBal); } catch(Exception e){}
+                for (int i = 0; i < timeline.size(); i++) {
+                  Vector te      = (Vector) timeline.get(i);
+                  boolean isBill = "BILL".equals(te.get(0).toString());
+                  String teBillNo= te.get(1).toString();
+                  String teCol1  = te.get(2).toString();
+                  String teCol2  = te.get(3).toString();
+                  String teCol3  = te.get(4).toString();
+                  String teCol4  = te.get(5).toString();
+                  String teMode  = te.get(6).toString();
+                  String tePType = te.get(7).toString();
+                  String teDate  = te.get(8).toString();
+                  String teTime  = te.get(9).toString();
+                  String teBiller= te.get(10).toString();
+                  String teBillId= te.get(11).toString();
+                  double tePendD = 0; try { tePendD = Double.parseDouble(te.get(12).toString()); } catch(Exception ex){}
+                  double teCol3D = 0; try { teCol3D = Double.parseDouble(teCol3.isEmpty() ? "0" : teCol3); } catch(Exception ex){}
+                  boolean hasPend = isBill && tePendD > 0;
+                  String rowBg   = !isBill ? "background:#f0fdf4;" : (hasPend ? "background:#fff1f1;" : "");
+                  String tdBg    = !isBill ? "background:#ecfdf5 !important;" : (hasPend ? "background:#fff1f1 !important;" : "");
               %>
-              <tr class="bill-row-link" data-bill-id="<%=billId%>" onclick="selectBill(this, <%=billId%>)">
-                <td><%=i+1%></td>
-                <td><span style="font-weight:600;"><%=billNo%></span></td>
-                <td class="text-end"><%=payable%></td>
-                <td class="text-end"><%=paid%></td>
-                <td class="text-end <%=curBalD > 0 ? "text-danger fw-bold" : "text-success"%>"><%=curBal%></td>
-                <td><%=date%></td>
-                <td><%=biller%></td>
+              <tr <%=isBill ? "class=\"bill-row-link\" data-bill-id=\""+teBillId+"\" onclick=\"selectBill(this,"+teBillId+")\"" : ""%>
+                  style="<%=rowBg%>">
+                <td style="<%=tdBg%>"><%=i+1%></td>
+                <td style="<%=tdBg%>">
+                  <% if (isBill) { %>
+                  <span class="badge" style="font-size:10px;font-weight:700;background:<%=hasPend ? "#fee2e2;color:#b91c1c" : "#dbeafe;color:#1d4ed8"%>;">BILL</span>
+                  <% } else { %>
+                  <span class="badge" style="font-size:10px;font-weight:700;background:#dcfce7;color:#15803d;">COLLECTION</span>
+                  <% } %>
+                </td>
+                <td style="<%=tdBg%>">
+                  <% if (isBill) { %><span style="font-weight:600;"><%=teBillNo%></span>
+                  <% } else { %><span style="opacity:.35;">—</span><% } %>
+                </td>
+                <td class="text-end" style="<%=tdBg%>"><%=teCol1.isEmpty() ? "<span style='opacity:.3'>—</span>" : teCol1%></td>
+                <td class="text-end" style="<%=tdBg%>"><%=teCol2.isEmpty() ? "<span style='opacity:.3'>—</span>" : teCol2%></td>
+                <td class="text-end <%=isBill ? (hasPend ? "text-danger fw-bold" : "text-success") : (teCol3D > 0 ? "text-danger fw-bold" : "text-success")%>" style="<%=tdBg%>">
+                  <%=teCol3.isEmpty() ? "<span style='opacity:.3'>—</span>" : teCol3%>
+                </td>
+                <td style="white-space:nowrap;<%=tdBg%>"><%=teDate%>
+                  <% if (!teTime.isEmpty()) { %><br><span style="font-size:10px;opacity:.6;"><%=teTime%></span><% } %>
+                </td>
+                <td style="<%=tdBg%>"><%=teBiller%></td>
               </tr>
-              <% }} %>
+              <% } } %>
             </tbody>
           </table>
         </div>
@@ -360,8 +442,45 @@ function submitPayment() {
         }
     }
 
-    // TODO: backend submit will be wired later
-    Swal.fire({ icon:'info', title:'Ready to Submit', text:'Payment: ₹' + amount.toFixed(2) + ' | Mode: ' + ['','Cash','Bank','Mixed'][mode], confirmButtonText:'OK' });
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Saving…';
+
+    const params = new URLSearchParams({
+        customerId: customerId,
+        cashPaid:   mode === '2' ? '0' : cash.toFixed(2),
+        bankPaid:   mode === '1' ? '0' : bank.toFixed(2),
+        payMode:    mode,
+        payType:    document.getElementById('payType').value
+    });
+
+    fetch(contextPath + '/billing/customer/saveCustomerPayment.jsp', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body:    params.toString()
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Payment Saved',
+                text: 'Remaining balance: ₹' + parseFloat(data.newBalance).toFixed(2),
+                confirmButtonText: 'OK'
+            }).then(() => location.reload());
+        } else {
+            errBox.textContent = data.message || 'Error saving payment.';
+            errBox.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Submit Payment';
+        }
+    })
+    .catch(() => {
+        errBox.textContent = 'Network error. Please try again.';
+        errBox.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Submit Payment';
+    });
 }
 
 // Init

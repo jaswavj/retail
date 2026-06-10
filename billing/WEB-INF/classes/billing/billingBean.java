@@ -1384,6 +1384,180 @@ public Vector getBillsByCustomerId(int customerId) throws Exception {
     }
 }
 
+// Saves a customer account payment: inserts prod_bill_due + updates customer_account balance
+// pay_mode: 1=Cash 2=Bank 3=Mixed  |  pay_type: 0=N/A 1=UPI 2=Debit 3=Credit 4=NetBanking 5=Wallet
+public double saveCustomerPayment(int customerId,
+                                  double cashPaid,
+                                  double bankPaid,
+                                  int payMode,
+                                  int payType,
+                                  int uid) throws Exception {
+    Connection con = null;
+    PreparedStatement selPS = null;
+    PreparedStatement insPS = null;
+    PreparedStatement updPS = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        con.setAutoCommit(false);
+
+        // Current account balance
+        selPS = con.prepareStatement(
+            "SELECT balance FROM customer_account WHERE customer_id = ? FOR UPDATE"
+        );
+        selPS.setInt(1, customerId);
+        rs = selPS.executeQuery();
+        double currentBalance = 0;
+        if (rs.next()) {
+            currentBalance = rs.getDouble(1);
+        } else {
+            throw new Exception("customer_account not found for customerId=" + customerId);
+        }
+        rs.close(); selPS.close();
+
+        double amount = cashPaid + bankPaid;
+        double newBalance = currentBalance - amount;
+        if (newBalance < 0) newBalance = 0;
+
+        // Insert into prod_bill_due
+        insPS = con.prepareStatement(
+            "INSERT INTO prod_bill_due "
+            + "(customer_id, amount, cash_paid, bank_paid, balance, pay_mode, pay_type, uid, date, time) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_DATE(), CURRENT_TIME())"
+        );
+        insPS.setInt(1, customerId);
+        insPS.setDouble(2, amount);
+        insPS.setDouble(3, cashPaid);
+        insPS.setDouble(4, bankPaid);
+        insPS.setDouble(5, newBalance);
+        insPS.setInt(6, payMode);
+        insPS.setInt(7, payType);
+        insPS.setInt(8, uid);
+        insPS.executeUpdate();
+        insPS.close();
+
+        // Update customer_account balance
+        updPS = con.prepareStatement(
+            "UPDATE customer_account SET balance = ? WHERE customer_id = ?"
+        );
+        updPS.setDouble(1, newBalance);
+        updPS.setInt(2, customerId);
+        updPS.executeUpdate();
+        updPS.close();
+
+        con.commit();
+        return newBalance;
+    } catch (Exception e) {
+        if (con != null) try { con.rollback(); } catch (Exception ignore) {}
+        throw e;
+    } finally {
+        if (rs != null)   try { rs.close();   } catch (Exception ignore) {}
+        if (selPS != null) try { selPS.close(); } catch (Exception ignore) {}
+        if (insPS != null) try { insPS.close(); } catch (Exception ignore) {}
+        if (updPS != null) try { updPS.close(); } catch (Exception ignore) {}
+        if (con != null)  try { con.close();   } catch (Exception ignore) {}
+    }
+}
+
+// Returns customers with due balance > 0: [customer_id, name, phone, balance]
+public Vector getCustomersDueList() throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector vec = new Vector();
+        pt = con.prepareStatement(
+            "SELECT a.customer_id, b.name, b.phone_number, a.balance " +
+            "FROM customer_account a " +
+            "JOIN customers b ON b.id = a.customer_id " +
+            "WHERE a.balance > 0 " +
+            "ORDER BY a.balance DESC"
+        );
+        rs = pt.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString(1)); // customer_id
+            row.addElement(rs.getString(2)); // name
+            row.addElement(rs.getString(3)); // phone
+            row.addElement(rs.getString(4)); // balance
+            vec.addElement(row);
+        }
+        return vec;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+// Returns [totalCustomers, totalDue, totalAdvance] from customer_account
+public Vector getCustomerAccountTotals() throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector row = new Vector();
+        pt = con.prepareStatement(
+            "SELECT COUNT(*), COALESCE(SUM(balance),0), COALESCE(SUM(advance),0) FROM customer_account"
+        );
+        rs = pt.executeQuery();
+        if (rs.next()) {
+            row.addElement(rs.getString(1)); // totalCustomers
+            row.addElement(rs.getString(2)); // totalDue
+            row.addElement(rs.getString(3)); // totalAdvance
+        }
+        return row;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+// Returns list of due payments from prod_bill_due for a customer
+// Each row: [id, amount, cash_paid, bank_paid, balance, pay_mode, pay_type, uid, date, time, user_name]
+public Vector getCustomerDuePayments(int customerId) throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector vec = new Vector();
+        pt = con.prepareStatement(
+            "SELECT a.id, a.amount, a.cash_paid, a.bank_paid, a.balance, " +
+            "a.pay_mode, a.pay_type, a.uid, a.date, a.time, b.user_name " +
+            "FROM prod_bill_due a " +
+            "JOIN users b ON b.id = a.uid " +
+            "WHERE a.customer_id = ? " +
+            "ORDER BY a.id DESC"
+        );
+        pt.setInt(1, customerId);
+        rs = pt.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString(1));  // id
+            row.addElement(rs.getString(2));  // amount
+            row.addElement(rs.getString(3));  // cash_paid
+            row.addElement(rs.getString(4));  // bank_paid
+            row.addElement(rs.getString(5));  // balance
+            row.addElement(rs.getString(6));  // pay_mode
+            row.addElement(rs.getString(7));  // pay_type
+            row.addElement(rs.getString(8));  // uid
+            row.addElement(rs.getString(9));  // date
+            row.addElement(rs.getString(10)); // time
+            row.addElement(rs.getString(11)); // user_name
+            vec.addElement(row);
+        }
+        return vec;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
 // Returns customer_account row: [id, customer_id, advance, balance]
 public Vector getCustomerAccount(int customerId) throws Exception {
     Connection con = null;
@@ -2220,6 +2394,50 @@ public Vector getHSNSalesGST(String from, String to) throws Exception {
             row.addElement(String.format("%.2f", rs.getDouble("sgst")));
             row.addElement(String.format("%.2f", rs.getDouble("total_gst")));
             row.addElement(String.format("%.2f", rs.getDouble("total_value")));
+            vec.add(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return vec;
+}
+
+// Bill-wise profit: one row per bill
+// Row: [bill_display, date, cusName, total_cost, payable, profit, profit_pct]
+public Vector getBillWiseProfitReport(String from, String to) throws Exception {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql =
+            "SELECT a.bill_display, a.date, IFNULL(a.cusName,'-'), " +
+            "SUM(bd.cost * bd.qty) AS total_cost, a.payable " +
+            "FROM prod_bill a " +
+            "JOIN prod_bill_details bd ON a.id = bd.bill_id " +
+            "WHERE a.date BETWEEN ? AND ? AND a.is_cancelled = 0 " +
+            "GROUP BY a.id, a.bill_display, a.date, a.cusName, a.payable " +
+            "ORDER BY a.date DESC, a.id DESC";
+        ps = con.prepareStatement(sql);
+        ps.setString(1, from);
+        ps.setString(2, to);
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            double totalCost = rs.getDouble(4);
+            double payable   = rs.getDouble(5);
+            double profit    = payable - totalCost;
+            double pct       = totalCost > 0 ? (profit / totalCost) * 100 : 0;
+            Vector row = new Vector();
+            row.addElement(rs.getString(1)); // bill_display
+            row.addElement(rs.getString(2)); // date
+            row.addElement(rs.getString(3)); // cusName
+            row.addElement(totalCost);
+            row.addElement(payable);
+            row.addElement(profit);
+            row.addElement(pct);
             vec.add(row);
         }
     } finally {

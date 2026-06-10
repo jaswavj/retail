@@ -3,8 +3,11 @@
 <%@ page language="java" import= "java.util.*,java.text.*" %>
 <jsp:useBean id="bill" class="billing.billingBean" />
 <%
-String fromDate = request.getParameter("fromDate");  
-    String toDate   = request.getParameter("toDate");
+String fromDate    = request.getParameter("fromDate");
+String toDate      = request.getParameter("toDate");
+String reportType  = request.getParameter("reportType");
+if (reportType == null || reportType.trim().isEmpty()) reportType = "product";
+boolean isBillWise = "bill".equals(reportType);
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -23,7 +26,7 @@ String fromDate = request.getParameter("fromDate");
 <jsp:include page="/assets/common/pageHeader.jsp" />
 
 <div class="container-fluid mt-3 mst-page">
-<p class="mb-1 text-muted"><strong>Period:</strong> <%= fromDate %> — <%= toDate %></p>
+<p class="mb-1 text-muted"><strong>Period:</strong> <%= fromDate %> — <%= toDate %> &nbsp;|&nbsp; <strong>Mode:</strong> <%= isBillWise ? "Bill-wise" : "Product-wise" %></p>
     <div class="d-flex gap-2 mb-3 no-print">
         <a href="<%=contextPath%>/reports/profitAnalysis/page.jsp" class="bb bb-outline"><i class="fa-solid fa-arrow-left me-1"></i>Back</a>
         <button class="bb bb-navy" onclick="printReport()"><i class="fa-solid fa-print me-1"></i>Print</button>
@@ -31,22 +34,84 @@ String fromDate = request.getParameter("fromDate");
     </div>
 
 <%
-        Vector vec = bill.getProfitAnalysisReport(fromDate, toDate);
-        double totalCostSum = 0.0;
-        double totalSaleSum = 0.0;
-        double totalProfitSum = 0.0;
-        
-        for(int i = 0; i < vec.size(); i++) {
-            Vector row = (Vector)vec.elementAt(i);
-            double totalCost = Double.parseDouble(row.elementAt(4).toString());
-            double saleTotal = Double.parseDouble(row.elementAt(5).toString());
-            double profit = saleTotal - totalCost;
-            
-            totalCostSum += totalCost;
-            totalSaleSum += saleTotal;
-            totalProfitSum += profit;
-        }
-        double overallProfitPercent = (totalCostSum > 0) ? (totalProfitSum / totalCostSum) * 100 : 0;
+double totalCostSum   = 0.0;
+double totalSaleSum   = 0.0;
+double totalProfitSum = 0.0;
+
+if (isBillWise) {
+    Vector vec = bill.getBillWiseProfitReport(fromDate, toDate);
+    for (int i = 0; i < vec.size(); i++) {
+        Vector row = (Vector) vec.elementAt(i);
+        totalCostSum   += (Double) row.elementAt(3);
+        totalSaleSum   += (Double) row.elementAt(4);
+        totalProfitSum += (Double) row.elementAt(5);
+    }
+    double overallPct = totalCostSum > 0 ? (totalProfitSum / totalCostSum) * 100 : 0;
+%>
+<!-- Summary Cards -->
+<div class="row mb-4 g-3">
+    <div class="col-md-3"><div class="card mst-card"><div class="card-body"><h6 class="text-muted">Total Cost</h6><h4 style="color:var(--bill-navy)">&#8377; <%= String.format("%,.2f", totalCostSum) %></h4></div></div></div>
+    <div class="col-md-3"><div class="card mst-card"><div class="card-body"><h6 class="text-muted">Total Sales</h6><h4 style="color:var(--bill-navy-mid)">&#8377; <%= String.format("%,.2f", totalSaleSum) %></h4></div></div></div>
+    <div class="col-md-3"><div class="card mst-card"><div class="card-body"><h6 class="text-muted">Total Profit</h6><h4 style="color:<%= totalProfitSum >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>">&#8377; <%= String.format("%,.2f", totalProfitSum) %></h4></div></div></div>
+    <div class="col-md-3"><div class="card mst-card"><div class="card-body"><h6 class="text-muted">Profit Margin</h6><h4 style="color:<%= overallPct >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>"><%= String.format("%.1f", overallPct) %>%</h4></div></div></div>
+</div>
+<div class="table-responsive">
+<table id="printTable" class="table mb-0 mst-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Bill No</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th class="text-end">Total Cost</th>
+            <th class="text-end">Payable</th>
+            <th class="text-end">Profit / Loss</th>
+            <th class="text-end">Margin %</th>
+        </tr>
+    </thead>
+    <tbody>
+    <% for (int i = 0; i < vec.size(); i++) {
+        Vector row = (Vector) vec.elementAt(i);
+        String billNo   = row.elementAt(0).toString();
+        String billDate = row.elementAt(1).toString();
+        String cusName  = row.elementAt(2).toString();
+        double tCost    = (Double) row.elementAt(3);
+        double payable  = (Double) row.elementAt(4);
+        double profit   = (Double) row.elementAt(5);
+        double pct      = (Double) row.elementAt(6);
+    %>
+        <tr>
+            <td><%= i+1 %></td>
+            <td><strong><%= billNo %></strong></td>
+            <td><%= cusName %></td>
+            <td><%= billDate %></td>
+            <td class="text-end">&#8377; <%= String.format("%,.2f", tCost) %></td>
+            <td class="text-end">&#8377; <%= String.format("%,.2f", payable) %></td>
+            <td class="text-end fw-bold" style="color:<%= profit >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>">&#8377; <%= String.format("%,.2f", profit) %></td>
+            <td class="text-end" style="color:<%= pct >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>"><%= String.format("%.1f", pct) %>%</td>
+        </tr>
+    <% } %>
+    </tbody>
+    <tfoot style="background:var(--bill-bg);font-weight:700">
+        <tr>
+            <td colspan="4" class="text-end">Grand Total:</td>
+            <td class="text-end">&#8377; <%= String.format("%,.2f", totalCostSum) %></td>
+            <td class="text-end">&#8377; <%= String.format("%,.2f", totalSaleSum) %></td>
+            <td class="text-end" style="color:<%= totalProfitSum >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>">&#8377; <%= String.format("%,.2f", totalProfitSum) %></td>
+            <td class="text-end" style="color:<%= overallPct >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>"><%= String.format("%.1f", overallPct) %>%</td>
+        </tr>
+    </tfoot>
+</table>
+</div>
+<% } else {
+    Vector vec = bill.getProfitAnalysisReport(fromDate, toDate);
+    for (int i = 0; i < vec.size(); i++) {
+        Vector row = (Vector) vec.elementAt(i);
+        totalCostSum   += Double.parseDouble(row.elementAt(4).toString());
+        totalSaleSum   += Double.parseDouble(row.elementAt(5).toString());
+        totalProfitSum += Double.parseDouble(row.elementAt(5).toString()) - Double.parseDouble(row.elementAt(4).toString());
+    }
+    double overallProfitPercent = totalCostSum > 0 ? (totalProfitSum / totalCostSum) * 100 : 0;
 %>
 
 <!-- Summary Cards -->
@@ -151,6 +216,7 @@ String fromDate = request.getParameter("fromDate");
 
 <!-- Summary Cards -->
 
+<% } %>
 </div>
 
 <script>

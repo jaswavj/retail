@@ -23,7 +23,7 @@ String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 
 <div class="container-fluid mt-3 mst-page">
 
-    <form action="<%=contextPath%>/reports/profitAnalysis/page0.jsp" method="post" class="row g-3">
+    <form action="<%=contextPath%>/reports/profitAnalysis/page0.jsp" method="post" class="row g-3 align-items-end">
         <!-- From Date -->
         <div class="col-md-3">
             <label for="fromDate" class="form-label">From Date:</label>
@@ -36,8 +36,17 @@ String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
             <input type="date" id="toDate" name="toDate" value="<%=today%>" class="form-control" required>
         </div>
 
+        <!-- Report Type -->
+        <div class="col-md-3">
+            <label for="reportType" class="form-label">Report Type:</label>
+            <select id="reportType" name="reportType" class="form-select">
+                <option value="product">Product-wise Profit</option>
+                <option value="bill">Bill-wise Profit / Loss</option>
+            </select>
+        </div>
+
         <!-- Submit Button -->
-        <div class="col-md-2 d-flex align-items-end">
+        <div class="col-md-2">
             <button type="submit" class="bb bb-primary w-100">Generate Report</button>
         </div>
     </form>

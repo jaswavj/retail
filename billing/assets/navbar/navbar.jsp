@@ -92,33 +92,25 @@ for (int i = 0; i < vecPer.size(); i++) {
       <span>Billing</span>
     </a>
     <% } %>
-  <% if (permissions.contains(13)) { %>
-    <a href="<%=request.getContextPath()%>/reports/balanceSummary/page.jsp" class="sidebar-item">
-      <i class="fas fa-scale-balanced"></i>
-      <span>Balance Summary</span>
-    </a>
-    <% } %> 
+
 <% if (permissions.contains(2)) { %>
     <div class="sidebar-dropdown">
       <a href="#" class="sidebar-item" data-bs-toggle="collapse" data-bs-target="#productMenu">
         <i class="fas fa-box"></i>
-        <span>Configuration</span>
+        <span>Master</span>
         <i class="fas fa-chevron-down ms-auto"></i>
       </a>
       <div class="collapse sidebar-submenu" id="productMenu">
-        <a href="<%=request.getContextPath()%>/product/master/barCode/page.jsp" class="sidebar-subitem">Bar Code</a>
+
         <a href="<%=request.getContextPath()%>/product/master/category/category.jsp" class="sidebar-subitem"><%=head1%></a>
         <a href="<%=request.getContextPath()%>/product/master/brands/brands.jsp" class="sidebar-subitem"><%=head2%></a>
         <a href="<%=request.getContextPath()%>/product/master/product/product.jsp" class="sidebar-subitem"><%=head3%></a>
-        <a href="<%=request.getContextPath()%>/product/master/productBulkUpdate/page.jsp" class="sidebar-subitem">Change <%=head3%> MRP</a>
+        <a href="<%=request.getContextPath()%>/product/master/productBulkUpdate/page.jsp" class="sidebar-subitem"><%=head3%> Master</a>
         <a href="<%=request.getContextPath()%>/product/master/stock/stock.jsp" class="sidebar-subitem">Stock Management</a>
         <a href="<%=request.getContextPath()%>/product/master/customer/page.jsp" class="sidebar-subitem">Customers</a>
-        <!-- Customer Submenu -->
         <a href="<%=request.getContextPath()%>/cafeOrder/tables/page.jsp" class="sidebar-subitem">Cafe Tables</a>
-
         <a href="<%=request.getContextPath()%>/product/master/units/page.jsp" class="sidebar-subitem">Units</a>
-        
-      </div>
+        <a href="<%=request.getContextPath()%>/product/master/barCode/page.jsp" class="sidebar-subitem">Bar Code</a>      </div>
     </div>
     <% } %>
 <% if (permissions.contains(5)) { %>
@@ -147,18 +139,20 @@ for (int i = 0; i < vecPer.size(); i++) {
         <i class="fas fa-chevron-down ms-auto"></i>
       </a>
       <div class="collapse sidebar-submenu" id="statisticsMenu">
-        <a href="<%=request.getContextPath()%>/reports/dashboard/page.jsp" class="sidebar-subitem">
+        <a href="<%=request.getContextPath()%>/reports/profitAnalysis/page.jsp" class="sidebar-item">
+          <i class="fas fa-chart-pie me-2"></i>Profit Analysis Report
+        </a>
+        <a href="<%=request.getContextPath()%>/reports/dashboard/page.jsp" class="sidebar-item">
           <i class="fas fa-chart-line me-2"></i>Dashboard
         </a>
-        <a href="<%=request.getContextPath()%>/reports/statistics/page.jsp" class="sidebar-subitem">
-          <i class="fas fa-chart-bar me-2"></i>Sales Statistics
-        </a>
-        <a href="<%=request.getContextPath()%>/reports/cateSalesStats/page.jsp" class="sidebar-subitem">
+        <a href="<%=request.getContextPath()%>/reports/cateSalesStats/page.jsp" class="sidebar-item">
           <i class="fas fa-layer-group me-2"></i>Category Sales Statistics
         </a>
-                <a href="<%=request.getContextPath()%>/admin/productReport/page.jsp" class="sidebar-subitem"><i class="fas fa-cube me-1"></i>Product Analysis Report</a>
-        <a href="<%=request.getContextPath()%>/admin/customerReport/page.jsp" class="sidebar-subitem"><i class="fas fa-user me-1"></i>Customer Analysis Report</a>
-
+        <a href="<%=request.getContextPath()%>/admin/productReport/page.jsp" class="sidebar-item"><i class="fas fa-cube me-1"></i>Product Analysis Report</a>
+        <a href="<%=request.getContextPath()%>/reports/balanceSummary/page.jsp" class="sidebar-item">
+          <i class="fas fa-scale-balanced"></i>
+          <span>Balance Summary</span>
+        </a>
       </div>
     </div>
     <% } %>
@@ -200,9 +194,11 @@ for (int i = 0; i < vecPer.size(); i++) {
             <a href="<%=request.getContextPath()%>/reports/salesByItem/page.jsp" class="sidebar-subitem">Sales by <%=head3%></a>
             <a href="<%=request.getContextPath()%>/reports/salesByCustomer/page.jsp" class="sidebar-subitem">Sales by Customer</a>
             <a href="<%=request.getContextPath()%>/reports/attenderSales/page.jsp" class="sidebar-subitem">Sales by Attender</a>
-            <a href="<%=request.getContextPath()%>/reports/dueCollection/page.jsp" class="sidebar-subitem">Balance Collection</a>
             <a href="<%=request.getContextPath()%>/reports/dayAccount/page.jsp" class="sidebar-subitem">Day Account</a>
-          </div>
+            <a href="<%=request.getContextPath()%>/reports/commissionReport/page.jsp" class="sidebar-subitem">
+              <i class="fas fa-percent me-2"></i>Commission Report
+            </a>
+            </div>
         </div>
         
         
@@ -224,18 +220,9 @@ for (int i = 0; i < vecPer.size(); i++) {
           </div>
         </div>
         
-        <!-- Profit & Loss Report -->
-        <a href="<%=request.getContextPath()%>/reports/profitLoss/page.jsp" class="sidebar-subitem">
-          <i class="fas fa-chart-line me-2"></i>Profit & Loss Report
-        </a>
         
-        <!-- Profit Analysis Report -->
-        <a href="<%=request.getContextPath()%>/reports/profitAnalysis/page.jsp" class="sidebar-subitem">
-          <i class="fas fa-chart-pie me-2"></i>Profit Analysis Report
-        </a>
-         <a href="<%=request.getContextPath()%>/reports/commissionReport/page.jsp" class="sidebar-subitem">
-          <i class="fas fa-percent me-2"></i>Commission Report
-        </a>
+        
+         
       </div>
     </div>
     <% } %>
@@ -257,7 +244,6 @@ for (int i = 0; i < vecPer.size(); i++) {
         <i class="fas fa-chevron-down ms-auto"></i>
       </a>
       <div class="collapse sidebar-submenu" id="chequeMenu">
-        <a href="<%=request.getContextPath()%>/billing/balanceCollection.jsp" class="sidebar-subitem">Balance Collection</a>
         <a href="<%=request.getContextPath()%>/billing/customer/index.jsp" class="sidebar-subitem">Customers Balance</a>
         <a href="<%=request.getContextPath()%>/product/supplierPayment/page.jsp" class="sidebar-subitem">Supplier Payment</a>
       </div>

@@ -92,84 +92,78 @@ String type = request.getParameter("type");
 
         <!-- Products Table -->
         <div class="card border-0 shadow-sm">
-            
             <div class="table-responsive">
-                <table class="table table-hover mb-0 mst-table">
+                <table class="table table-hover mb-0 mst-table" style="font-size:12.5px;">
                     <thead>
                         <tr>
-                            <th style="width: 5%;">#</th>
-                            <th style="width: 20%;"><%=head3%> Name</th>
-                            <th style="width: 10%;">Code</th>
-                            <th style="width: 12%;"><%=head1%></th>
-                            <th style="width: 12%;">Current MRP</th>
-                            <th style="width: 12%;">New MRP</th>
-                            <th style="width: 10%;">GST (%)</th>
-                            <th style="width: 12%;">Actions</th>
+                            <th>#</th>
+                            <th><%=head3%> Name</th>
+                            <th>Brand</th>
+                            <th><%=head1%></th>
+                            <th style="width:110px;">Code</th>
+                            <th style="width:100px;">Cost</th>
+                            <th style="width:100px;">MRP</th>
+                            <th style="width:80px;">GST %</th>
+                            <th style="width:90px;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <%
                             int count = 0;
-                            
                             try {
-                                // Get products using bean method
                                 Vector products = prod.getProductsForBulkUpdate(filterName, filterCategory);
-                                
                                 for (int i = 0; i < products.size(); i++) {
                                     Vector product = (Vector) products.get(i);
                                     count++;
-                                    
-                                    int productId = ((Integer) product.get(0)).intValue();
-                                    String productName = (String) product.get(1);
-                                    String productCode = (String) product.get(2);
-                                    int gst = ((Integer) product.get(3)).intValue();
-                                    String categoryName = (String) product.get(4);
-                                    double mrp = ((Double) product.get(5)).doubleValue();
-                                    int batchId = ((Integer) product.get(6)).intValue();
+                                    int    productId   = ((Integer) product.get(0)).intValue();
+                                    String productName = (String)  product.get(1);
+                                    String productCode = product.get(2) != null ? (String) product.get(2) : "";
+                                    int    gst         = ((Integer) product.get(3)).intValue();
+                                    String categoryName= (String)  product.get(4);
+                                    double mrp         = ((Double)  product.get(5)).doubleValue();
+                                    int    batchId     = ((Integer) product.get(6)).intValue();
+                                    double cost        = ((Double)  product.get(7)).doubleValue();
+                                    String brandName   = (String)  product.get(8);
                         %>
                         <tr id="row-<%=productId%>">
                             <td><%=count%></td>
                             <td><strong><%=productName%></strong></td>
-                            <td><span class="badge bg-secondary"><%=productCode != null ? productCode : "-"%></span></td>
+                            <td style="color:#555;"><%=brandName != null ? brandName : "-"%></td>
                             <td><%=categoryName%></td>
-                            <td>₹ <%=String.format("%.2f", mrp)%></td>
                             <td>
-                                <input type="number" step="0.01" class="editable-input" id="mrp-<%=productId%>" value="<%=mrp%>">
+                                <input type="text" class="form-control form-control-sm" id="code-<%=productId%>" value="<%=productCode%>" style="width:90px;padding:3px 5px;">
                             </td>
                             <td>
-                                <input type="number" step="1" class="editable-input" id="gst-<%=productId%>" value="<%=gst%>" min="0" max="100">
+                                <input type="number" step="0.01" class="form-control form-control-sm" id="cost-<%=productId%>" value="<%=String.format("%.2f", cost)%>" min="0" style="width:90px;padding:3px 5px;">
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-outline-success btn-update" onclick="updateProduct(<%=productId%>, <%=batchId%>)">
-                                    <i class="fas fa-save me-1"></i> Update
+                                <input type="number" step="0.01" class="form-control form-control-sm" id="mrp-<%=productId%>" value="<%=String.format("%.2f", mrp)%>" min="0" style="width:90px;padding:3px 5px;">
+                            </td>
+                            <td>
+                                <input type="number" step="1" class="form-control form-control-sm" id="gst-<%=productId%>" value="<%=gst%>" min="0" max="100" style="width:65px;padding:3px 5px;">
+                            </td>
+                            <td>
+                                <button class="bb bb-primary" style="height:30px;padding:0 10px;font-size:11px;" onclick="updateProduct(<%=productId%>, <%=batchId%>)">
+                                    <i class="fas fa-save me-1"></i>Save
                                 </button>
                             </td>
                         </tr>
                         <%
                                 }
-                                
                                 if (count == 0) {
                         %>
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
-                                <i class="fas fa-inbox fa-2x mb-2"></i>
-                                <p class="mb-0">No products found matching your criteria</p>
-                            </td>
+                            <td colspan="9" class="text-center text-muted py-4">No products found matching your criteria</td>
                         </tr>
                         <%
                                 }
-                                
                             } catch (Exception e) {
                                 e.printStackTrace();
                         %>
                         <tr>
-                            <td colspan="8" class="text-center text-danger py-4">
-                                Error loading products: <%=e.getMessage()%>
-                            </td>
+                            <td colspan="9" class="text-center text-danger py-4">Error loading products: <%=e.getMessage()%></td>
                         </tr>
-                        <%
-                            }
-                        %>
+                        <% } %>
                     </tbody>
                 </table>
             </div>
@@ -178,70 +172,45 @@ String type = request.getParameter("type");
 
     <script>
         function updateProduct(productId, batchId) {
-            const mrp = document.getElementById('mrp-' + productId).value;
-            const gst = document.getElementById('gst-' + productId).value;
-            
-            if (!mrp || parseFloat(mrp) <= 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid MRP',
-                    text: 'Please enter a valid MRP value',
-                    confirmButtonColor: '#667eea'
-                });
+            const code = document.getElementById('code-' + productId).value.trim();
+            const cost = document.getElementById('cost-' + productId).value;
+            const mrp  = document.getElementById('mrp-'  + productId).value;
+            const gst  = document.getElementById('gst-'  + productId).value;
+
+            if (!mrp || parseFloat(mrp) < 0) {
+                Swal.fire({ icon:'error', title:'Invalid MRP', text:'Please enter a valid MRP value.', confirmButtonColor:'#667eea' });
                 return;
             }
-            
-            if (!gst || parseInt(gst) < 0 || parseInt(gst) > 100) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid GST',
-                    text: 'Please enter a valid GST percentage (0-100)',
-                    confirmButtonColor: '#667eea'
-                });
+            if (!cost || parseFloat(cost) < 0) {
+                Swal.fire({ icon:'error', title:'Invalid Cost', text:'Please enter a valid cost value.', confirmButtonColor:'#667eea' });
                 return;
             }
-            
-            // Show confirmation
+            if (gst === '' || parseInt(gst) < 0 || parseInt(gst) > 100) {
+                Swal.fire({ icon:'error', title:'Invalid GST', text:'GST must be between 0 and 100.', confirmButtonColor:'#667eea' });
+                return;
+            }
+
             Swal.fire({
-                title: 'Update Product?',
-                text: 'Are you sure you want to update MRP and GST for this product?',
+                title: 'Save Changes?',
+                text: 'Update code, cost, MRP and GST for this product?',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#667eea',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, update it!'
+                confirmButtonText: 'Yes, save!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Show loading
-                    Swal.fire({
-                        title: 'Updating...',
-                        text: 'Please wait',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
-                    
-                    // Submit form
+                    Swal.fire({ title:'Saving...', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = 'update.jsp';
-                    
-                    const fields = {
-                        productId: productId,
-                        batchId: batchId,
-                        mrp: mrp,
-                        gst: gst
-                    };
-                    
+                    const fields = { productId, batchId, code, cost, mrp, gst };
                     for (const key in fields) {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = key;
-                        input.value = fields[key];
-                        form.appendChild(input);
+                        const inp = document.createElement('input');
+                        inp.type = 'hidden'; inp.name = key; inp.value = fields[key];
+                        form.appendChild(inp);
                     }
-                    
                     document.body.appendChild(form);
                     form.submit();
                 }
@@ -250,3 +219,4 @@ String type = request.getParameter("type");
     </script>
 </body>
 </html>
+

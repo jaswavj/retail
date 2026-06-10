@@ -39,20 +39,14 @@ String selPeriodLabel = MONTH_NAMES[selMonth] + " " + selYear;
 ///////////////////  Sales  /////////////////
 double thisSale  = op1.getTotalSalesByDateRange(selMonthStart, selMonthEnd);
 double lastSale  = op1.getTotalSalesByDateRange(prevMonthStart, prevMonthEnd);
-double saleMargin = thisSale - lastSale;
-double saleMarginPercent = 0;
-if (lastSale != 0) saleMarginPercent = (saleMargin / lastSale) * 100;
-String saleColor = (saleMarginPercent >= 0) ? "green" : "red";
+double saleMarginPercent = lastSale != 0 ? ((thisSale - lastSale) / lastSale) * 100 : 0;
 
 //////////////////  Purchase  /////////////////
 double thisPurchase  = op1.getTotalPurchasesByDateRange(selMonthStart, selMonthEnd);
 double lastPurchase  = op1.getTotalPurchasesByDateRange(prevMonthStart, prevMonthEnd);
-double purchaseMargin = thisPurchase - lastPurchase;
-double purchaseMarginPercent = 0;
-if (lastPurchase != 0) purchaseMarginPercent = (purchaseMargin / lastPurchase) * 100;
-String PurchaseColor = (purchaseMarginPercent >= 0) ? "green" : "red";
+double purchaseMarginPercent = lastPurchase != 0 ? ((thisPurchase - lastPurchase) / lastPurchase) * 100 : 0;
 
-///////////////////  Today's Sales  /////////////////
+///////////////////  Today's Sales (kept for potential use)  /////////////////
 double todaySales    = op1.getTodaySales();
 int    todayBillCount = op1.getTodayBillCount();
 
@@ -75,10 +69,7 @@ for (int i = 0; i < lastMonthProfitData.size(); i++) {
     if (totalCost > 0) lastProfit += (saleTotal - totalCost);
 }
 
-double profitMargin = thisProfit - lastProfit;
-double profitMarginPercent = 0;
-if (lastProfit != 0) profitMarginPercent = (profitMargin / lastProfit) * 100;
-String profitColor = (profitMarginPercent >= 0) ? "green" : "red";
+double profitMarginPercent = lastProfit != 0 ? ((thisProfit - lastProfit) / lastProfit) * 100 : 0;
 
 ///////////////////  Expenses  /////////////////
 double thisExpense = 0.0;
@@ -103,12 +94,9 @@ try {
     }
 } catch (Exception e) { System.err.println("Error loading last expenses: " + e.getMessage()); }
 
-double expenseMargin = thisExpense - lastExpense;
-double expenseMarginPercent = 0;
-if (lastExpense != 0) expenseMarginPercent = (expenseMargin / lastExpense) * 100;
-String expenseColor = (expenseMarginPercent >= 0) ? "red" : "green";
+double expenseMarginPercent = lastExpense != 0 ? ((thisExpense - lastExpense) / lastExpense) * 100 : 0;
 
-double netProfitWithExpenses = thisProfit - thisExpense;
+double netProfit = thisSale - thisPurchase - thisExpense;
 
 // Get today's date label
 java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd-MMM-yyyy");
@@ -132,12 +120,6 @@ for (int i = 0; i < vecPurchase.size(); i++) {
     purchaseData.append(row.elementAt(1).toString().isEmpty() ? "0" : row.elementAt(1));
     if (i < vecPurchase.size() - 1) purchaseData.append(", ");
 }
-
-/////////////////////  Top Customers and Suppliers  //////////////////
-Vector<Vector> topCustomers         = op1.getTopCustomersByDateRange(selMonthStart, selMonthEnd);
-Vector<Vector> topSuppliers         = op1.getTopSuppliersByDateRange(selMonthStart, selMonthEnd);
-Vector<Vector> outstandingCustomers = op1.getOutstandingCustomers();
-Vector<Vector> outstandingSuppliers = op1.getOutstandingSuppliers();
 
 // Build year options (current year back 5 years, forward 1 year)
 int yearMin = curYear - 4;
@@ -225,136 +207,86 @@ int yearMax = curYear + 1;
             <span class="ms-auto text-muted" style="font-size:0.82rem;">Showing data for <strong style="color:var(--bill-navy);"><%= selPeriodLabel %></strong></span>
         </form>
 
-        <!-- Summary Cards -->
-        <div class="row g-4 mb-4">
-            <!-- Today's Sales Card -->
-            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-                <div class="card dashboard-card h-100 border-start border-4 border-danger">
-                    <div class="card-body position-relative" style="padding: 0.75rem;">
-                        <h6 class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">Today's Sales</h6>
-                        <p class="text-muted mb-2" style="font-size: 0.65rem; margin-top: -2px;">(<%= todayDate %>)</p>
-                        <h4 class="fw-bold text-dark mb-2" style="font-size: 1.1rem;">&#8377; <%= String.format("%,.2f", todaySales) %></h4>
-                        <div class="d-flex align-items-center">
-                            <span class="text-muted" style="font-size: 0.7rem;"><i class="fas fa-receipt me-1"></i> <%= todayBillCount %> Bills</span>
-                        </div>
-                        <i class="fas fa-calendar-day card-icon text-danger" style="font-size: 2.5rem;"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Sales Card -->
-            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-                <div class="card dashboard-card h-100 border-start border-4 border-primary">
-                    <div class="card-body position-relative" style="padding: 0.75rem;">
-                        <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.7rem;">Total Sales (<%= selPeriodLabel %>)</h6>
-                        <h4 class="fw-bold text-dark mb-2" style="font-size: 1.1rem;">&#8377; <%= String.format("%,.2f", thisSale) %></h4>
-                        <div class="d-flex align-items-center">
-                            <span class="<%= saleMarginPercent >= 0 ? "trend-up" : "trend-down" %> me-1" style="font-size: 0.7rem;">
-                                <i class="fas <%= saleMarginPercent >= 0 ? "fa-arrow-up" : "fa-arrow-down" %>"></i> 
-                                <%= String.format("%.1f", Math.abs(saleMarginPercent)) %>%
-                            </span>
-                            <span class="text-muted" style="font-size: 0.65rem;">vs last month</span>
-                        </div>
-                        <i class="fa-solid fa-chart-line card-icon" style="color: var(--bill-gold);"></i>
-                    </div>
-                </div>
-            </div>
+        <!-- 4 Summary Cards -->
+        <div class="row g-3 mb-4">
 
-            <!-- Purchase Card -->
-            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-                <div class="card dashboard-card h-100 border-start border-4 border-success">
-                    <div class="card-body position-relative" style="padding: 0.75rem;">
-                        <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.7rem;">Total Purchase (<%= selPeriodLabel %>)</h6>
-                        <h4 class="fw-bold text-dark mb-2" style="font-size: 1.1rem;">&#8377; <%= String.format("%,.2f", thisPurchase) %></h4>
-                        <div class="d-flex align-items-center">
-                            <span class="<%= purchaseMarginPercent >= 0 ? "trend-up" : "trend-down" %> me-1" style="font-size: 0.7rem;">
-                                <i class="fas <%= purchaseMarginPercent >= 0 ? "fa-arrow-up" : "fa-arrow-down" %>"></i> 
-                                <%= String.format("%.1f", Math.abs(purchaseMarginPercent)) %>%
-                            </span>
-                            <span class="text-muted" style="font-size: 0.65rem;">vs last month</span>
-                        </div>
-                        <i class="fa-solid fa-cart-shopping card-icon" style="color: var(--bill-green);"></i>
-                    </div>
-                </div>
+          <!-- Sales -->
+          <div class="col-lg-3 col-sm-6">
+            <div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(59,130,246,.18);background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);color:#fff;padding:22px 22px 16px;position:relative;min-height:140px;">
+              <div style="position:absolute;right:-12px;top:-12px;width:90px;height:90px;background:rgba(255,255,255,.08);border-radius:50%;"></div>
+              <div style="position:absolute;right:16px;top:16px;font-size:2rem;opacity:.25;"><i class="fa-solid fa-chart-line"></i></div>
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;opacity:.8;margin-bottom:8px;">Total Sales</div>
+              <div style="font-size:28px;font-weight:900;letter-spacing:-.5px;margin-bottom:10px;">&#8377;<%= String.format("%,.2f", thisSale) %></div>
+              <div style="font-size:11px;background:rgba(255,255,255,.15);border-radius:20px;display:inline-flex;align-items:center;gap:5px;padding:3px 10px;">
+                <% if (lastSale == 0) { %>
+                  <span style="opacity:.8;">— No prev. data</span>
+                <% } else if (saleMarginPercent >= 0) { %>
+                  <i class="fa-solid fa-arrow-trend-up"></i><span><%= String.format("%.1f", saleMarginPercent) %>% vs last month</span>
+                <% } else { %>
+                  <i class="fa-solid fa-arrow-trend-down"></i><span><%= String.format("%.1f", Math.abs(saleMarginPercent)) %>% vs last month</span>
+                <% } %>
+              </div>
             </div>
+          </div>
 
-            <!-- Net Margin Card (Calculated) -->
-            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-                <div class="card dashboard-card h-100 border-start border-4 border-info">
-                    <div class="card-body position-relative" style="padding: 0.75rem;">
-                        <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.7rem;">Net Difference</h6>
-                        <h4 class="fw-bold text-dark mb-2" style="font-size: 1.1rem;">&#8377; <%= String.format("%,.2f", thisSale - thisPurchase) %></h4>
-                        <div class="d-flex align-items-center">
-                            <span class="text-muted" style="font-size: 0.65rem;">Sales - Purchase</span>
-                        </div>
-                        <i class="fa-solid fa-wallet card-icon" style="color: var(--bill-navy);"></i>
-                    </div>
-                </div>
+          <!-- Purchase -->
+          <div class="col-lg-3 col-sm-6">
+            <div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(234,88,12,.18);background:linear-gradient(135deg,#c2410c 0%,#f97316 100%);color:#fff;padding:22px 22px 16px;position:relative;min-height:140px;">
+              <div style="position:absolute;right:-12px;top:-12px;width:90px;height:90px;background:rgba(255,255,255,.08);border-radius:50%;"></div>
+              <div style="position:absolute;right:16px;top:16px;font-size:2rem;opacity:.25;"><i class="fa-solid fa-cart-shopping"></i></div>
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;opacity:.8;margin-bottom:8px;">Total Purchase</div>
+              <div style="font-size:28px;font-weight:900;letter-spacing:-.5px;margin-bottom:10px;">&#8377;<%= String.format("%,.2f", thisPurchase) %></div>
+              <div style="font-size:11px;background:rgba(255,255,255,.15);border-radius:20px;display:inline-flex;align-items:center;gap:5px;padding:3px 10px;">
+                <% if (lastPurchase == 0) { %>
+                  <span style="opacity:.8;">— No prev. data</span>
+                <% } else if (purchaseMarginPercent >= 0) { %>
+                  <i class="fa-solid fa-arrow-trend-up"></i><span><%= String.format("%.1f", purchaseMarginPercent) %>% vs last month</span>
+                <% } else { %>
+                  <i class="fa-solid fa-arrow-trend-down"></i><span><%= String.format("%.1f", Math.abs(purchaseMarginPercent)) %>% vs last month</span>
+                <% } %>
+              </div>
             </div>
-            
-             <!-- Last Month Sales Card -->
-            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-                <div class="card dashboard-card h-100 border-start border-4 border-warning">
-                    <div class="card-body position-relative" style="padding: 0.75rem;">
-                        <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.7rem;">Previous Month Sales</h6>
-                        <h4 class="fw-bold text-dark mb-2" style="font-size: 1.1rem;">&#8377; <%= String.format("%,.2f", lastSale) %></h4>
-                        <div class="d-flex align-items-center">
-                             <span class="text-muted" style="font-size: 0.65rem;"><%= MONTH_NAMES[selMonth == 1 ? 12 : selMonth - 1] %> <%= selMonth == 1 ? selYear - 1 : selYear %></span>
-                        </div>
-                        <i class="fa-solid fa-clock-rotate-left card-icon" style="color: var(--bill-gold);"></i>
-                    </div>
-                </div>
+          </div>
+
+          <!-- Expense -->
+          <div class="col-lg-3 col-sm-6">
+            <div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(124,58,237,.18);background:linear-gradient(135deg,#6d28d9 0%,#a78bfa 100%);color:#fff;padding:22px 22px 16px;position:relative;min-height:140px;">
+              <div style="position:absolute;right:-12px;top:-12px;width:90px;height:90px;background:rgba(255,255,255,.08);border-radius:50%;"></div>
+              <div style="position:absolute;right:16px;top:16px;font-size:2rem;opacity:.25;"><i class="fa-solid fa-receipt"></i></div>
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;opacity:.8;margin-bottom:8px;">Total Expense</div>
+              <div style="font-size:28px;font-weight:900;letter-spacing:-.5px;margin-bottom:10px;">&#8377;<%= String.format("%,.2f", thisExpense) %></div>
+              <div style="font-size:11px;background:rgba(255,255,255,.15);border-radius:20px;display:inline-flex;align-items:center;gap:5px;padding:3px 10px;">
+                <% if (lastExpense == 0) { %>
+                  <span style="opacity:.8;">— No prev. data</span>
+                <% } else if (expenseMarginPercent >= 0) { %>
+                  <i class="fa-solid fa-arrow-trend-up"></i><span><%= String.format("%.1f", expenseMarginPercent) %>% vs last month</span>
+                <% } else { %>
+                  <i class="fa-solid fa-arrow-trend-down"></i><span><%= String.format("%.1f", Math.abs(expenseMarginPercent)) %>% vs last month</span>
+                <% } %>
+              </div>
             </div>
-            
-            <!-- Profit Card -->
-            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-                <div class="card dashboard-card h-100 border-start border-4 border-success">
-                    <div class="card-body position-relative" style="padding: 0.75rem;">
-                        <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.7rem;">Gross Profit (<%= selPeriodLabel %>)</h6>
-                        <h4 class="fw-bold text-dark mb-2" style="font-size: 1.1rem;">&#8377; <%= String.format("%,.2f", thisProfit) %></h4>
-                        <div class="d-flex align-items-center">
-                            <span class="<%= profitMarginPercent >= 0 ? "trend-up" : "trend-down" %> me-1" style="font-size: 0.7rem;">
-                                <i class="fas <%= profitMarginPercent >= 0 ? "fa-arrow-up" : "fa-arrow-down" %>"></i> 
-                                <%= String.format("%.1f", Math.abs(profitMarginPercent)) %>%
-                            </span>
-                            <span class="text-muted" style="font-size: 0.65rem;">vs last month</span>
-                        </div>
-                        <i class="fa-solid fa-chart-pie card-icon" style="color: var(--bill-green);"></i>
-                    </div>
-                </div>
+          </div>
+
+          <!-- Net Profit -->
+          <div class="col-lg-3 col-sm-6">
+            <% String profitGrad = netProfit >= 0 ? "linear-gradient(135deg,#065f46 0%,#10b981 100%)" : "linear-gradient(135deg,#991b1b 0%,#ef4444 100%)"; %>
+            <div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(16,185,129,.18);background:<%= profitGrad %>;color:#fff;padding:22px 22px 16px;position:relative;min-height:140px;">
+              <div style="position:absolute;right:-12px;top:-12px;width:90px;height:90px;background:rgba(255,255,255,.08);border-radius:50%;"></div>
+              <div style="position:absolute;right:16px;top:16px;font-size:2rem;opacity:.25;"><i class="fa-solid fa-coins"></i></div>
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;opacity:.8;margin-bottom:8px;">Net Profit</div>
+              <div style="font-size:28px;font-weight:900;letter-spacing:-.5px;margin-bottom:10px;">&#8377;<%= String.format("%,.2f", netProfit) %></div>
+              <div style="font-size:11px;background:rgba(255,255,255,.15);border-radius:20px;display:inline-flex;align-items:center;gap:5px;padding:3px 10px;">
+                <% if (lastProfit == 0) { %>
+                  <span style="opacity:.8;">— No prev. data</span>
+                <% } else if (profitMarginPercent >= 0) { %>
+                  <i class="fa-solid fa-arrow-trend-up"></i><span><%= String.format("%.1f", profitMarginPercent) %>% vs last month</span>
+                <% } else { %>
+                  <i class="fa-solid fa-arrow-trend-down"></i><span><%= String.format("%.1f", Math.abs(profitMarginPercent)) %>% vs last month</span>
+                <% } %>
+              </div>
             </div>
-            
-            <!-- Expenses Card -->
-            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-                <div class="card dashboard-card h-100 border-start border-4" style="border-color: var(--bill-navy) !important;">
-                    <div class="card-body position-relative" style="padding: 0.75rem;">
-                        <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.7rem;">Expenses (<%= selPeriodLabel %>)</h6>
-                        <h4 class="fw-bold text-dark mb-2" style="font-size: 1.1rem;">&#8377; <%= String.format("%,.2f", thisExpense) %></h4>
-                        <div class="d-flex align-items-center">
-                            <span class="<%= expenseMarginPercent < 0 ? "trend-up" : "trend-down" %> me-1" style="font-size: 0.7rem;">
-                                <i class="fas <%= expenseMarginPercent >= 0 ? "fa-arrow-up" : "fa-arrow-down" %>"></i> 
-                                <%= String.format("%.1f", Math.abs(expenseMarginPercent)) %>%
-                            </span>
-                            <span class="text-muted" style="font-size: 0.65rem;">vs last month</span>
-                        </div>
-                        <i class="fas fa-receipt card-icon" style="color: var(--bill-navy);"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Net Profit Card -->
-            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-                <div class="card dashboard-card h-100 border-start border-4 <%= netProfitWithExpenses >= 0 ? "border-success" : "border-danger" %>">
-                    <div class="card-body position-relative" style="padding: 0.75rem;">
-                        <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.7rem;">Net Profit (<%= selPeriodLabel %>)</h6>
-                        <h4 class="fw-bold mb-2" style="font-size: 1.1rem; color: <%= netProfitWithExpenses >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>;">&#8377; <%= String.format("%,.2f", netProfitWithExpenses) %></h4>
-                        <div class="d-flex align-items-center">
-                            <span class="text-muted" style="font-size: 0.65rem;">After Expenses</span>
-                        </div>
-                        <i class="fa-solid fa-coins card-icon" style="color: <%= netProfitWithExpenses >= 0 ? "var(--bill-green)" : "var(--bill-red)" %>;"></i>
-                    </div>
-                </div>
-            </div>
+          </div>
+
         </div>
 
         <!-- Charts Section -->
@@ -405,190 +337,6 @@ int yearMax = curYear + 1;
                     </div>
                     <div class="chart-wrapper-sm">
                         <canvas id="purchaseChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Customer & Supplier Dashboards -->
-        <div class="row g-4 mt-1">
-            <!-- Top Customers by Sales -->
-            <div class="col-lg-6">
-                <div class="chart-container">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold"><i class="fa-solid fa-users me-2" style="color:var(--bill-navy);"></i>Top Customers (<%= selPeriodLabel %>)</h5>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table mb-0 mst-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 5%;">#</th>
-                                    <th>Customer Name</th>
-                                    <th class="text-end">Total Sales</th>
-                                    <th class="text-center">Bills</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% if (topCustomers.size() == 0) { %>
-                                    <tr><td colspan="4" class="text-center text-muted">No data available</td></tr>
-                                <% } else {
-                                    for (int i = 0; i < topCustomers.size(); i++) {
-                                        Vector row = topCustomers.get(i);
-                                        String name = (String) row.get(0);
-                                        double sales = (Double) row.get(1);
-                                        int billCount = (Integer) row.get(2);
-                                %>
-                                    <tr>
-                                        <td><%= i + 1 %></td>
-                                        <td><strong><%= name %></strong></td>
-                                        <td class="text-end fw-bold" style="color:var(--bill-navy);">&#8377; <%= String.format("%,.2f", sales) %></td>
-                                        <td class="text-center"><span class="dash-badge"><%= billCount %></span></td>
-                                    </tr>
-                                <% } } %>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Top Suppliers by Purchase -->
-            <div class="col-lg-6">
-                <div class="chart-container">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold"><i class="fa-solid fa-truck me-2" style="color:var(--bill-green);"></i>Top Suppliers (<%= selPeriodLabel %>)</h5>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table mb-0 mst-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 5%;">#</th>
-                                    <th>Supplier Name</th>
-                                    <th class="text-end">Total Purchase</th>
-                                    <th class="text-center">Orders</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% if (topSuppliers.size() == 0) { %>
-                                    <tr><td colspan="4" class="text-center text-muted">No data available</td></tr>
-                                <% } else {
-                                    for (int i = 0; i < topSuppliers.size(); i++) {
-                                        Vector row = topSuppliers.get(i);
-                                        String name = (String) row.get(0);
-                                        double purchase = (Double) row.get(1);
-                                        int orderCount = (Integer) row.get(2);
-                                %>
-                                    <tr>
-                                        <td><%= i + 1 %></td>
-                                        <td><strong><%= name %></strong></td>
-                                        <td class="text-end fw-bold" style="color:var(--bill-green);">&#8377; <%= String.format("%,.2f", purchase) %></td>
-                                        <td class="text-center"><span class="dash-badge"><%= orderCount %></span></td>
-                                    </tr>
-                                <% } } %>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Outstanding Balances -->
-        <div class="row g-4 mt-1">
-            <!-- Outstanding Customer Balances -->
-            <div class="col-lg-6">
-                <div class="chart-container">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold"><i class="fa-solid fa-money-bill-wave me-2" style="color:var(--bill-gold);"></i>Top Outstanding Customers</h5>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table mb-0 mst-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 5%;">#</th>
-                                    <th>Customer Name</th>
-                                    <th class="text-end">Outstanding Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% if (outstandingCustomers.size() == 0) { %>
-                                    <tr><td colspan="3" class="text-center text-muted">No outstanding balances</td></tr>
-                                <% } else {
-                                    for (int i = 0; i < outstandingCustomers.size(); i++) {
-                                        Vector row = outstandingCustomers.get(i);
-                                        String name = (String) row.get(0);
-                                        double outstanding = (Double) row.get(1);
-                                        double pending = (Double) row.get(2);
-                                %>
-                                    <tr>
-                                        <td><%= i + 1 %></td>
-                                        <td><strong><%= name %></strong></td>
-                                        
-                                        <td class="text-end fw-bold" style="color:var(--bill-gold);">&#8377; <%= String.format("%,.2f", pending) %></td>
-                                    </tr>
-                                <% } } %>
-                            </tbody>
-                            <% if (outstandingCustomers.size() > 0) {
-                                double totalOutstanding = 0;
-                                for (Vector row : outstandingCustomers) {
-                                    totalOutstanding += (Double) row.get(1);
-                                }
-                            %>
-                            <tfoot>
-                                <tr style="background:var(--bill-bg); font-weight:700;">
-                                    <th colspan="2" class="text-end">Total (Top 5):</th>
-                                    <th class="text-end" style="color:var(--bill-red);">&#8377; <%= String.format("%,.2f", totalOutstanding) %></th>
-                                </tr>
-                            </tfoot>
-                            <% } %>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Outstanding Supplier Balances -->
-            <div class="col-lg-6">
-                <div class="chart-container">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold"><i class="fa-solid fa-file-invoice-dollar me-2" style="color:var(--bill-red);"></i>Top Outstanding Suppliers</h5>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table mb-0 mst-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 5%;">#</th>
-                                    <th>Supplier Name</th>
-                                    <th class="text-end">Outstanding Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% if (outstandingSuppliers.size() == 0) { %>
-                                    <tr><td colspan="3" class="text-center text-muted">No outstanding balances</td></tr>
-                                <% } else {
-                                    for (int i = 0; i < outstandingSuppliers.size(); i++) {
-                                        Vector row = outstandingSuppliers.get(i);
-                                        String name = (String) row.get(0);
-                                        double outstanding = (Double) row.get(1);
-                                %>
-                                    <tr>
-                                        <td><%= i + 1 %></td>
-                                        <td><strong><%= name %></strong></td>
-                                        <td class="text-end fw-bold" style="color:var(--bill-red);">&#8377; <%= String.format("%,.2f", outstanding) %></td>
-                                    </tr>
-                                <% } } %>
-                            </tbody>
-                            <% if (outstandingSuppliers.size() > 0) {
-                                double totalOutstanding = 0;
-                                for (Vector row : outstandingSuppliers) {
-                                    totalOutstanding += (Double) row.get(1);
-                                }
-                            %>
-                            <tfoot>
-                                <tr style="background:var(--bill-bg); font-weight:700;">
-                                    <th colspan="2" class="text-end">Total (Top 5):</th>
-                                    <th class="text-end" style="color:var(--bill-red);">&#8377; <%= String.format("%,.2f", totalOutstanding) %></th>
-                                </tr>
-                            </tfoot>
-                            <% } %>
-                        </table>
                     </div>
                 </div>
             </div>

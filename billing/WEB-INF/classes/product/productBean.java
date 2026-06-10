@@ -6700,16 +6700,15 @@ public Map<String, Double> getOutwardSuppliesTotals(Map<Double, Map<String, Doub
             con = util.DBConnectionManager.getConnectionFromPool();
             Vector products = new Vector();
             
-            // Build query based on filters
             StringBuilder query = new StringBuilder();
             query.append("SELECT p.id, p.name, p.code, p.gst, c.name AS category_name, ");
-            query.append("b.mrp, b.id AS batch_id ");
+            query.append("b.mrp, b.id AS batch_id, b.cost, br.name AS brand_name ");
             query.append("FROM prod_product p ");
             query.append("JOIN prod_category c ON p.category_id = c.id ");
+            query.append("JOIN prod_brands br ON p.brand_id = br.id ");
             query.append("JOIN prod_batch b ON b.product_id = p.id ");
             query.append("WHERE p.is_active = 1 ");
             
-            // Add filters
             if (filterName != null && !filterName.trim().isEmpty()) {
                 query.append("AND p.name LIKE ? ");
             }
@@ -6740,35 +6739,20 @@ public Map<String, Double> getOutwardSuppliesTotals(Map<Double, Map<String, Doub
                 product.addElement(rs.getString("category_name")); // 4: category_name
                 product.addElement(rs.getDouble("mrp"));          // 5: mrp
                 product.addElement(rs.getInt("batch_id"));        // 6: batch_id
+                product.addElement(rs.getDouble("cost"));         // 7: cost
+                product.addElement(rs.getString("brand_name"));   // 8: brand_name
                 products.addElement(product);
             }
             
             return products;
             
         } finally {
-            if (rs != null) {
-                try { rs.close(); } catch (SQLException e) { ; }
-                rs = null;
-            }
-            if (pt != null) {
-                try { pt.close(); } catch (SQLException e) { ; }
-                pt = null;
-            }
-            if (con != null) {
-                try { con.close(); } catch (SQLException e) { ; }
-                con = null;
-            }
+            if (rs != null) { try { rs.close(); } catch (SQLException e) { ; } rs = null; }
+            if (pt != null) { try { pt.close(); } catch (SQLException e) { ; } pt = null; }
+            if (con != null) { try { con.close(); } catch (SQLException e) { ; } con = null; }
         }
     }
 
-    /**
-     * Update MRP and GST for a product
-     * @param productId - The product ID
-     * @param batchId - The batch ID
-     * @param mrp - New MRP value
-     * @param gst - New GST percentage
-     * @return boolean - true if update successful, false otherwise
-     */
     public boolean updateProductMrpAndGst(int productId, int batchId, double mrp, int gst) throws Exception {
         Connection con = null;
         PreparedStatement pt1 = null;
@@ -6824,6 +6808,48 @@ public Map<String, Double> getOutwardSuppliesTotals(Map<Double, Map<String, Doub
     }
 
 ///////////////////////-------- ATTENDER MANAGEMENT ---------------------
+/**
+ * Full bulk update: code, cost, mrp, gst for a product
+ */
+public boolean bulkUpdateProduct(int productId, int batchId, String code, double cost, double mrp, int gst) throws Exception {
+    Connection con = null;
+    PreparedStatement pt1 = null, pt2 = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        con.setAutoCommit(false);
+
+        // Update prod_product: gst + code
+        pt1 = con.prepareStatement("UPDATE prod_product SET gst = ?, code = ? WHERE id = ?");
+        pt1.setInt(1, gst);
+        pt1.setString(2, code != null ? code : "");
+        pt1.setInt(3, productId);
+        int r1 = pt1.executeUpdate();
+
+        // Update prod_batch: cost + mrp
+        pt2 = con.prepareStatement("UPDATE prod_batch SET cost = ?, mrp = ? WHERE id = ?");
+        pt2.setDouble(1, cost);
+        pt2.setDouble(2, mrp);
+        pt2.setInt(3, batchId);
+        int r2 = pt2.executeUpdate();
+
+        if (r1 > 0 && r2 > 0) {
+            con.commit();
+            return true;
+        } else {
+            con.rollback();
+            return false;
+        }
+    } catch (Exception e) {
+        if (con != null) try { con.rollback(); } catch (Exception ex) {}
+        throw e;
+    } finally {
+        if (pt1 != null) try { pt1.close(); } catch (SQLException e) {}
+        if (pt2 != null) try { pt2.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (SQLException e) {}
+    }
+}
+
+///////////////////////-------- ATTENDER MANAGEMENT (original) ---------------------
 /**
  * Get all attenders
  */
