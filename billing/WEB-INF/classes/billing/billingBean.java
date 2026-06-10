@@ -1342,6 +1342,75 @@ public Vector getDueBills()throws Exception
 			}
 		}
 }
+
+// Returns all bills for a specific customer (by customer id), same columns as getDueBills
+// plus an extra column for cusName (col 0), used in customer balance view
+public Vector getBillsByCustomerId(int customerId) throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector vec = new Vector();
+        pt = con.prepareStatement(
+            "SELECT a.cusName, a.cusPhn, a.payable, a.paid, a.balance, a.date, a.time, " +
+            "b.user_name, a.bill_display, a.id, a.currentBalance " +
+            "FROM prod_bill a, users b " +
+            "WHERE a.uid = b.id AND a.customerId = ? AND a.is_cancelled = 0 " +
+            "ORDER BY a.id DESC"
+        );
+        pt.setInt(1, customerId);
+        rs = pt.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString(1));
+            row.addElement(rs.getString(2));
+            row.addElement(rs.getString(3));
+            row.addElement(rs.getString(4));
+            row.addElement(rs.getString(5));
+            row.addElement(rs.getString(6));
+            row.addElement(rs.getString(7));
+            row.addElement(rs.getString(8));
+            row.addElement(rs.getString(9));
+            row.addElement(rs.getString(10));
+            row.addElement(rs.getString(11));
+            vec.addElement(row);
+        }
+        return vec;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+// Returns customer_account row: [id, customer_id, advance, balance]
+public Vector getCustomerAccount(int customerId) throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector row = new Vector();
+        pt = con.prepareStatement(
+            "SELECT id, customer_id, advance, balance FROM customer_account WHERE customer_id = ?"
+        );
+        pt.setInt(1, customerId);
+        rs = pt.executeQuery();
+        if (rs.next()) {
+            row.addElement(rs.getString(1));
+            row.addElement(rs.getString(2));
+            row.addElement(rs.getString(3));
+            row.addElement(rs.getString(4));
+        }
+        return row;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
 public Vector getBillAmount(int id) throws Exception {
     Connection con = null;
     PreparedStatement ps = null;

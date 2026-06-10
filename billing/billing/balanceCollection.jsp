@@ -3,7 +3,19 @@
 <jsp:useBean id="bill" class="billing.billingBean" />
 <%
 Vector billList = bill.getDueBills();
-    
+
+double totalPendingBalance = 0.0;
+int totalDueBills = 0;
+for (int i = 0; i < billList.size(); i++) {
+    Vector r = (Vector) billList.get(i);
+    try {
+        double cb = Double.parseDouble(r.get(10).toString());
+        if (cb > 0) {
+            totalPendingBalance += cb;
+            totalDueBills++;
+        }
+    } catch (Exception ex) {}
+}
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -23,6 +35,35 @@ Vector billList = bill.getDueBills();
 <jsp:include page="/assets/common/pageHeader.jsp" />
 
 <div class="container-fluid mt-3 mst-page">
+
+  <!-- Total Pending Balance Card -->
+  <div class="row mb-4 justify-content-center">
+    <div class="col-12 col-md-5">
+      <div style="
+          background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+          border-radius: 14px;
+          padding: 28px 36px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          box-shadow: 0 6px 24px rgba(220,38,38,.30);
+          color: #fff;
+      ">
+        <div>
+          <div style="font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;opacity:.85;margin-bottom:6px;">
+            Total Pending Balance
+          </div>
+          <div style="font-size:42px;font-weight:900;line-height:1;letter-spacing:-1px;">
+            &#8377;<%= String.format("%,.2f", totalPendingBalance) %>
+          </div>
+          <div style="font-size:13px;margin-top:8px;opacity:.80;">
+            <%= totalDueBills %> bill<%= totalDueBills != 1 ? "s" : "" %> with pending dues
+          </div>
+        </div>
+        <i class="fa-solid fa-file-invoice-dollar" style="font-size:64px;opacity:.20;"></i>
+      </div>
+    </div>
+  </div>
 
   <!-- Filter Section -->
   <div class="row mb-3">

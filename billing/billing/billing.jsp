@@ -163,13 +163,14 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
             border-radius: var(--r-sm);
         }
 
-        /* â”€â”€ PRODUCT ROW â”€â”€ */
+        /* ── PRODUCT ROW ── */
         .prod-row {
             display: flex;
             gap: 7px;
             align-items: flex-end;
             flex-wrap: wrap;
             margin-top: 7px;
+            padding-bottom: 16px;
         }
 
         /* â”€â”€ TABLE PANEL â”€â”€ */
@@ -422,14 +423,13 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
 
         <!-- Row 2: Product entry -->
         <div class="prod-row">
-            <div class="fg" style="flex:.8;min-width:88px;">
-                <span class="fg-lbl">Code</span>
-                <input type="text" id="productCode" class="fg-inp" placeholder="Scan / Type" autocomplete="off">
+            <div class="fg" style="flex:2.8;min-width:160px;position:relative;">
+                <span class="fg-lbl">Code / Item Name</span>
+                <input type="text" id="productSearch" class="fg-inp" placeholder="Scan barcode or search item" autocomplete="off">
+                <span id="stockBadge" style="display:none;position:absolute;bottom:-18px;left:1px;font-size:10px;font-weight:700;letter-spacing:.3px;padding:2px 7px;border-radius:3px;white-space:nowrap;"></span>
             </div>
-            <div class="fg" style="flex:2;min-width:140px;">
-                <span class="fg-lbl">Item Name</span>
-                <input type="text" id="productName" name="productName" class="fg-inp" placeholder="Search item" autocomplete="off">
-            </div>
+            <input type="hidden" id="productCode">
+            <input type="hidden" id="productName" name="productName">
             <div class="fg" style="flex:.75;min-width:78px;">
                 <span class="fg-lbl">Unit</span>
                 <select id="productUnit" class="fg-sel" disabled>
@@ -700,14 +700,15 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
 <script src="billing.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // Focus barcode input on load
+    // Focus product search input on load
     setTimeout(function () {
-        const pc = document.getElementById('productCode');
-        if (pc) pc.focus();
+        const ps = document.getElementById('productSearch');
+        if (ps) ps.focus();
     }, 150);
 
     const productCodeInput = document.getElementById('productCode');
     const productNameInput = document.getElementById('productName');
+    const productSearchInput = document.getElementById('productSearch');
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
     const body = document.body;
@@ -729,8 +730,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    if (productCodeInput) productCodeInput.addEventListener('focus', closeSidebar);
-    if (productNameInput) productNameInput.addEventListener('focus', closeSidebar);
+    if (productSearchInput) productSearchInput.addEventListener('focus', closeSidebar);
 
     // Ctrl+S â€” save bill
     document.addEventListener('keydown', function (e) {

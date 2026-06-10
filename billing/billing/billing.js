@@ -263,7 +263,8 @@ function addProduct() {
     const convertionUnit = (document.getElementById("productConvertionUnit").value || '').trim();
 
     if (code === "" || name === "" || isNaN(qtyInput) || isNaN(price)) {
-        alert("Please enter valid product details!");
+        const searchTerm = document.getElementById("productSearch").value.trim();
+        showProductNotFound(searchTerm || 'this product');
         return;
     }
 
@@ -327,10 +328,25 @@ function addProduct() {
         }
         
         Swal.fire({
-            icon: 'error',
-            title: 'Insufficient Stock',
-            html: stockMessage,
-            confirmButtonText: 'OK'
+            icon: 'warning',
+            title: 'Stock Limit Exceeded',
+            html: stockMessage + '<br><br><strong>Do you want to add stock?</strong>',
+            showConfirmButton: true,
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Add Stock',
+            cancelButtonText: 'No'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                const w = Math.round(screen.width * 0.75);
+                const h = Math.round(screen.height * 0.75);
+                const left = Math.round((screen.width - w) / 2);
+                const top = Math.round((screen.height - h) / 2);
+                window.open(
+                    contextPath + '/product/purchase/page.jsp',
+                    'purchaseEntry',
+                    'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',resizable=yes,scrollbars=yes'
+                );
+            }
         });
         return;
     }
@@ -403,10 +419,12 @@ function addProduct() {
     updateTotals();
     updatePayableAmount();
 
+    document.getElementById("productSearch").value = "";
     document.getElementById("productCode").value = "";
     document.getElementById("productCode").dataset.id = 0;
     document.getElementById("productCode").dataset.commission = "0";
     document.getElementById("productName").value = "";
+    updateStockBadge(null);
     document.getElementById("productQty").value = "1";
     document.getElementById("productPrice").value = "";
     document.getElementById("productUnit").value = "";
@@ -416,7 +434,9 @@ function addProduct() {
     document.getElementById("productConvertionUnit").value = "";
     document.getElementById("qtyLabel").textContent = " Qty ";
     $('#productName').prop('disabled', false);
-    document.getElementById("productCode").focus();
+    productSearchStartTime = null;
+    productNameSuggestions = [];
+    document.getElementById("productSearch").focus();
     
     // Reset stock counter
     currentProductStock = 0;
@@ -436,12 +456,38 @@ function fetchProductStock(productId) {
         dataType: "json",
         success: function (data) {
             currentProductStock = data.stock || 0;
+            updateStockBadge(currentProductStock);
         },
         error: function () {
             console.error("Error fetching product stock");
             currentProductStock = 0;
+            updateStockBadge(0);
         }
     });
+}
+
+function updateStockBadge(stock) {
+    const badge = document.getElementById('stockBadge');
+    if (!badge) return;
+    if (stock === null || stock === undefined) {
+        badge.style.display = 'none';
+        return;
+    }
+    const qty = parseFloat(stock);
+    badge.style.display = 'inline-block';
+    if (qty <= 0) {
+        badge.textContent = 'Stock: OUT OF STOCK';
+        badge.style.background = '#fee2e2';
+        badge.style.color = '#dc2626';
+    } else if (qty <= 5) {
+        badge.textContent = 'Stock: ' + qty;
+        badge.style.background = '#fef3c7';
+        badge.style.color = '#b45309';
+    } else {
+        badge.textContent = 'Stock: ' + qty;
+        badge.style.background = '#dcfce7';
+        badge.style.color = '#16a34a';
+    }
 }
 
 // Add quantity validation on input
@@ -462,8 +508,23 @@ document.getElementById("productQty").addEventListener("input", function() {
             Swal.fire({
                 icon: 'warning',
                 title: 'Stock Limit Exceeded',
-                html: `Total available stock: ${currentProductStock}<br>Already added: ${alreadyAddedQty}<br>Available to add: ${availableToAdd}`,
-                confirmButtonText: 'OK'
+                html: `Total available stock: ${currentProductStock}<br>Already added: ${alreadyAddedQty}<br>Available to add: ${availableToAdd}<br><br><strong>Do you want to add stock?</strong>`,
+                showConfirmButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Add Stock',
+                cancelButtonText: 'No'
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    const w = Math.round(screen.width * 0.75);
+                    const h = Math.round(screen.height * 0.75);
+                    const left = Math.round((screen.width - w) / 2);
+                    const top = Math.round((screen.height - h) / 2);
+                    window.open(
+                        contextPath + '/product/purchase/page.jsp',
+                        'purchaseEntry',
+                        'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',resizable=yes,scrollbars=yes'
+                    );
+                }
             });
             this.value = availableToAdd > 0 ? availableToAdd : 1;
         }
@@ -896,16 +957,94 @@ document.getElementById("productDiscount").addEventListener("keydown", function(
 
 
 
-document.getElementById("productCode").addEventListener("keydown", function (e) {
-    if (e.key === "Tab" || e.key === "Enter") {  // Tab OR Enter
-        e.preventDefault();
+// ── Combined product search input (scan / type code / search by name) ────────
+let productSearchStartTime = null;
+let productSelectedFromAutocomplete = false; // flag: autocomplete select just fired
 
-        const code = this.value.trim();
-        if (code === "") return;
-
-        fetchProductDetails(code);
+document.getElementById("productSearch").addEventListener("input", function () {
+    if (productSearchStartTime === null) {
+        productSearchStartTime = Date.now();
     }
 });
+
+document.getElementById("productSearch").addEventListener("focus", function () {
+    productSearchStartTime = null;
+});
+
+document.getElementById("productSearch").addEventListener("keydown", function (e) {
+    if (productSearchStartTime === null) {
+        productSearchStartTime = Date.now();
+    }
+
+    if (e.key === "Enter" || e.key === "Tab") {
+        // If autocomplete just selected an item, skip — fetchProductDetailsByName already called
+        if (productSelectedFromAutocomplete) {
+            productSelectedFromAutocomplete = false;
+            e.preventDefault();
+            return;
+        }
+
+        e.preventDefault();
+        $(this).autocomplete("close");
+
+        const val = this.value.trim();
+        if (val === "") return;
+
+        const elapsed = Date.now() - (productSearchStartTime || Date.now());
+        const avgMsPerChar = val.length > 0 ? elapsed / val.length : 9999;
+        productSearchStartTime = null;
+
+        if (e.key === "Tab") {
+            // Tab → always name search using first suggestion or typed value
+            const firstSuggestion = productNameSuggestions.length > 0
+                ? getProductSuggestionName(productNameSuggestions[0]).trim()
+                : "";
+            const name = firstSuggestion || val;
+            this.value = name;
+            fetchProductDetailsByName(name);
+        } else {
+            // Enter (dropdown was NOT open):
+            //  1. Scanner (very fast input) → code lookup
+            //  2. Name suggestions exist   → name lookup
+            //  3. No suggestions           → code lookup
+            const isScanner = avgMsPerChar < 30;
+            if (isScanner) {
+                fetchProductDetails(val);
+            } else if (productNameSuggestions.length > 0) {
+                const firstSuggestion = getProductSuggestionName(productNameSuggestions[0]).trim();
+                const name = firstSuggestion || val;
+                this.value = name;
+                fetchProductDetailsByName(name);
+            } else {
+                fetchProductDetails(val);
+            }
+        }
+    }
+});
+
+function showProductNotFound(searchTerm) {
+    Swal.fire({
+        icon: 'question',
+        title: 'Product Not Found',
+        html: '<b>"' + searchTerm + '"</b> was not found.<br>Do you want to add it as a new product?',
+        showConfirmButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Add Product',
+        cancelButtonText: 'No'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            const w = Math.round(screen.width * 0.75);
+            const h = Math.round(screen.height * 0.75);
+            const left = Math.round((screen.width - w) / 2);
+            const top  = Math.round((screen.height - h) / 2);
+            window.open(
+                contextPath + '/product/master/product/product.jsp',
+                'addProduct',
+                'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',resizable=yes,scrollbars=yes'
+            );
+        }
+    });
+}
 
 function fetchProductDetails(code) {
     // Since we removed price categories and always use MRP, default to retailer (3)
@@ -918,7 +1057,18 @@ function fetchProductDetails(code) {
         success: function (response) {
             const data = JSON.parse(response);
 
-            $('#productName').val(data.name).prop('disabled', true);
+            if (data.error) {
+                showProductNotFound(code);
+                return;
+            }
+
+            const nameVal = data.name || '';
+            $('#productSearch').val(nameVal);
+            const acInst = $('#productSearch').data('ui-autocomplete');
+            if (acInst) acInst.term = nameVal;
+            $('#productCode').val(data.code || code);
+            $('#productName').val(nameVal);
+            $('#productName').prop('disabled', true);
             $('#productPrice').val(data.mrp);
             $('#productDiscount').val(data.discount);
 
@@ -941,10 +1091,10 @@ function fetchProductDetails(code) {
                 const qtyField = document.getElementById("productQty");
                 qtyField.focus();
                 qtyField.select();
-            }, 10);
+            }, 150);
         },
         error: function () {
-            console.error("Error sending data to detail.jsp");
+            showProductNotFound(code);
         }
     });
 }
@@ -956,43 +1106,35 @@ function getProductSuggestionName(item) {
 }
 
 $(function () {
-        $("#productName").autocomplete({
+        $("#productSearch").autocomplete({
             source: function (request, response) {
                 $.ajax({
-                    url: contextPath + "/billing/getProducts.jsp", // backend file returning product list
+                    url: contextPath + "/billing/getProducts.jsp",
                     data: { term: request.term },
                     dataType: "json",
                     success: function (data) {
                         productNameSuggestions = Array.isArray(data) ? data : [];
-                        response(data); // expects an array like ["Pen","Pencil","Notebook"]
+                        // Ensure every item has label & value = product name
+                        // so jQuery UI sets the input correctly on selection
+                        const normalized = productNameSuggestions.map(function(item) {
+                            const name = getProductSuggestionName(item);
+                            return $.extend({}, (typeof item === 'object' ? item : {}), { label: name, value: name });
+                        });
+                        productNameSuggestions = normalized;
+                        response(normalized);
                     }
                 });
             },
-            minLength: 1,   // start after 1 char
+            minLength: 1,
             select: function (event, ui) {
-                const selectedName = getProductSuggestionName(ui.item);
-                $("#productName").val(selectedName);
+                const selectedName = ui.item.value;
+                productSelectedFromAutocomplete = true; // tell keydown handler to skip
+                productSearchStartTime = null;
                 fetchProductDetailsByName(selectedName);
-                return false;
+                // Do NOT return false — let jQuery UI set the input value naturally
             }
         });
     });
-document.getElementById("productName").addEventListener("keydown", function (e) {
-    if (e.key === "Tab" || e.key === "Enter") {   // when user presses Tab or Enter
-        e.preventDefault();
-
-                const firstSuggestionName = productNameSuggestions.length > 0
-                        ? getProductSuggestionName(productNameSuggestions[0]).trim()
-                        : "";
-
-                const name = firstSuggestionName || this.value.trim();
-        if (name === "") return;
-
-                this.value = name;
-
-        fetchProductDetailsByName(name);
-    }
-});
 function fetchProductDetailsByName(name) {
     // Since we removed price categories and always use MRP, default to retailer (3)
     const priceCategory = 3;
@@ -1005,7 +1147,14 @@ function fetchProductDetailsByName(name) {
         success: function (data) {   // data is already an object
             //alert(JSON.stringify(data));
 
-            $('#productCode').val(data.code);  // Removed .prop('disabled', true)
+            if (data.error) {
+                showProductNotFound(name);
+                return;
+            }
+
+            const nameVal = data.name || name;
+            $('#productCode').val(data.code);
+            $('#productName').val(nameVal);
             $('#productPrice').val(data.mrp);
             $('#productDiscount').val(data.discount);
 
@@ -1028,10 +1177,10 @@ function fetchProductDetailsByName(name) {
                 const qtyField = document.getElementById("productQty");
                 qtyField.focus();
                 qtyField.select();
-            }, 10);
+            }, 150);
         },
         error: function () {
-            console.error("Error getting product details by name");
+            showProductNotFound(name);
         }
     });
 }
@@ -1870,7 +2019,7 @@ function newBill() {
     
     // Focus on code field
     setTimeout(() => {
-        document.getElementById('productCode').focus();
+        document.getElementById('productSearch').focus();
     }, 100);
 }
 

@@ -10,6 +10,11 @@ int priceCategory = (priceCategoryStr != null && !priceCategoryStr.isEmpty()) ? 
 // Fetch product details: [id, name, mrp, discount]
 Vector getDet = bill.getProductUsingCode(code, priceCategory);
 
+if (getDet == null || getDet.isEmpty() || getDet.get(0).toString().equals("0")) {
+    out.print("{\"error\":\"Product not found\"}");
+    return;
+}
+
 int productId = Integer.parseInt(getDet.get(0).toString());        // prod_id
 String name = (String) getDet.get(1);      // product name
 String mrp = String.valueOf(getDet.get(2)); 

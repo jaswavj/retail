@@ -2199,13 +2199,14 @@ finally
 public void AddCustomer(String name,String custAddress,String custPhn,String gstin, int isGst, int isEligibleForCommission) throws Exception {
     Connection con = null;
     PreparedStatement pt = null;
+    PreparedStatement ptAcc = null;
 
     try {
         con = util.DBConnectionManager.getConnectionFromPool();
         con.setAutoCommit(false); // IMPORTANT
 
         String sql = "INSERT INTO customers(name, date, time, address, phone_number, gstin, is_gst, is_eligible_for_commission) VALUES (?, NOW(), NOW(), ?, ?, ?, ?, ?)";
-        pt = con.prepareStatement(sql);
+        pt = con.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS);
         pt.setString(1, name);
 		pt.setString(2, custAddress);
 		pt.setString(3, custPhn);
@@ -2215,6 +2216,14 @@ public void AddCustomer(String name,String custAddress,String custPhn,String gst
 		
         int rows = pt.executeUpdate();
         if (rows > 0) {
+            java.sql.ResultSet generatedKeys = pt.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                int newCustomerId = generatedKeys.getInt(1);
+                String accSql = "INSERT INTO customer_account(customer_id, advance, balance) VALUES (?, 0.00, 0.00)";
+                ptAcc = con.prepareStatement(accSql);
+                ptAcc.setInt(1, newCustomerId);
+                ptAcc.executeUpdate();
+            }
             System.out.println("Customer inserted successfully.");
         } else {
             System.out.println("No rows inserted.");
@@ -2228,7 +2237,45 @@ public void AddCustomer(String name,String custAddress,String custPhn,String gst
         System.err.println("Error inserting customer: " + e.getMessage());
         throw e; // Rethrow so caller knows
     } finally {
+        if (ptAcc != null) try { ptAcc.close(); } catch (SQLException e) { }
         if (pt != null) try { pt.close(); } catch (SQLException e) { }
+        if (con != null) try { con.close(); } catch (Exception e) { }
+    }
+}
+////////////////////////////--------------------
+public void addDueToCustomerAccount(int customerId, double dueAmount) throws Exception {
+    Connection con = null;
+    PreparedStatement ptUpdate = null;
+    PreparedStatement ptInsert = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        con.setAutoCommit(false);
+
+        // Try to update existing row first
+        String updateSql = "UPDATE customer_account SET balance = balance + ? WHERE customer_id = ?";
+        ptUpdate = con.prepareStatement(updateSql);
+        ptUpdate.setDouble(1, dueAmount);
+        ptUpdate.setInt(2, customerId);
+        int rows = ptUpdate.executeUpdate();
+
+        // If no row existed yet, insert a new one
+        if (rows == 0) {
+            String insertSql = "INSERT INTO customer_account (customer_id, advance, balance) VALUES (?, 0.00, ?)";
+            ptInsert = con.prepareStatement(insertSql);
+            ptInsert.setInt(1, customerId);
+            ptInsert.setDouble(2, dueAmount);
+            ptInsert.executeUpdate();
+        }
+
+        con.commit();
+        System.out.println("customer_account updated: customerId=" + customerId + " due=" + dueAmount);
+    } catch (Exception e) {
+        if (con != null) con.rollback();
+        System.err.println("Error updating customer_account: " + e.getMessage());
+        throw e;
+    } finally {
+        if (ptUpdate != null) try { ptUpdate.close(); } catch (SQLException e) { }
+        if (ptInsert != null) try { ptInsert.close(); } catch (SQLException e) { }
         if (con != null) try { con.close(); } catch (Exception e) { }
     }
 }

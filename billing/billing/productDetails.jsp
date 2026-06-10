@@ -22,6 +22,7 @@ if (getDet != null && !getDet.isEmpty()) {
     String convertionUnit = getDet.size() > 8 && getDet.get(8) != null ? getDet.get(8).toString() : "";
 
     String json = "{\"id\":\"" + productId + "\","
+                 + "\"name\":\"" + productName + "\","
                  + "\"code\":\"" + code + "\","
                  + "\"mrp\":\"" + mrp + "\","
                  + "\"discount\":\"" + discount + "\","

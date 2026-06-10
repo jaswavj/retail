@@ -180,6 +180,16 @@ try {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        // Add due amount to customer_account balance (accumulates: existing + new due)
+        try {
+            System.out.println("DEBUG customer_account: customerId=" + customerId + " balance=" + balance);
+            prod.addDueToCustomerAccount(customerId, balance);
+            System.out.println("DEBUG customer_account: UPDATE SUCCESS");
+        } catch (Exception e) {
+            System.out.println("Error updating customer_account balance: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     for (int i = 0; i < products.length(); i++) {
