@@ -32,10 +32,105 @@ String fromDate = request.getParameter("fromDate");
     <meta charset="UTF-8">
     <title>Collection Report</title>
 <%@ include file="/assets/common/head.jsp" %>
+<script>
+// Toast notification function
+function showToast(message, type = 'success') {
+    const toastColors = {
+        success: '#10b981',
+        error: '#ef4444',
+        info: '#3b82f6'
+    };
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        background-color: ${toastColors[type] || toastColors.success};
+        color: white;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+        font-size: 14px;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => document.body.removeChild(toast), 300);
+    }, 3000);
+}
 
+// Direct thermal print function
+function directPrint(billNo) {
+    fetch('<%=contextPath%>/billing/directPrint.jsp?billNo=' + billNo, {
+        credentials: 'same-origin'
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.type === 'a4') {
+                    window.open('<%=contextPath%>/billing/print.jsp?billNo=' + encodeURIComponent(data.billNo), '_blank');
+                    showToast('\u2713 Opening A4 print preview', 'info');
+                } else if (data.type === 'printed') {
+                    showToast('\u2713 Receipt printed successfully!', 'success');
+                } else if (data.type === 'txt') {
+                    showToast('\u2139 No printer found. Receipt saved as TXT file', 'info');
+                    alert('Receipt saved to: ' + data.txtPath + '\n\nFile: ' + data.txtFile + '\n\nYou can open this file with Notepad to see how the receipt looks.');
+                }
+            } else {
+                showToast('\u2717 Print failed: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Print error:', error);
+            showToast('\u2717 Print failed: ' + error.message, 'error');
+        });
+}
 
+function printReport() {
+    var printArea = document.createElement('div');
+    printArea.id = 'printArea';
+    fetch('<%=contextPath%>/printHeader.jsp')
+        .then(response => response.text())
+        .then(headerHtml => {
+            printArea.innerHTML = headerHtml;
+            var tableContainer = document.querySelector('.mst-page');
+            var tableClone = tableContainer.cloneNode(true);
+            var buttons = tableClone.querySelector('.no-print');
+            if(buttons) buttons.remove();
+            printArea.appendChild(tableClone);
+            document.body.appendChild(printArea);
+            window.print();
+            document.body.removeChild(printArea);
+        })
+        .catch(error => {
+            console.error('Error loading print header:', error);
+            window.print();
+        });
+}
 
-
+function exportTableToExcel(tableID, filename = ''){
+    var table = document.getElementById(tableID);
+    if (!table) { alert('Table not found!'); return; }
+    var tableClone = table.cloneNode(true);
+    var html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel">';
+    html += '<head><meta charset="UTF-8">';
+    html += '<style>table {border-collapse: collapse;} td, th {border: 1px solid black; padding: 5px;}</style>';
+    html += '</head><body>';
+    html += '<table border="1">' + tableClone.innerHTML + '</table>';
+    html += '</body></html>';
+    filename = filename ? filename + '.xls' : 'excel_data.xls';
+    var blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel' });
+    var downloadLink = document.createElement("a");
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+}
+</script>
 </head>
 <body > 
 
@@ -159,7 +254,6 @@ String fromDate = request.getParameter("fromDate");
    <thead>
     <tr>
         <th>S.No</th>
-        <th>Bill No</th>
         <th>Customer Name</th>
         <th>Balance</th>
         <th>Cash Paid</th>
@@ -179,26 +273,22 @@ String fromDate = request.getParameter("fromDate");
     for (int j = 0; j < dueDetails.size(); j++) {
         Vector row = (Vector) dueDetails.elementAt(j);
 
-        String cusName     = row.elementAt(0).toString();   // Customer
-        String mode        = row.elementAt(4).toString();   // Cash / Bank
-        String bank        = row.elementAt(5).toString();   // UPI / NEFT / etc.
-        String date        = row.elementAt(6).toString();   // Date
-        String time        = row.elementAt(7).toString();   // Time
-        String userName    = row.elementAt(8).toString();   // Biller
-        String billDisplay = row.elementAt(9).toString();   // Bill No
+        String cusName  = row.elementAt(0).toString();   // Customer
+        String mode    = row.elementAt(4).toString();   // Cash / Bank
+        String bank    = row.elementAt(5).toString();   // UPI / NEFT / etc.
+        String date    = row.elementAt(6).toString();   // Date
+        String time    = row.elementAt(7).toString();   // Time
+        String userName = row.elementAt(8).toString();  // Biller
 
         double balance  = Double.parseDouble(row.elementAt(1).toString());
         double cashPaid = Double.parseDouble(row.elementAt(2).toString());
         double bankPaid = Double.parseDouble(row.elementAt(3).toString());
-        int billId      = Integer.parseInt(row.elementAt(10).toString());
 
         totalCashPaid += cashPaid;
         totalBankPaid += bankPaid;
-        double totalPaid = cashPaid + bankPaid;
 %>
     <tr style="border-bottom:1px solid var(--bill-border-lt)">
         <td><%= j + 1 %></td>
-        <td><%= billDisplay %></td>
         <td><%= cusName %></td>
         <td><%= balance %></td>
         <td><%= cashPaid %></td>
@@ -213,7 +303,7 @@ String fromDate = request.getParameter("fromDate");
     } // end for
 %>
     <tr style="background:var(--bill-bg);font-weight:700">
-        <td colspan="4"><strong>Grand Total</strong></td>
+        <td colspan="3"><strong>Grand Total</strong></td>
         <td><strong><%= String.format("%.3f", totalCashPaid) %></strong></td>
         <td><strong><%= String.format("%.3f", totalBankPaid) %></strong></td>
         <td colspan="5"></td>
@@ -235,162 +325,14 @@ String fromDate = request.getParameter("fromDate");
     body * { visibility: hidden; }
     #printArea, #printArea * { visibility: visible; }
     #printArea { position: absolute; left: 0; top: 0; width: 100%; }
-    #printArea table { width: 100% !important; font-size: 8px !important; }
-    #printArea th, #printArea td { padding: 1px 2px !important; font-size: 8px !important; }
-}
-</style>
-        padding: 0;
-    }
-    #printArea .container {
-        max-width: 100% !important;
-        margin: 0 !important;
-        padding: 0 5px !important;
-    }
-    #printArea .table-responsive {
-        overflow: visible !important;
-    }
-    #printArea table {
-        width: 100% !important;
-        font-size: 8px !important;
-        table-layout: auto !important;
-    }
-    #printArea table th,
-    #printArea table td {
-        padding: 1px 2px !important;
-        font-size: 8px !important;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        max-width: 80px;
-    }
+    #printArea table { width: 100% !important; font-size: 8px !important; table-layout: auto !important; }
+    #printArea th, #printArea td { padding: 1px 2px !important; font-size: 8px !important; word-wrap: break-word; overflow-wrap: break-word; max-width: 80px; }
+    #printArea .container { max-width: 100% !important; margin: 0 !important; padding: 0 5px !important; }
+    #printArea .table-responsive { overflow: visible !important; }
 }
 </style>
 
-<script>
-// Toast notification function
-function showToast(message, type = 'success') {
-    const toastColors = {
-        success: '#10b981',
-        error: '#ef4444',
-        info: '#3b82f6'
-    };
-    
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 12px 20px;
-        background-color: ${toastColors[type] || toastColors.success};
-        color: white;
-        border-radius: 6px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 10000;
-        animation: slideIn 0.3s ease-out;
-        font-size: 14px;
-    `;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s ease-out';
-        setTimeout(() => document.body.removeChild(toast), 300);
-    }, 3000);
-}
 
-// Direct thermal print function
-function directPrint(billNo) {
-    fetch('<%=contextPath%>/billing/directPrint.jsp?billNo=' + billNo, {
-        credentials: 'same-origin'
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if (data.type === 'a4') {
-                    // A4 format selected in company settings - open print.jsp
-                    window.open('<%=contextPath%>/billing/print.jsp?billNo=' + encodeURIComponent(data.billNo), '_blank');
-                    showToast('✓ Opening A4 print preview', 'info');
-                } else if (data.type === 'printed') {
-                    showToast('✓ Receipt printed successfully!', 'success');
-                } else if (data.type === 'txt') {
-                    showToast('ℹ No printer found. Receipt saved as TXT file', 'info');
-                    alert('Receipt saved to: ' + data.txtPath + '\n\nFile: ' + data.txtFile + '\n\nYou can open this file with Notepad to see how the receipt looks.');
-                }
-            } else {
-                showToast('✗ Print failed: ' + data.message, 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Print error:', error);
-            showToast('✗ Print failed: ' + error.message, 'error');
-        });
-}
-
-function printReport() {
-    // Create print area
-    var printArea = document.createElement('div');
-    printArea.id = 'printArea';
-    
-    // Fetch and add header
-    fetch('<%=contextPath%>/printHeader.jsp')
-        .then(response => response.text())
-        .then(headerHtml => {
-            printArea.innerHTML = headerHtml;
-            
-            // Add the table content
-            var tableContainer = document.querySelector('.mst-page');
-            var tableClone = tableContainer.cloneNode(true);
-            
-            // Remove the button div from clone
-            var buttons = tableClone.querySelector('.no-print');
-            if(buttons) buttons.remove();
-            
-            printArea.appendChild(tableClone);
-            
-            // Append to body and print
-            document.body.appendChild(printArea);
-            window.print();
-            
-            // Remove after print
-            document.body.removeChild(printArea);
-        })
-        .catch(error => {
-            console.error('Error loading print header:', error);
-            window.print();
-        });
-}
-
-function exportTableToExcel(tableID, filename = ''){
-    var table = document.getElementById(tableID);
-    if (!table) {
-        alert('Table not found!');
-        return;
-    }
-    
-    // Create a copy of the table
-    var tableClone = table.cloneNode(true);
-    
-    // Create HTML content with proper Excel format
-    var html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel">';
-    html += '<head><meta charset="UTF-8">';
-    html += '<style>table {border-collapse: collapse;} td, th {border: 1px solid black; padding: 5px;}</style>';
-    html += '</head><body>';
-    html += '<table border="1">' + tableClone.innerHTML + '</table>';
-    html += '</body></html>';
-    
-    filename = filename ? filename + '.xls' : 'excel_data.xls';
-    
-    var blob = new Blob(['\ufeff', html], {
-        type: 'application/vnd.ms-excel'
-    });
-    
-    var downloadLink = document.createElement("a");
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = filename;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-}
-</script>
 
 </body>
 </html>

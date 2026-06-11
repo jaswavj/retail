@@ -1750,28 +1750,25 @@ public Vector getDuePaidList(String from, String to, int uid) throws Exception {
     try {
         con = util.DBConnectionManager.getConnectionFromPool();
 
-        // Base query
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT b.cusName, a.balance, ");
-        sql.append("CASE WHEN a.mode = 1 THEN a.paid ELSE '0' END AS cashPaid, ");
-        sql.append("CASE WHEN a.mode = 2 THEN a.paid ELSE '0' END AS bankPaid, ");
-        sql.append("CASE WHEN a.mode = 1 THEN 'Cash' ELSE 'Bank' END AS mode, ");
+        sql.append("SELECT c.name, a.balance, a.cash_paid, a.bank_paid, ");
+        sql.append("CASE WHEN a.pay_mode = 1 THEN 'Cash' ELSE 'Bank' END AS mode, ");
         sql.append("CASE ");
-        sql.append(" WHEN a.bankOption = 0 THEN '-' ");
-        sql.append(" WHEN a.bankOption = 1 THEN 'UPI' ");
-        sql.append(" WHEN a.bankOption = 2 THEN 'DEBIT CARD' ");
-        sql.append(" WHEN a.bankOption = 3 THEN 'CREDIT CARD' ");
-        sql.append(" WHEN a.bankOption = 4 THEN 'NEFT' ");
-        sql.append(" WHEN a.bankOption = 5 THEN 'WALLET' ");
+        sql.append(" WHEN a.pay_type = 0 THEN '-' ");
+        sql.append(" WHEN a.pay_type = 1 THEN 'UPI' ");
+        sql.append(" WHEN a.pay_type = 2 THEN 'DEBIT CARD' ");
+        sql.append(" WHEN a.pay_type = 3 THEN 'CREDIT CARD' ");
+        sql.append(" WHEN a.pay_type = 4 THEN 'NEFT' ");
+        sql.append(" WHEN a.pay_type = 5 THEN 'WALLET' ");
         sql.append("END AS bank, ");
-        sql.append("a.date, a.time, c.user_name, b.bill_display, b.id ");
-        sql.append("FROM prod_bill_due_collection a ");
-        sql.append("JOIN prod_bill b ON a.bill_id = b.id ");
-        sql.append("JOIN users c ON a.uid = c.id ");
-        sql.append("WHERE a.date BETWEEN ? AND ? b.is_cancelled=0");
+        sql.append("a.date, a.time, u.user_name, a.id ");
+        sql.append("FROM prod_bill_due a ");
+        sql.append("JOIN customers c ON a.customer_id = c.id ");
+        sql.append("JOIN users u ON a.uid = u.id ");
+        sql.append("WHERE a.date BETWEEN ? AND ?");
 
         if (uid != 0) {
-            sql.append("AND a.uid = ? ");
+            sql.append(" AND a.uid = ?");
         }
 
         ps = con.prepareStatement(sql.toString());
@@ -1788,15 +1785,14 @@ public Vector getDuePaidList(String from, String to, int uid) throws Exception {
             Vector row = new Vector();
             row.addElement(rs.getString(1));   // cusName
             row.addElement(rs.getString(2));   // balance
-            row.addElement(rs.getString(3));   // cashPaid
-            row.addElement(rs.getString(4));   // bankPaid
+            row.addElement(rs.getString(3));   // cash_paid
+            row.addElement(rs.getString(4));   // bank_paid
             row.addElement(rs.getString(5));   // mode
             row.addElement(rs.getString(6));   // bank
             row.addElement(rs.getString(7));   // date
             row.addElement(rs.getString(8));   // time
             row.addElement(rs.getString(9));   // user_name
-            row.addElement(rs.getString(10));  // bill_display
-            row.addElement(rs.getString(11));  // id
+            row.addElement(rs.getString(10));  // id
 
             vec.add(row);
         }

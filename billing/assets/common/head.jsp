@@ -12,6 +12,7 @@ String contextPath = request.getContextPath();
 <script src="<%=contextPath%>/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<%=contextPath%>/dist/js/jquery-3.6.0.min.js"></script>
 <script src="<%=contextPath%>/dist/js/jquery-ui.js"></script>
+<script src="<%=contextPath%>/assets/common/LoadContent.js"></script>
 <script src="<%=contextPath%>/dist/js/JsBarcode.all.min.js"></script>
 <script src="<%=contextPath%>/dist/js/chart.js"></script>
 <script src="<%=contextPath%>/dist/js/windowPrint.js"></script>
