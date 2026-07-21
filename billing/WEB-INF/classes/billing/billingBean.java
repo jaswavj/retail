@@ -1491,7 +1491,7 @@ public Vector getCustomersDueList() throws Exception {
     }
 }
 
-// Returns [totalCustomers, totalDue, totalAdvance] from customer_account
+// Returns [dueCustomerCount, totalDue, totalAdvance] from customer_account
 public Vector getCustomerAccountTotals() throws Exception {
     Connection con = null;
     PreparedStatement pt = null;
@@ -1500,7 +1500,9 @@ public Vector getCustomerAccountTotals() throws Exception {
         con = util.DBConnectionManager.getConnectionFromPool();
         Vector row = new Vector();
         pt = con.prepareStatement(
-            "SELECT COUNT(*), COALESCE(SUM(balance),0), COALESCE(SUM(advance),0) FROM customer_account"
+            "SELECT COUNT(CASE WHEN balance > 0 THEN 1 END), " +
+            "COALESCE(SUM(CASE WHEN balance > 0 THEN balance ELSE 0 END), 0), " +
+            "COALESCE(SUM(advance), 0) FROM customer_account"
         );
         rs = pt.executeQuery();
         if (rs.next()) {
@@ -6688,6 +6690,379 @@ public Vector getBalanceSummaryReport(String fromDate, String toDate) throws Exc
             row.addElement(rs.getDouble("out_amt"));
             row.addElement(rs.getString("uname")    != null ? rs.getString("uname")    : "");
             row.addElement(rs.getString("type"));
+            vec.addElement(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return vec;
+}
+
+public double getDayBookCashOpeningBalance(String fromDate) throws Exception {
+    double manualBefore = getManualOpeningBalanceBefore(fromDate);
+    // When manual opening balance is used, it is the source of truth for cash in hand.
+    // Entries on fromDate appear as rows; only earlier manual entries belong in the header.
+    if (hasManualOpeningBalanceUpTo(fromDate)) {
+        return manualBefore;
+    }
+    return getTransactionCashOpeningBefore(fromDate) + manualBefore;
+}
+
+private double getTransactionCashOpeningBefore(String fromDate) throws Exception {
+    Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
+    double opening = 0;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql =
+            "SELECT COALESCE(SUM(s.cash_in),0) - COALESCE(SUM(s.cash_out),0) AS bal FROM ("
+            + " SELECT SUM(c.cash) AS cash_in, 0.0 AS cash_out FROM prod_bill a"
+            + "   JOIN prod_bill_payment c ON c.bill_id=a.id"
+            + "   WHERE a.is_cancelled=0 AND a.date < ?"
+            + " UNION ALL"
+            + " SELECT SUM(a.paid), 0.0 FROM prod_bill_due_collection a"
+            + "   WHERE a.mode=1 AND COALESCE(a.collectDate, a.date) < ?"
+            + " UNION ALL"
+            + " SELECT SUM(a.cash_paid), 0.0 FROM prod_bill_due a"
+            + "   WHERE a.date < ?"
+            + " UNION ALL"
+            + " SELECT 0.0, SUM(pp.paid) FROM prod_purchase pp"
+            + "   WHERE pp.pay_type=1 AND pp.is_cancelled=0 AND pp.is_po=0 AND pp.ent_date < ?"
+            + " UNION ALL"
+            + " SELECT 0.0, SUM(spd.paid) FROM prod_purchase_supplier_payment_details spd"
+            + "   WHERE spd.pay_type=1 AND DATE(spd.date) < ?"
+            + "     AND (spd.notes IS NULL OR spd.notes NOT IN ('Payment for Purchase Bill', 'Payment for Purchase from PO', 'pending payment'))"
+            + " UNION ALL"
+            + " SELECT 0.0, SUM(ee.amount) FROM expense_entry ee"
+            + "   WHERE ee.is_active=1 AND DATE(ee.exc_date_time) < ?"
+            + ") s";
+        ps = con.prepareStatement(sql);
+        for (int i = 1; i <= 6; i++) ps.setString(i, fromDate);
+        rs = ps.executeQuery();
+        if (rs.next()) opening = rs.getDouble("bal");
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return opening;
+}
+
+private boolean hasManualOpeningBalanceUpTo(String fromDate) throws Exception {
+    Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        ps = con.prepareStatement(
+            "SELECT 1 FROM daybook_opening_balance WHERE is_active=1 AND balance_date <= ? LIMIT 1"
+        );
+        ps.setString(1, fromDate);
+        rs = ps.executeQuery();
+        return rs.next();
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public Vector getDayBookCashBook(String fromDate, String toDate) throws Exception {
+    Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql =
+            "SELECT t.txn_date, t.txn_time, t.category, t.description, t.cash_in, t.cash_out"
+            + " FROM ("
+            + "  SELECT a.date AS txn_date, a.time AS txn_time, 'Sales' AS category,"
+            + "         CONCAT('Bill #', a.bill_display, ' - ', COALESCE(a.cusName,'')) AS description,"
+            + "         c.cash AS cash_in, 0.0 AS cash_out"
+            + "  FROM prod_bill a JOIN prod_bill_payment c ON c.bill_id=a.id"
+            + "  WHERE a.is_cancelled=0 AND a.date BETWEEN ? AND ? AND c.cash > 0"
+            + "  UNION ALL"
+            + "  SELECT COALESCE(a.collectDate, a.date), a.collectTime, 'Balance Collection',"
+            + "         CONCAT('Bill #', b.bill_display, ' - ', COALESCE(b.cusName,'')),"
+            + "         a.paid, 0.0"
+            + "  FROM prod_bill_due_collection a JOIN prod_bill b ON b.id=a.bill_id"
+            + "  WHERE a.mode=1 AND COALESCE(a.collectDate, a.date) BETWEEN ? AND ?"
+            + "  UNION ALL"
+            + "  SELECT a.date, a.time, 'Balance Collection',"
+            + "         CONCAT('Customer Balance - ', COALESCE(c.name,''),"
+            + "                IF(c.phone_number IS NOT NULL AND c.phone_number!='' AND c.phone_number!='-',"
+            + "                   CONCAT(' (', c.phone_number, ')'), '')),"
+            + "         a.cash_paid, 0.0"
+            + "  FROM prod_bill_due a JOIN customers c ON c.id = a.customer_id"
+            + "  WHERE a.date BETWEEN ? AND ? AND a.cash_paid > 0"
+            + "  UNION ALL"
+            + "  SELECT pp.ent_date, pp.ent_time, 'Purchase',"
+            + "         CONCAT('GRN #', pp.prno, ' - ', COALESCE(s.name,'')),"
+            + "         0.0, pp.paid"
+            + "  FROM prod_purchase pp JOIN prod_supplier s ON s.id=pp.deal_id"
+            + "  WHERE pp.pay_type=1 AND pp.is_cancelled=0 AND pp.is_po=0"
+            + "    AND pp.ent_date BETWEEN ? AND ? AND pp.paid > 0"
+            + "  UNION ALL"
+            + "  SELECT DATE(spd.date), TIME(spd.time), 'Supplier Payment',"
+            + "         CONCAT('GRN #', p.prno, ' - ', COALESCE(su.name,''),"
+            + "                IF(spd.notes IS NOT NULL AND spd.notes!='', CONCAT(' (',spd.notes,')'), '')),"
+            + "         0.0, spd.paid"
+            + "  FROM prod_purchase_supplier_payment_details spd"
+            + "  JOIN prod_purchase_supplier_payment sp ON sp.id=spd.supPayId"
+            + "  JOIN prod_purchase p ON p.id=sp.prid"
+            + "  JOIN prod_supplier su ON su.id=sp.deal_id"
+            + "  WHERE spd.pay_type=1 AND DATE(spd.date) BETWEEN ? AND ?"
+            + "    AND (spd.notes IS NULL OR spd.notes NOT IN ('Payment for Purchase Bill', 'Payment for Purchase from PO'))"
+            + "  UNION ALL"
+            + "  SELECT DATE(ee.exc_date_time), TIME(ee.exc_date_time), 'Expense',"
+            + "         CONCAT(COALESCE(et.type,'Expense'), ' - ', ee.content),"
+            + "         0.0, ee.amount"
+            + "  FROM expense_entry ee LEFT JOIN expense_type et ON et.id=ee.exp_type"
+            + "  WHERE ee.is_active=1 AND DATE(ee.exc_date_time) BETWEEN ? AND ?"
+            + "  UNION ALL"
+            + "  SELECT ob.balance_date, ob.entry_time, 'Opening Balance',"
+            + "         COALESCE(NULLIF(ob.notes,''), 'Manual Opening Balance'),"
+            + "         CASE WHEN ob.amount >= 0 THEN ob.amount ELSE 0 END,"
+            + "         CASE WHEN ob.amount < 0 THEN ABS(ob.amount) ELSE 0 END"
+            + "  FROM daybook_opening_balance ob"
+            + "  WHERE ob.is_active=1 AND ob.balance_date BETWEEN ? AND ?"
+            + " ) t ORDER BY CASE WHEN t.category='Opening Balance' THEN 0 ELSE 1 END,"
+            + " t.txn_date, t.txn_time, t.category, t.description";
+        ps = con.prepareStatement(sql);
+        for (int i = 1; i <= 13; i += 2) { ps.setString(i, fromDate); ps.setString(i + 1, toDate); }
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString("txn_date") != null ? rs.getString("txn_date") : "");
+            row.addElement(rs.getString("txn_time") != null ? rs.getString("txn_time") : "");
+            row.addElement(rs.getString("category")  != null ? rs.getString("category")  : "");
+            row.addElement(rs.getString("description") != null ? rs.getString("description") : "");
+            row.addElement(rs.getDouble("cash_in"));
+            row.addElement(rs.getDouble("cash_out"));
+            vec.addElement(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return vec;
+}
+
+public Vector getDayBookDetail(String fromDate, String toDate) throws Exception {
+    Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql =
+            "SELECT t.txn_date, t.txn_time, t.category, t.description, t.cash_amt, t.credit_amt, t.bank_amt, t.total_amt"
+            + " FROM ("
+            + "  SELECT a.date AS txn_date, a.time AS txn_time, 'Sales' AS category,"
+            + "         CONCAT('Bill #', a.bill_display, ' - ', COALESCE(a.cusName,'')) AS description,"
+            + "         c.cash AS cash_amt, a.balance AS credit_amt, c.bank AS bank_amt, a.payable AS total_amt"
+            + "  FROM prod_bill a JOIN prod_bill_payment c ON c.bill_id=a.id"
+            + "  WHERE a.is_cancelled=0 AND a.date BETWEEN ? AND ?"
+            + "  UNION ALL"
+            + "  SELECT COALESCE(a.collectDate, a.date), a.collectTime, 'Balance Collection',"
+            + "         CONCAT('Bill #', b.bill_display, ' - ', COALESCE(b.cusName,'')),"
+            + "         CASE WHEN a.mode=1 THEN a.paid ELSE 0 END,"
+            + "         0.0,"
+            + "         CASE WHEN a.mode=2 THEN a.paid ELSE 0 END,"
+            + "         a.paid"
+            + "  FROM prod_bill_due_collection a JOIN prod_bill b ON b.id=a.bill_id"
+            + "  WHERE COALESCE(a.collectDate, a.date) BETWEEN ? AND ?"
+            + "  UNION ALL"
+            + "  SELECT a.date, a.time, 'Balance Collection',"
+            + "         CONCAT('Customer Balance - ', COALESCE(c.name,''),"
+            + "                IF(c.phone_number IS NOT NULL AND c.phone_number!='' AND c.phone_number!='-',"
+            + "                   CONCAT(' (', c.phone_number, ')'), '')),"
+            + "         a.cash_paid, 0.0, a.bank_paid, a.amount"
+            + "  FROM prod_bill_due a JOIN customers c ON c.id = a.customer_id"
+            + "  WHERE a.date BETWEEN ? AND ?"
+            + "  UNION ALL"
+            + "  SELECT pp.ent_date, pp.ent_time, 'Purchase',"
+            + "         CONCAT('GRN #', pp.prno, ' - ', COALESCE(s.name,'')),"
+            + "         CASE WHEN pp.pay_type=1 THEN pp.paid ELSE 0 END,"
+            + "         pp.balance,"
+            + "         CASE WHEN pp.pay_type<>1 THEN pp.paid ELSE 0 END,"
+            + "         pp.net"
+            + "  FROM prod_purchase pp JOIN prod_supplier s ON s.id=pp.deal_id"
+            + "  WHERE pp.is_cancelled=0 AND pp.is_po=0 AND pp.ent_date BETWEEN ? AND ?"
+            + "  UNION ALL"
+            + "  SELECT DATE(spd.date), TIME(spd.time), 'Supplier Payment',"
+            + "         CONCAT('GRN #', p.prno, ' - ', COALESCE(su.name,''),"
+            + "                IF(spd.notes IS NOT NULL AND spd.notes!='', CONCAT(' (',spd.notes,')'), '')),"
+            + "         CASE WHEN spd.pay_type=1 THEN spd.paid ELSE 0 END,"
+            + "         0.0,"
+            + "         CASE WHEN spd.pay_type<>1 THEN spd.paid ELSE 0 END,"
+            + "         spd.paid"
+            + "  FROM prod_purchase_supplier_payment_details spd"
+            + "  JOIN prod_purchase_supplier_payment sp ON sp.id=spd.supPayId"
+            + "  JOIN prod_purchase p ON p.id=sp.prid"
+            + "  JOIN prod_supplier su ON su.id=sp.deal_id"
+            + "  WHERE DATE(spd.date) BETWEEN ? AND ?"
+            + "    AND (spd.notes IS NULL OR spd.notes NOT IN ('Payment for Purchase Bill', 'Payment for Purchase from PO'))"
+            + "  UNION ALL"
+            + "  SELECT DATE(ee.exc_date_time), TIME(ee.exc_date_time), 'Expense',"
+            + "         CONCAT(COALESCE(et.type,'Expense'), ' - ', ee.content),"
+            + "         ee.amount, 0.0, 0.0, ee.amount"
+            + "  FROM expense_entry ee LEFT JOIN expense_type et ON et.id=ee.exp_type"
+            + "  WHERE ee.is_active=1 AND DATE(ee.exc_date_time) BETWEEN ? AND ?"
+            + "  UNION ALL"
+            + "  SELECT ob.balance_date, ob.entry_time, 'Opening Balance',"
+            + "         COALESCE(NULLIF(ob.notes,''), 'Manual Opening Balance'),"
+            + "         ob.amount, 0.0, 0.0, ob.amount"
+            + "  FROM daybook_opening_balance ob"
+            + "  WHERE ob.is_active=1 AND ob.balance_date BETWEEN ? AND ?"
+            + " ) t ORDER BY CASE WHEN t.category='Opening Balance' THEN 0 ELSE 1 END,"
+            + " t.txn_date, t.txn_time, t.category, t.description";
+        ps = con.prepareStatement(sql);
+        for (int i = 1; i <= 13; i += 2) { ps.setString(i, fromDate); ps.setString(i + 1, toDate); }
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString("txn_date") != null ? rs.getString("txn_date") : "");
+            row.addElement(rs.getString("txn_time") != null ? rs.getString("txn_time") : "");
+            row.addElement(rs.getString("category")  != null ? rs.getString("category")  : "");
+            row.addElement(rs.getString("description") != null ? rs.getString("description") : "");
+            row.addElement(rs.getDouble("cash_amt"));
+            row.addElement(rs.getDouble("credit_amt"));
+            row.addElement(rs.getDouble("bank_amt"));
+            row.addElement(rs.getDouble("total_amt"));
+            vec.addElement(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return vec;
+}
+
+public int saveDayBookOpeningBalance(String balanceDate, double amount, String notes, int uid) throws Exception {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        con.setAutoCommit(false);
+        ps = con.prepareStatement(
+            "INSERT INTO daybook_opening_balance (balance_date, amount, notes, uid, entry_date, entry_time, is_active) "
+            + "VALUES (?, ?, ?, ?, CURDATE(), CURTIME(), 1)",
+            Statement.RETURN_GENERATED_KEYS
+        );
+        ps.setString(1, balanceDate);
+        ps.setDouble(2, amount);
+        ps.setString(3, notes != null ? notes : "");
+        ps.setInt(4, uid);
+        int rows = ps.executeUpdate();
+        if (rows != 1) {
+            throw new Exception("Opening balance was not saved. No row inserted.");
+        }
+        int newId = 0;
+        rs = ps.getGeneratedKeys();
+        if (rs.next()) {
+            newId = rs.getInt(1);
+        }
+        con.commit();
+        return newId;
+    } catch (Exception e) {
+        if (con != null) {
+            try { con.rollback(); } catch (Exception ignore) {}
+        }
+        throw e;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public double getManualOpeningBalanceBefore(String fromDate) throws Exception {
+    Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
+    double total = 0;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        ps = con.prepareStatement(
+            "SELECT COALESCE(SUM(amount),0) FROM daybook_opening_balance "
+            + "WHERE is_active=1 AND balance_date < ?"
+        );
+        ps.setString(1, fromDate);
+        rs = ps.executeQuery();
+        if (rs.next()) total = rs.getDouble(1);
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return total;
+}
+
+public Vector getDayBookOpeningBalanceList() throws Exception {
+    Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        ps = con.prepareStatement(
+            "SELECT ob.id, ob.balance_date, ob.amount, COALESCE(ob.notes,''), "
+            + "COALESCE(u.user_name,''), ob.entry_date, ob.entry_time "
+            + "FROM daybook_opening_balance ob "
+            + "LEFT JOIN users u ON u.id = ob.uid "
+            + "WHERE ob.is_active=1 "
+            + "ORDER BY ob.balance_date DESC, ob.id DESC LIMIT 50"
+        );
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString(1));
+            row.addElement(rs.getString(2));
+            row.addElement(rs.getString(3));
+            row.addElement(rs.getString(4));
+            row.addElement(rs.getString(5));
+            row.addElement(rs.getString(6));
+            row.addElement(rs.getString(7));
+            vec.addElement(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return vec;
+}
+
+public Vector getDayBookSalesDetails(String fromDate, String toDate) throws Exception {
+    Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        String sql =
+            "SELECT a.date, a.bill_display,"
+            + " CASE WHEN a.is_cancelled=1 THEN 'Cancelled' ELSE 'Active' END AS bill_status,"
+            + " CASE WHEN a.balance > 0 AND COALESCE(a.paid,0) = 0 THEN 'Due'"
+            + "      WHEN a.balance > 0 THEN CONCAT("
+            + "           CASE WHEN a.paymentMode=1 THEN 'Cash'"
+            + "                WHEN a.paymentMode=2 THEN 'Bank'"
+            + "                WHEN a.paymentMode=3 THEN 'Mixed'"
+            + "                ELSE 'Paid' END, ' + Due')"
+            + "      WHEN a.paymentMode=1 THEN 'Cash'"
+            + "      WHEN a.paymentMode=2 THEN 'Bank'"
+            + "      WHEN a.paymentMode=3 THEN 'Mixed'"
+            + "      ELSE '-' END AS sale_type,"
+            + " COALESCE(a.cusName,'-') AS customer_name, a.payable, a.time"
+            + " FROM prod_bill a"
+            + " WHERE a.date BETWEEN ? AND ?"
+            + " ORDER BY a.date, a.time, a.bill_display";
+        ps = con.prepareStatement(sql);
+        ps.setString(1, fromDate);
+        ps.setString(2, toDate);
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString("date") != null ? rs.getString("date") : "");
+            row.addElement(rs.getString("bill_display") != null ? rs.getString("bill_display") : "");
+            row.addElement(rs.getString("bill_status") != null ? rs.getString("bill_status") : "");
+            row.addElement(rs.getString("sale_type") != null ? rs.getString("sale_type") : "");
+            row.addElement(rs.getString("customer_name") != null ? rs.getString("customer_name") : "");
+            row.addElement(rs.getDouble("payable"));
             vec.addElement(row);
         }
     } finally {

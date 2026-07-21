@@ -39,7 +39,7 @@ try {
   <div class="row g-3 mb-4">
     <div class="col-4">
       <div class="mst-card p-3 text-center">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.7;">Customers</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.7;">Due Customers</div>
         <div style="font-size:28px;font-weight:900;"><%=totalCustomers%></div>
       </div>
     </div>

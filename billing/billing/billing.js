@@ -9,6 +9,49 @@ let currentProductStock = 0; // Store current product's available stock
 let productQuantitiesInBill = {}; // Track quantities already added to bill by product ID
 let currentQuotationId = null; // Store current quotation ID when converting to bill
 
+function buildDiscountCellHtml(rowId, value, discType) {
+    const val = (parseFloat(value) || 0).toFixed(2);
+    const type = discType === 2 ? 2 : 1;
+    return `<div class="disc-cell" onclick="event.stopPropagation();">
+        <select class="disc-type-sel" onchange="updateRowDiscount(${rowId})" onclick="event.stopPropagation();">
+            <option value="1"${type === 1 ? ' selected' : ''}>\u20b9</option>
+            <option value="2"${type === 2 ? ' selected' : ''}>%</option>
+        </select>
+        <input type="number" class="disc-inp" value="${val}" min="0" step="0.01"
+            onclick="this.select(); event.stopPropagation();"
+            onfocus="this.select();"
+            oninput="updateRowDiscount(${rowId})"
+            onchange="updateRowDiscount(${rowId})">
+    </div>`;
+}
+
+function getRowDiscountType(row) {
+    const typeSel = row.querySelector('.disc-type-sel');
+    return typeSel ? parseInt(typeSel.value, 10) : 1;
+}
+
+function calculateRowDiscountAmount(row, inputValue) {
+    const productSubtotal = parseFloat(row.dataset.subtotal) || 0;
+    const discType = getRowDiscountType(row);
+    let amount = discType === 2
+        ? (productSubtotal * inputValue) / 100
+        : inputValue;
+
+    if (amount > productSubtotal) amount = productSubtotal;
+    if (amount < 0) amount = 0;
+    return amount;
+}
+
+function getRowCalculatedDiscount(row) {
+    return parseFloat(row.dataset.discount) || 0;
+}
+
+function isDiscountControl(target) {
+    return target && (target.classList.contains('disc-inp')
+        || target.classList.contains('disc-type-sel')
+        || (target.closest && target.closest('.disc-cell')));
+}
+
 // Customer Autocomplete Setup
 let customerAutocompleteTimeout;
 const customerNameInput = document.getElementById("customerName");
@@ -382,7 +425,7 @@ function addProduct() {
             <td style="width: 22%;" data-name="${name}">${name}</td>
             <td style="width: 8%;">${displayQty} ${displayUnit}</td>
             <td style="width: 10%;">₹${price.toFixed(3)}</td>
-            <td style="width: 10%;"><input type="number" class="disc-inp" value="0" min="0" step="0.01" onclick="this.select(); event.stopPropagation();" onfocus="this.select();" onchange="updateRowDiscount(${count})" style="width:100%;height:26px;border:1px solid #d1d9e6;border-radius:4px;padding:0 4px;font-size:12px;text-align:right;background:#f8fafc;color:#0f172a;"></td>
+            <td style="width: 10%;">${buildDiscountCellHtml(count, 0, 1)}</td>
             <td style="width: 10%;">₹${commissionAmount.toFixed(3)}</td>
             <td style="width: 10%;" class="row-total">₹${total.toFixed(3)}</td>
             <td style="width: 15%;">
@@ -409,8 +452,7 @@ function addProduct() {
 
     // Add click event to the newly added row
     addedRow.addEventListener('click', function(e) {
-        // Don't trigger if clicking on delete button
-        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button') || isDiscountControl(e.target)) {
             return;
         }
         showProductHistory(this);
@@ -603,17 +645,25 @@ function updateRowDiscount(rowId) {
     const row = document.getElementById(`row${rowId}`);
     if (!row) return;
     const discInput = row.querySelector('.disc-inp');
-    let newDisc = parseFloat(discInput.value) || 0;
+    if (!discInput) return;
+
+    let inputValue = parseFloat(discInput.value) || 0;
     const productSubtotal = parseFloat(row.dataset.subtotal) || 0;
+    const discType = getRowDiscountType(row);
     const oldDiscount = parseFloat(row.dataset.discount) || 0;
     const oldTotal = parseFloat(row.dataset.total) || 0;
 
-    // Cap discount at subtotal
-    if (newDisc > productSubtotal) {
-        newDisc = productSubtotal;
-        discInput.value = newDisc.toFixed(2);
+    if (discType === 2) {
+        if (inputValue > 100) {
+            inputValue = 100;
+            discInput.value = inputValue.toFixed(2);
+        }
+    } else if (inputValue > productSubtotal) {
+        inputValue = productSubtotal;
+        discInput.value = inputValue.toFixed(2);
     }
 
+    const newDisc = calculateRowDiscountAmount(row, inputValue);
     const commissionAmount = parseFloat(row.dataset.commissionAmount || 0);
     const newTotal = productSubtotal - newDisc - commissionAmount;
     totalDiscount = totalDiscount - oldDiscount + newDisc;
@@ -826,8 +876,7 @@ function saveBill() {
         const id = parseInt(cols[1].dataset.id || 0);
         const qty = parseFloat(cols[3].innerText) || 0;
         const price = parseFloat(cols[4].innerText.replace("₹","")) || 0;
-        const discInp = cols[5].querySelector('.disc-inp');
-        const discount = discInp ? (parseFloat(discInp.value) || 0) : (parseFloat(cols[5].innerText.replace("₹","")) || 0);
+        const discount = getRowCalculatedDiscount(row);
         const total = parseFloat(cols[7].innerText.replace("₹","")) || 0;
         const batchId = parseInt(row.dataset.batchId || 0);
         const commission = isEligibleForCommission ? parseFloat(row.dataset.commission || 0) : 0;
@@ -1524,8 +1573,7 @@ function printQuotation() {
             const qty = parseInt(cells[3].textContent.trim()) || 0;
             const priceText = cells[4].textContent.replace('₹', '').trim();
             const price = parseFloat(priceText) || 0;
-            const discountText = cells[5].textContent.replace('₹', '').trim();
-            const discount = parseFloat(discountText) || 0;
+            const discount = getRowCalculatedDiscount(row);
             const totalText = cells[7].textContent.replace('₹', '').trim();
             const total = parseFloat(totalText) || 0;
             
@@ -1884,7 +1932,7 @@ function addOrderItemToBill(item) {
             <td style="width: 22%;">${item.prodName}</td>
             <td style="width: 8%;">${item.qty}</td>
             <td style="width: 10%;">₹${item.price.toFixed(3)}</td>
-            <td style="width: 10%;"><input type="number" class="disc-inp" value="0" min="0" step="0.01" onclick="this.select(); event.stopPropagation();" onfocus="this.select();" onchange="updateRowDiscount(${count})" style="width:100%;height:26px;border:1px solid #d1d9e6;border-radius:4px;padding:0 4px;font-size:12px;text-align:right;background:#f8fafc;color:#0f172a;"></td>
+            <td style="width: 10%;">${buildDiscountCellHtml(count, 0, 1)}</td>
             <td style="width: 10%;">₹0.000</td>
             <td style="width: 10%;" class="row-total">₹${item.total.toFixed(3)}</td>
             <td style="width: 15%;">
@@ -2052,8 +2100,7 @@ function saveQuotation() {
         const qty = parseFloat(qtyText.split(' ')[0]); // Remove unit suffix
         const priceText = row.querySelector('td:nth-child(5)').textContent.replace('₹', '').trim();
         const price = parseFloat(priceText);
-        const discInp = row.querySelector('td:nth-child(6) .disc-inp');
-        const discount = discInp ? (parseFloat(discInp.value) || 0) : parseFloat(row.querySelector('td:nth-child(6)').textContent.replace('₹', '').trim()) || 0;
+        const discount = getRowCalculatedDiscount(row);
         const totalText = row.querySelector('td:nth-child(8)').textContent.replace('₹', '').trim();
         const total = parseFloat(totalText);
         
@@ -2221,7 +2268,7 @@ function addProductToBillTable(product) {
             <td style="width: 22%;" data-name="${product.productName}">${product.productName}</td>
             <td style="width: 8%;">${product.qty}</td>
             <td style="width: 10%;">₹${parseFloat(product.price).toFixed(3)}</td>
-            <td style="width: 10%;"><input type="number" class="disc-inp" value="${productDiscount.toFixed(2)}" min="0" step="0.01" onclick="this.select(); event.stopPropagation();" onfocus="this.select();" onchange="updateRowDiscount(${count})" style="width:100%;height:26px;border:1px solid #d1d9e6;border-radius:4px;padding:0 4px;font-size:12px;text-align:right;background:#f8fafc;color:#0f172a;"></td>
+            <td style="width: 10%;">${buildDiscountCellHtml(count, productDiscount, 1)}</td>
             <td style="width: 10%;">₹${productCommissionAmount.toFixed(3)}</td>
             <td style="width: 10%;" class="row-total">₹${productTotal.toFixed(3)}</td>
             <td style="width: 15%;">
@@ -2248,8 +2295,7 @@ function addProductToBillTable(product) {
     
     // Add click event to show product history
     addedRow.addEventListener('click', function(e) {
-        // Don't trigger if clicking on delete button
-        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button') || isDiscountControl(e.target)) {
             return;
         }
         showProductHistory(this);

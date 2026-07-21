@@ -253,6 +253,39 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
             font-size: 12px;
         }
 
+        .disc-cell {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+        }
+
+        .disc-type-sel {
+            width: 38px;
+            min-width: 38px;
+            height: 26px;
+            border-width: 1px;
+            border-style: solid;
+            border-radius: 3px;
+            padding: 0 2px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .disc-cell .disc-inp {
+            flex: 1;
+            min-width: 0;
+            width: auto;
+            height: 26px;
+            border-width: 1px;
+            border-style: solid;
+            border-radius: 3px;
+            padding: 0 4px;
+            font-size: 12px;
+            text-align: right;
+        }
+
         /* â”€â”€ BOOTSTRAP BTN COMPAT FOR BILLING.JS ROWS â”€â”€ */
         /* Bootstrap btn compat – structural only (colors in theme.css) */
         .btn    { display: inline-flex; align-items: center; gap: 3px; cursor: pointer; border: 1px solid transparent; border-radius: 4px; padding: 2px 8px; font-size: 11.5px; font-weight: 600; transition: all .15s; }
