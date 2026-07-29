@@ -644,6 +644,9 @@ ps.executeUpdate();
         ps.executeUpdate();
         ps.close();
 
+        insertProdLedgerEntry(con, 1, billId, customerId, 0, mode, payableAmount,
+                cashPaid, bankPaid, type, uid);
+
         con.commit(); // Commit all inserts
 
     } catch (Exception e) {
@@ -657,6 +660,41 @@ ps.executeUpdate();
 
     return billNo; // return for reference
     
+}
+
+/** bill_type 1 = customer bill (see bill_type table). supplierId use 0 or omit for NULL. */
+private void insertProdLedgerEntry(Connection con, int billType, int billId, int customerId,
+        int supplierId, int paymentMode, double billAmount, double cashPaid, double bankPaid,
+        int paymentType, int uid) throws SQLException {
+    PreparedStatement ps = null;
+    try {
+        ps = con.prepareStatement(
+            "INSERT INTO prod_ledger (bill_type, bill_id, customer_id, supplier_id, payment_mode, "
+            + "bill_amount, cash_paid, bank_paid, payment_type, uid, date_time) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())"
+        );
+        ps.setInt(1, billType);
+        ps.setInt(2, billId);
+        if (customerId > 0) {
+            ps.setInt(3, customerId);
+        } else {
+            ps.setNull(3, java.sql.Types.INTEGER);
+        }
+        if (supplierId > 0) {
+            ps.setInt(4, supplierId);
+        } else {
+            ps.setNull(4, java.sql.Types.INTEGER);
+        }
+        ps.setInt(5, paymentMode);
+        ps.setDouble(6, billAmount);
+        ps.setDouble(7, cashPaid);
+        ps.setDouble(8, bankPaid);
+        ps.setInt(9, paymentType);
+        ps.setInt(10, uid);
+        ps.executeUpdate();
+    } finally {
+        if (ps != null) try { ps.close(); } catch (SQLException ignore) {}
+    }
 }
 
 
@@ -1415,6 +1453,10 @@ public double saveCustomerPayment(int customerId,
         }
         rs.close(); selPS.close();
 
+        if (currentBalance <= 0) {
+            throw new Exception("No account balance due to collect.");
+        }
+
         double amount = cashPaid + bankPaid;
         double newBalance = currentBalance - amount;
         if (newBalance < 0) newBalance = 0;
@@ -1422,8 +1464,9 @@ public double saveCustomerPayment(int customerId,
         // Insert into prod_bill_due
         insPS = con.prepareStatement(
             "INSERT INTO prod_bill_due "
-            + "(customer_id, amount, cash_paid, bank_paid, balance, pay_mode, pay_type, uid, date, time) "
-            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_DATE(), CURRENT_TIME())"
+            + "(customer_id, amount, cash_paid, bank_paid, balance, pay_mode, pay_type, txn_type, notes, uid, date, time) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, 'COLLECTION', NULL, ?, CURRENT_DATE(), CURRENT_TIME())",
+            Statement.RETURN_GENERATED_KEYS
         );
         insPS.setInt(1, customerId);
         insPS.setDouble(2, amount);
@@ -1434,7 +1477,13 @@ public double saveCustomerPayment(int customerId,
         insPS.setInt(7, payType);
         insPS.setInt(8, uid);
         insPS.executeUpdate();
+        int dueId = 0;
+        rs = insPS.getGeneratedKeys();
+        if (rs.next()) dueId = rs.getInt(1);
+        if (rs != null) { rs.close(); rs = null; }
         insPS.close();
+
+        insertProdLedgerEntry(con, 2, dueId, customerId, 0, payMode, amount, cashPaid, bankPaid, payType, uid);
 
         // Update customer_account balance
         updPS = con.prepareStatement(
@@ -1456,6 +1505,161 @@ public double saveCustomerPayment(int customerId,
         if (insPS != null) try { insPS.close(); } catch (Exception ignore) {}
         if (updPS != null) try { updPS.close(); } catch (Exception ignore) {}
         if (con != null)  try { con.close();   } catch (Exception ignore) {}
+    }
+}
+
+public double saveCustomerAdvance(int customerId,
+                                  double cashPaid,
+                                  double bankPaid,
+                                  int payMode,
+                                  int payType,
+                                  int uid,
+                                  String notes) throws Exception {
+    Connection con = null;
+    PreparedStatement selPS = null;
+    PreparedStatement insPS = null;
+    PreparedStatement updPS = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        con.setAutoCommit(false);
+
+        selPS = con.prepareStatement(
+            "SELECT advance, balance FROM customer_account WHERE customer_id = ? FOR UPDATE"
+        );
+        selPS.setInt(1, customerId);
+        rs = selPS.executeQuery();
+        double currentAdvance = 0;
+        double currentBalance = 0;
+        if (rs.next()) {
+            currentAdvance = rs.getDouble(1);
+            currentBalance = rs.getDouble(2);
+        } else {
+            throw new Exception("customer_account not found for customerId=" + customerId);
+        }
+        rs.close();
+        selPS.close();
+
+        double amount = cashPaid + bankPaid;
+        if (amount <= 0) {
+            throw new Exception("Advance amount must be greater than zero.");
+        }
+        double newAdvance = currentAdvance + amount;
+
+        insPS = con.prepareStatement(
+            "INSERT INTO prod_bill_due "
+            + "(customer_id, amount, cash_paid, bank_paid, balance, pay_mode, pay_type, txn_type, notes, uid, date, time) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, 'ADVANCE', ?, ?, CURRENT_DATE(), CURRENT_TIME())",
+            Statement.RETURN_GENERATED_KEYS
+        );
+        insPS.setInt(1, customerId);
+        insPS.setDouble(2, amount);
+        insPS.setDouble(3, cashPaid);
+        insPS.setDouble(4, bankPaid);
+        insPS.setDouble(5, currentBalance);
+        insPS.setInt(6, payMode);
+        insPS.setInt(7, payType);
+        insPS.setString(8, notes != null && !notes.trim().isEmpty() ? notes.trim() : "Customer advance");
+        insPS.setInt(9, uid);
+        insPS.executeUpdate();
+        int dueId = 0;
+        rs = insPS.getGeneratedKeys();
+        if (rs.next()) dueId = rs.getInt(1);
+        rs.close();
+        insPS.close();
+
+        insertProdLedgerEntry(con, 3, dueId, customerId, 0, payMode, amount, cashPaid, bankPaid, payType, uid);
+
+        updPS = con.prepareStatement(
+            "UPDATE customer_account SET advance = ? WHERE customer_id = ?"
+        );
+        updPS.setDouble(1, newAdvance);
+        updPS.setInt(2, customerId);
+        updPS.executeUpdate();
+        updPS.close();
+
+        con.commit();
+        return newAdvance;
+    } catch (Exception e) {
+        if (con != null) try { con.rollback(); } catch (Exception ignore) {}
+        throw e;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception ignore) {}
+        if (selPS != null) try { selPS.close(); } catch (Exception ignore) {}
+        if (insPS != null) try { insPS.close(); } catch (Exception ignore) {}
+        if (updPS != null) try { updPS.close(); } catch (Exception ignore) {}
+        if (con != null) try { con.close(); } catch (Exception ignore) {}
+    }
+}
+
+public double saveCustomerOldDue(int customerId, double dueAmount, int uid, String notes) throws Exception {
+    Connection con = null;
+    PreparedStatement selPS = null;
+    PreparedStatement insPS = null;
+    PreparedStatement updPS = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        con.setAutoCommit(false);
+
+        selPS = con.prepareStatement(
+            "SELECT balance FROM customer_account WHERE customer_id = ? FOR UPDATE"
+        );
+        selPS.setInt(1, customerId);
+        rs = selPS.executeQuery();
+        double currentBalance = 0;
+        if (rs.next()) {
+            currentBalance = rs.getDouble(1);
+        } else {
+            throw new Exception("customer_account not found for customerId=" + customerId);
+        }
+        rs.close();
+        selPS.close();
+
+        if (dueAmount <= 0) {
+            throw new Exception("Old due amount must be greater than zero.");
+        }
+        double newBalance = currentBalance + dueAmount;
+
+        insPS = con.prepareStatement(
+            "INSERT INTO prod_bill_due "
+            + "(customer_id, amount, cash_paid, bank_paid, balance, pay_mode, pay_type, txn_type, notes, uid, date, time) "
+            + "VALUES (?, ?, 0, 0, ?, 0, 0, 'OLD_DUE', ?, ?, CURRENT_DATE(), CURRENT_TIME())",
+            Statement.RETURN_GENERATED_KEYS
+        );
+        insPS.setInt(1, customerId);
+        insPS.setDouble(2, dueAmount);
+        insPS.setDouble(3, newBalance);
+        insPS.setString(4, notes != null && !notes.trim().isEmpty() ? notes.trim() : "Old due (before system)");
+        insPS.setInt(5, uid);
+        insPS.executeUpdate();
+        int dueId = 0;
+        rs = insPS.getGeneratedKeys();
+        if (rs.next()) dueId = rs.getInt(1);
+        rs.close();
+        insPS.close();
+
+        insertProdLedgerEntry(con, 4, dueId, customerId, 0, 0, dueAmount, 0, 0, 0, uid);
+
+        updPS = con.prepareStatement(
+            "UPDATE customer_account SET balance = ? WHERE customer_id = ?"
+        );
+        updPS.setDouble(1, newBalance);
+        updPS.setInt(2, customerId);
+        updPS.executeUpdate();
+        updPS.close();
+
+        con.commit();
+        return newBalance;
+    } catch (Exception e) {
+        if (con != null) try { con.rollback(); } catch (Exception ignore) {}
+        throw e;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception ignore) {}
+        if (selPS != null) try { selPS.close(); } catch (Exception ignore) {}
+        if (insPS != null) try { insPS.close(); } catch (Exception ignore) {}
+        if (updPS != null) try { updPS.close(); } catch (Exception ignore) {}
+        if (con != null) try { con.close(); } catch (Exception ignore) {}
     }
 }
 
@@ -1529,11 +1733,12 @@ public Vector getCustomerDuePayments(int customerId) throws Exception {
         Vector vec = new Vector();
         pt = con.prepareStatement(
             "SELECT a.id, a.amount, a.cash_paid, a.bank_paid, a.balance, " +
-            "a.pay_mode, a.pay_type, a.uid, a.date, a.time, b.user_name " +
+            "a.pay_mode, a.pay_type, a.uid, a.date, a.time, b.user_name, " +
+            "COALESCE(a.txn_type, 'COLLECTION'), COALESCE(a.notes, '') " +
             "FROM prod_bill_due a " +
             "JOIN users b ON b.id = a.uid " +
             "WHERE a.customer_id = ? " +
-            "ORDER BY a.id DESC"
+            "ORDER BY a.date DESC, a.time DESC, a.id DESC"
         );
         pt.setInt(1, customerId);
         rs = pt.executeQuery();
@@ -1550,6 +1755,8 @@ public Vector getCustomerDuePayments(int customerId) throws Exception {
             row.addElement(rs.getString(9));  // date
             row.addElement(rs.getString(10)); // time
             row.addElement(rs.getString(11)); // user_name
+            row.addElement(rs.getString(12)); // txn_type
+            row.addElement(rs.getString(13)); // notes
             vec.addElement(row);
         }
         return vec;

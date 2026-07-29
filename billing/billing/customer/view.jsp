@@ -59,6 +59,7 @@ for (int i = 0; i < billList.size(); i++) {
     e.addElement(r.get(7).toString());
     e.addElement(r.get(9).toString());
     e.addElement(String.valueOf(pd));
+    e.addElement("");
     timeline.add(e);
 }
 if (duePayments != null) {
@@ -66,16 +67,30 @@ if (duePayments != null) {
         Vector dr = (Vector) duePayments.get(i);
         int dM = 0; try { dM = Integer.parseInt(dr.get(5).toString()); } catch(Exception ex){}
         int dT = 0; try { dT = Integer.parseInt(dr.get(6).toString()); } catch(Exception ex){}
+        String txnType = dr.size() > 11 && dr.get(11) != null ? dr.get(11).toString().trim().toUpperCase() : "COLLECTION";
+        if (txnType.isEmpty()) txnType = "COLLECTION";
         Vector e = new Vector();
-        double dCashD = 0, dBankD = 0;
+        double dCashD = 0, dBankD = 0, dAmt = 0, dBal = 0;
+        try { dAmt = Double.parseDouble(dr.get(1).toString()); } catch(Exception ex){}
         try { dCashD = Double.parseDouble(dr.get(2).toString()); } catch(Exception ex){}
         try { dBankD = Double.parseDouble(dr.get(3).toString()); } catch(Exception ex){}
-        e.addElement("DUE");
+        try { dBal = Double.parseDouble(dr.get(4).toString()); } catch(Exception ex){}
+        e.addElement(txnType);
         e.addElement("");
-        e.addElement(dr.get(1).toString());       // teCol1 = amount
-        e.addElement(String.format("%.1f", dCashD + dBankD)); // teCol2 = cash+bank paid
-        e.addElement(dr.get(4).toString());       // teCol3 = balance after
-        e.addElement("");                         // teCol4 unused
+        if ("OLD_DUE".equals(txnType)) {
+            e.addElement(String.format("%.1f", dAmt));
+            e.addElement("");
+            e.addElement(String.format("%.1f", dBal));
+        } else if ("ADVANCE".equals(txnType)) {
+            e.addElement(String.format("%.1f", dAmt));
+            e.addElement(String.format("%.1f", dCashD + dBankD));
+            e.addElement(String.format("%.1f", dBal));
+        } else {
+            e.addElement(dr.get(1).toString());
+            e.addElement(String.format("%.1f", dCashD + dBankD));
+            e.addElement(dr.get(4).toString());
+        }
+        e.addElement("");
         e.addElement((dM >= 1 && dM <= 3) ? _modeL[dM] : "-");
         e.addElement((dT >= 0 && dT <= 5) ? _typeL[dT] : "-");
         e.addElement(dr.get(8).toString());
@@ -83,6 +98,7 @@ if (duePayments != null) {
         e.addElement(dr.get(10).toString());
         e.addElement("-1");
         e.addElement("0");
+        e.addElement(dr.size() > 12 && dr.get(12) != null ? dr.get(12).toString() : "");
         timeline.add(e);
     }
 }
@@ -94,6 +110,7 @@ java.util.Collections.sort(timeline, new java.util.Comparator() {
         return dtB.compareTo(dtA);
     }
 });
+boolean canCollectDue = accBalance > 0.005 && (accBalance - accAdvance) > 0.005;
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -190,6 +207,8 @@ java.util.Collections.sort(timeline, new java.util.Comparator() {
                 for (int i = 0; i < timeline.size(); i++) {
                   Vector te      = (Vector) timeline.get(i);
                   boolean isBill = "BILL".equals(te.get(0).toString());
+                  String txnType = isBill ? "BILL" : te.get(0).toString();
+                  String teNotes = te.size() > 13 && te.get(13) != null ? te.get(13).toString() : "";
                   String teBillNo= te.get(1).toString();
                   String teCol1  = te.get(2).toString();
                   String teCol2  = te.get(3).toString();
@@ -204,8 +223,11 @@ java.util.Collections.sort(timeline, new java.util.Comparator() {
                   double tePendD = 0; try { tePendD = Double.parseDouble(te.get(12).toString()); } catch(Exception ex){}
                   double teCol3D = 0; try { teCol3D = Double.parseDouble(teCol3.isEmpty() ? "0" : teCol3); } catch(Exception ex){}
                   boolean hasPend = isBill && tePendD > 0;
-                  String rowBg   = !isBill ? "background:#f0fdf4;" : (hasPend ? "background:#fff1f1;" : "");
-                  String tdBg    = !isBill ? "background:#ecfdf5 !important;" : (hasPend ? "background:#fff1f1 !important;" : "");
+                  boolean isOldDue = "OLD_DUE".equals(txnType);
+                  boolean isAdvance = "ADVANCE".equals(txnType);
+                  boolean isCollection = !isBill && "COLLECTION".equals(txnType);
+                  String rowBg   = isBill ? (hasPend ? "background:#fff1f1;" : "") : (isOldDue ? "background:#fff7ed;" : (isAdvance ? "background:#eff6ff;" : "background:#f0fdf4;"));
+                  String tdBg    = isBill ? (hasPend ? "background:#fff1f1 !important;" : "") : (isOldDue ? "background:#ffedd5 !important;" : (isAdvance ? "background:#dbeafe !important;" : "background:#ecfdf5 !important;"));
               %>
               <tr <%=isBill ? "class=\"bill-row-link\" data-bill-id=\""+teBillId+"\" onclick=\"selectBill(this,"+teBillId+")\"" : ""%>
                   style="<%=rowBg%>">
@@ -213,17 +235,22 @@ java.util.Collections.sort(timeline, new java.util.Comparator() {
                 <td style="<%=tdBg%>">
                   <% if (isBill) { %>
                   <span class="badge" style="font-size:10px;font-weight:700;background:<%=hasPend ? "#fee2e2;color:#b91c1c" : "#dbeafe;color:#1d4ed8"%>;">BILL</span>
+                  <% } else if (isOldDue) { %>
+                  <span class="badge" style="font-size:10px;font-weight:700;background:#ffedd5;color:#c2410c;">OLD DUE</span>
+                  <% } else if (isAdvance) { %>
+                  <span class="badge" style="font-size:10px;font-weight:700;background:#dbeafe;color:#1d4ed8;">ADVANCE</span>
                   <% } else { %>
                   <span class="badge" style="font-size:10px;font-weight:700;background:#dcfce7;color:#15803d;">COLLECTION</span>
                   <% } %>
                 </td>
                 <td style="<%=tdBg%>">
                   <% if (isBill) { %><span style="font-weight:600;"><%=teBillNo%></span>
+                  <% } else if (!teNotes.isEmpty()) { %><span style="font-size:11px;"><%=teNotes%></span>
                   <% } else { %><span style="opacity:.35;">—</span><% } %>
                 </td>
                 <td class="text-end" style="<%=tdBg%>"><%=teCol1.isEmpty() ? "<span style='opacity:.3'>—</span>" : teCol1%></td>
                 <td class="text-end" style="<%=tdBg%>"><%=teCol2.isEmpty() ? "<span style='opacity:.3'>—</span>" : teCol2%></td>
-                <td class="text-end <%=isBill ? (hasPend ? "text-danger fw-bold" : "text-success") : (teCol3D > 0 ? "text-danger fw-bold" : "text-success")%>" style="<%=tdBg%>">
+                <td class="text-end <%=isBill ? (hasPend ? "text-danger fw-bold" : "text-success") : (isOldDue ? "text-danger fw-bold" : (teCol3D > 0 ? "text-danger fw-bold" : "text-success"))%>" style="<%=tdBg%>">
                   <%=teCol3.isEmpty() ? "<span style='opacity:.3'>—</span>" : teCol3%>
                 </td>
                 <td style="white-space:nowrap;<%=tdBg%>"><%=teDate%>
@@ -254,18 +281,30 @@ java.util.Collections.sort(timeline, new java.util.Comparator() {
       <!-- Payment Box -->
       <div class="mst-card">
         <div class="mst-card-header px-3 py-2">
-          <span style="font-weight:700;font-size:13px;"><i class="fa-solid fa-circle-dollar-to-slot me-2"></i>Collect Payment</span>
+          <span style="font-weight:700;font-size:13px;"><i class="fa-solid fa-circle-dollar-to-slot me-2"></i>Account Entry</span>
         </div>
         <div class="p-3">
           <div class="mb-2">
-            <label class="pay-label">Amount to Collect</label>
+            <label class="pay-label">Entry Type</label>
+            <select id="entryType" class="pay-sel" onchange="onEntryTypeChange()">
+              <option value="COLLECTION" <%= canCollectDue ? "selected" : "disabled" %>>Collect Payment (Due)</option>
+              <option value="ADVANCE" <%= !canCollectDue ? "selected" : "" %>>Add Advance</option>
+              <option value="OLD_DUE">Add Old Due (Before System)</option>
+            </select>
+          </div>
+          <div id="noDueHint" class="small mb-2" style="display:<%= canCollectDue ? "none" : "block" %>;color:#b45309;">
+            <i class="fa-solid fa-circle-info me-1"></i>No account balance due. You cannot collect payment until there is a due balance.
+          </div>
+
+          <div class="mb-2">
+            <label class="pay-label" id="amountLabel">Amount to Collect</label>
             <input type="number" id="collectAmount" class="pay-inp" placeholder="0.00" min="0" step="0.01"
                    value="<%= String.format("%.2f", Math.max(0, accBalance - accAdvance))%>"
                    oninput="onAmountChange()"
                    style="height:52px;font-size:20px;font-weight:800;background:#f0fdf4;border-color:#86efac;color:#15803d;">
           </div>
 
-          <div class="mb-2">
+          <div class="mb-2" id="payModeBlock">
             <label class="pay-label">Pay Mode</label>
             <select id="payMode" class="pay-sel" onchange="onModeChange()">
               <option value="1">Cash</option>
@@ -295,14 +334,19 @@ java.util.Collections.sort(timeline, new java.util.Comparator() {
             <input type="number" id="bankPaid" class="pay-inp" placeholder="0.00" min="0" step="0.01" oninput="onBankChange()">
           </div>
 
-          <div class="mb-3">
+          <div class="mb-2">
+            <label class="pay-label">Notes <span style="font-weight:400;text-transform:none;">(optional)</span></label>
+            <input type="text" id="entryNotes" class="pay-inp" placeholder="Remark or reference">
+          </div>
+
+          <div class="mb-3" id="remainingBlock">
             <label class="pay-label">Remaining Balance</label>
             <input type="number" id="remainingBalance" class="pay-inp" placeholder="0.00" readonly
                    style="background:#f8fafc;font-weight:700;color:#dc2626;">
           </div>
 
           <button class="bb bb-primary w-100" onclick="submitPayment()" id="submitBtn" style="height:38px;font-size:13px;">
-            <i class="fa-solid fa-check me-1"></i> Submit Payment
+            <i class="fa-solid fa-check me-1"></i> <span id="submitBtnLabel">Submit Payment</span>
           </button>
           <div id="payError" style="display:none;color:#dc2626;font-size:12px;margin-top:6px;text-align:center;"></div>
         </div>
@@ -333,6 +377,7 @@ const contextPath = '<%=contextPath%>';
 const customerId  = <%=customerId%>;
 const accBalance  = <%=accBalance%>;
 const accAdvance  = <%=accAdvance%>;
+const canCollectDue = <%=canCollectDue%>;
 
 // ── Bill row selection ──────────────────────────────────────
 function selectBill(row, billId) {
@@ -355,7 +400,81 @@ function selectBill(row, billId) {
 // ── Payment logic (mirrors billing.jsp) ────────────────────
 const netPayable = Math.max(0, accBalance - accAdvance);
 
+function onEntryTypeChange() {
+    const entryType = document.getElementById('entryType').value;
+    const amountInp = document.getElementById('collectAmount');
+    const amountLabel = document.getElementById('amountLabel');
+    const submitLabel = document.getElementById('submitBtnLabel');
+    const payModeBlock = document.getElementById('payModeBlock');
+    const payTypeRow = document.getElementById('payTypeRow');
+    const cashRow = document.getElementById('cashRow');
+    const bankRow = document.getElementById('bankRow');
+    const remainingBlock = document.getElementById('remainingBlock');
+    const notesInp = document.getElementById('entryNotes');
+
+    if (entryType === 'OLD_DUE') {
+        amountLabel.textContent = 'Old Due Amount';
+        submitLabel.textContent = 'Save Old Due';
+        amountInp.value = '';
+        amountInp.style.background = '#fff7ed';
+        amountInp.style.borderColor = '#fdba74';
+        amountInp.style.color = '#c2410c';
+        payModeBlock.style.display = 'none';
+        payTypeRow.style.display = 'none';
+        cashRow.style.display = 'none';
+        bankRow.style.display = 'none';
+        remainingBlock.style.display = 'none';
+        if (!notesInp.value) notesInp.placeholder = 'e.g. Opening balance before go-live';
+    } else if (entryType === 'ADVANCE') {
+        amountLabel.textContent = 'Advance Amount';
+        submitLabel.textContent = 'Save Advance';
+        amountInp.value = '';
+        amountInp.style.background = '#eff6ff';
+        amountInp.style.borderColor = '#93c5fd';
+        amountInp.style.color = '#1d4ed8';
+        payModeBlock.style.display = '';
+        remainingBlock.style.display = 'none';
+        if (!notesInp.value) notesInp.placeholder = 'e.g. Advance for future bills';
+        onModeChange();
+    } else {
+        amountLabel.textContent = 'Amount to Collect';
+        submitLabel.textContent = 'Submit Payment';
+        amountInp.value = netPayable.toFixed(2);
+        amountInp.style.background = '#f0fdf4';
+        amountInp.style.borderColor = '#86efac';
+        amountInp.style.color = '#15803d';
+        payModeBlock.style.display = '';
+        remainingBlock.style.display = '';
+        notesInp.placeholder = 'Remark or reference';
+        if (!canCollectDue) {
+            document.getElementById('entryType').value = 'ADVANCE';
+            onEntryTypeChange();
+            return;
+        }
+        onModeChange();
+    }
+    updateCollectionSubmitState();
+}
+
+function updateCollectionSubmitState() {
+    const entryType = document.getElementById('entryType').value;
+    const btn = document.getElementById('submitBtn');
+    const errBox = document.getElementById('payError');
+    if (entryType === 'COLLECTION' && !canCollectDue) {
+        btn.disabled = true;
+        errBox.textContent = 'No account balance due to collect.';
+        errBox.style.display = 'block';
+    } else if (entryType === 'COLLECTION' || entryType === 'ADVANCE' || entryType === 'OLD_DUE') {
+        btn.disabled = false;
+        if (errBox.textContent === 'No account balance due to collect.') {
+            errBox.style.display = 'none';
+            errBox.textContent = '';
+        }
+    }
+}
+
 function onModeChange() {
+    if (document.getElementById('entryType').value === 'OLD_DUE') return;
     const mode = document.getElementById('payMode').value;
     const total = parseFloat(document.getElementById('collectAmount').value) || 0;
 
@@ -401,6 +520,7 @@ function onBankChange() {
 }
 
 function calcRemaining() {
+    if (document.getElementById('entryType').value !== 'COLLECTION') return;
     const total = parseFloat(document.getElementById('collectAmount').value) || 0;
     const cash  = parseFloat(document.getElementById('cashPaid').value)  || 0;
     const bank  = parseFloat(document.getElementById('bankPaid').value)  || 0;
@@ -413,32 +533,44 @@ function submitPayment() {
     const errBox = document.getElementById('payError');
     errBox.style.display = 'none';
 
+    const entryType = document.getElementById('entryType').value;
     const amount = parseFloat(document.getElementById('collectAmount').value) || 0;
     const mode   = document.getElementById('payMode').value;
     const cash   = parseFloat(document.getElementById('cashPaid').value)  || 0;
     const bank   = parseFloat(document.getElementById('bankPaid').value)  || 0;
+    const notes  = document.getElementById('entryNotes').value || '';
 
-    // Validation
+    if (entryType === 'COLLECTION' && !canCollectDue) {
+        errBox.textContent = 'No account balance due to collect.';
+        errBox.style.display = 'block';
+        return;
+    }
+
     if (amount <= 0) {
-        errBox.textContent = 'Please enter an amount to collect.';
+        errBox.textContent = 'Please enter an amount greater than zero.';
         errBox.style.display = 'block'; return;
     }
-    if (mode === '1' && cash <= 0) {
-        errBox.textContent = 'Please enter cash paid amount.';
-        errBox.style.display = 'block'; return;
-    }
-    if (mode === '2' && bank <= 0) {
-        errBox.textContent = 'Please enter bank paid amount.';
-        errBox.style.display = 'block'; return;
-    }
-    if (mode === '3') {
-        if (cash <= 0 && bank <= 0) {
-            errBox.textContent = 'Please enter cash and/or bank amount.';
+
+    if (entryType === 'OLD_DUE') {
+        // no pay mode validation
+    } else if (entryType === 'ADVANCE' || entryType === 'COLLECTION') {
+        if (mode === '1' && cash <= 0) {
+            errBox.textContent = 'Please enter cash paid amount.';
             errBox.style.display = 'block'; return;
         }
-        if (Math.abs((cash + bank) - amount) > 0.01) {
-            errBox.textContent = 'Cash + Bank must equal the collect amount.';
+        if (mode === '2' && bank <= 0) {
+            errBox.textContent = 'Please enter bank paid amount.';
             errBox.style.display = 'block'; return;
+        }
+        if (mode === '3') {
+            if (cash <= 0 && bank <= 0) {
+                errBox.textContent = 'Please enter cash and/or bank amount.';
+                errBox.style.display = 'block'; return;
+            }
+            if (Math.abs((cash + bank) - amount) > 0.01) {
+                errBox.textContent = 'Cash + Bank must equal the amount.';
+                errBox.style.display = 'block'; return;
+            }
         }
     }
 
@@ -448,13 +580,16 @@ function submitPayment() {
 
     const params = new URLSearchParams({
         customerId: customerId,
-        cashPaid:   mode === '2' ? '0' : cash.toFixed(2),
-        bankPaid:   mode === '1' ? '0' : bank.toFixed(2),
-        payMode:    mode,
-        payType:    document.getElementById('payType').value
+        entryType:  entryType,
+        amount:     amount.toFixed(2),
+        cashPaid:   (entryType === 'OLD_DUE' || mode === '2') ? '0' : cash.toFixed(2),
+        bankPaid:   (entryType === 'OLD_DUE' || mode === '1') ? '0' : bank.toFixed(2),
+        payMode:    entryType === 'OLD_DUE' ? '1' : mode,
+        payType:    document.getElementById('payType').value,
+        notes:      notes
     });
 
-    fetch(contextPath + '/billing/customer/saveCustomerPayment.jsp', {
+    fetch(contextPath + '/billing/customer/saveCustomerAccountEntry.jsp', {
         method:  'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body:    params.toString()
@@ -462,29 +597,37 @@ function submitPayment() {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
+            let msg = data.message || 'Saved successfully.';
+            if (data.entryType === 'COLLECTION' && data.newBalance != null) {
+                msg = 'Remaining balance: ₹' + parseFloat(data.newBalance).toFixed(2);
+            } else if (data.entryType === 'ADVANCE' && data.newAdvance != null) {
+                msg = 'Total advance: ₹' + parseFloat(data.newAdvance).toFixed(2);
+            } else if (data.entryType === 'OLD_DUE' && data.newBalance != null) {
+                msg = 'Account balance: ₹' + parseFloat(data.newBalance).toFixed(2);
+            }
             Swal.fire({
                 icon: 'success',
-                title: 'Payment Saved',
-                text: 'Remaining balance: ₹' + parseFloat(data.newBalance).toFixed(2),
+                title: 'Saved',
+                text: msg,
                 confirmButtonText: 'OK'
             }).then(() => location.reload());
         } else {
-            errBox.textContent = data.message || 'Error saving payment.';
+            errBox.textContent = data.message || 'Error saving entry.';
             errBox.style.display = 'block';
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Submit Payment';
+            btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> <span id="submitBtnLabel">' + document.getElementById('submitBtnLabel').textContent + '</span>';
         }
     })
     .catch(() => {
         errBox.textContent = 'Network error. Please try again.';
         errBox.style.display = 'block';
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Submit Payment';
+        btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> <span id="submitBtnLabel">' + document.getElementById('submitBtnLabel').textContent + '</span>';
     });
 }
 
-// Init
-onModeChange();
+// Init — onEntryTypeChange before onModeChange
+onEntryTypeChange();
 </script>
 </body>
 </html>

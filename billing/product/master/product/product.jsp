@@ -188,6 +188,30 @@ String type = request.getParameter("type"); // success / warning / danger / info
                         </form>
                     </div>
                 </div>
+
+                <div class="card mt-2" style="border: none; box-shadow: 0 2px 4px rgba(0,0,0,.07); border-radius: 8px;">
+                    <div class="mst-card-header">
+                        <h6 class="mb-0" style="font-size: 0.95rem;"><i class="fas fa-file-excel me-2"></i>Bulk Upload (Excel)</h6>
+                    </div>
+                    <div class="card-body" style="padding: 1rem;">
+                        <p class="text-muted small mb-2">Download the sample file, fill in your products, then upload the same format (.xlsx, .xls, or .csv).</p>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <button type="button" class="bb bb-green" onclick="downloadBulkSampleXlsx()">
+                                <i class="fas fa-download me-1"></i>Download Sample (.xlsx)
+                            </button>
+                            <a href="<%=contextPath%>/product/master/product/downloadProductSample.jsp" class="bb bb-outline">
+                                <i class="fas fa-file-csv me-1"></i>Sample (.csv)
+                            </a>
+                        </div>
+                        <div class="mb-2">
+                            <input type="file" id="bulkProductFile" class="form-control form-control-sm" accept=".xlsx,.xls,.csv">
+                        </div>
+                        <button type="button" class="bb bb-primary w-100" id="bulkUploadBtn" onclick="uploadBulkProducts()">
+                            <i class="fas fa-upload me-1"></i>Upload &amp; Import
+                        </button>
+                        <div id="bulkUploadStatus" class="small mt-2 text-muted"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Right Column - Product List Table -->
@@ -246,9 +270,197 @@ String type = request.getParameter("type"); // success / warning / danger / info
     </div>
 
     <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
     const contextPath = '<%=contextPath%>';
+    const bulkCategories = [<%
+        Vector bulkCats = prod.getCategoryName();
+        if (bulkCats != null) {
+            for (int bc = 0; bc < bulkCats.size(); bc++) {
+                Vector c = (Vector) bulkCats.get(bc);
+                if (c != null && c.elementAt(0) != null) {
+                    String cn = c.elementAt(0).toString().replace("\\", "\\\\").replace("\"", "\\\"");
+                    out.print((bc > 0 ? "," : "") + "\"" + cn + "\"");
+                }
+            }
+        }
+    %>];
+    const bulkBrands = [<%
+        Vector bulkBr = prod.getBrandsName();
+        if (bulkBr != null) {
+            for (int bb = 0; bb < bulkBr.size(); bb++) {
+                Vector b = (Vector) bulkBr.get(bb);
+                if (b != null && b.elementAt(0) != null) {
+                    String bn = b.elementAt(0).toString().replace("\\", "\\\\").replace("\"", "\\\"");
+                    out.print((bb > 0 ? "," : "") + "\"" + bn + "\"");
+                }
+            }
+        }
+    %>];
+    const bulkUnits = [<%
+        Vector bulkUn = prod.getUnits();
+        if (bulkUn != null) {
+            for (int bu = 0; bu < bulkUn.size(); bu++) {
+                Vector u = (Vector) bulkUn.get(bu);
+                if (u != null && u.elementAt(0) != null) {
+                    String un = u.elementAt(0).toString().replace("\\", "\\\\").replace("\"", "\\\"");
+                    out.print((bu > 0 ? "," : "") + "\"" + un + "\"");
+                }
+            }
+        }
+    %>];
+    const BULK_HEADERS = ['Category','Brand','Product Name','Product Code','HSN','Unit','Stock','Cost Price','MRP','Commission','Discount Type','Discount Value','GST'];
+
+    function pickBulkField(obj, aliases) {
+        const keys = Object.keys(obj);
+        for (let a = 0; a < aliases.length; a++) {
+            const want = aliases[a].toLowerCase();
+            for (let k = 0; k < keys.length; k++) {
+                if (String(keys[k]).trim().toLowerCase() === want) {
+                    return obj[keys[k]] != null ? String(obj[keys[k]]).trim() : '';
+                }
+            }
+        }
+        return '';
+    }
+
+    function downloadBulkSampleXlsx() {
+        if (typeof XLSX === 'undefined') {
+            window.location.href = contextPath + '/product/master/product/downloadProductSample.jsp';
+            return;
+        }
+        const wb = XLSX.utils.book_new();
+        const products = [
+            BULK_HEADERS,
+            ['General','Others','Sample Product 1','SP001','1234','Nos','10','50','100','0','Rs','0','18'],
+            ['General','Others','Sample Product 2','SP002','5678','Nos','0','25','45','0','%','5','5']
+        ];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(products), 'Products');
+
+        const ref = [['Categories']];
+        bulkCategories.forEach(function(c) { ref.push([c]); });
+        ref.push(['']);
+        ref.push(['Brands']);
+        bulkBrands.forEach(function(b) { ref.push([b]); });
+        ref.push(['']);
+        ref.push(['Units']);
+        bulkUnits.forEach(function(u) { ref.push([u]); });
+        ref.push(['']);
+        ref.push(['Notes']);
+        ref.push(['Use exact Category, Brand and Unit names from this sheet.']);
+        ref.push(['Discount Type: Rs, %, or leave blank.']);
+        ref.push(['Required: Category, Brand, Product Name, Unit, Cost Price, MRP.']);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ref), 'Reference');
+
+        XLSX.writeFile(wb, 'Product_Bulk_Upload_Sample.xlsx');
+    }
+
+    function parseBulkFileToRows(file, callback) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let data = e.target.result;
+                let workbook;
+                if (file.name.toLowerCase().endsWith('.csv')) {
+                    workbook = XLSX.read(data, { type: 'string' });
+                } else {
+                    workbook = XLSX.read(new Uint8Array(data), { type: 'array' });
+                }
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                const rows = [];
+                json.forEach(function(item) {
+                    const productName = pickBulkField(item, ['product name', 'productname', 'name']);
+                    if (!productName) return;
+                    rows.push({
+                        categoryName: pickBulkField(item, ['category', 'category name']),
+                        brandName: pickBulkField(item, ['brand', 'brand name']),
+                        productName: productName,
+                        productCode: pickBulkField(item, ['product code', 'code']),
+                        hsn: pickBulkField(item, ['hsn', 'hsn code']),
+                        unitName: pickBulkField(item, ['unit', 'unit/size', 'unit name']),
+                        stock: pickBulkField(item, ['stock']),
+                        cost: pickBulkField(item, ['cost price', 'cost']),
+                        mrp: pickBulkField(item, ['mrp']),
+                        commission: pickBulkField(item, ['commission']),
+                        discType: pickBulkField(item, ['discount type', 'disctype']),
+                        discValue: pickBulkField(item, ['discount value', 'discount']),
+                        gst: pickBulkField(item, ['gst', 'gst %'])
+                    });
+                });
+                callback(null, rows);
+            } catch (err) {
+                callback(err.message || 'Could not read file.');
+            }
+        };
+        if (file.name.toLowerCase().endsWith('.csv')) {
+            reader.readAsText(file);
+        } else {
+            reader.readAsArrayBuffer(file);
+        }
+    }
+
+    function uploadBulkProducts() {
+        const fileInput = document.getElementById('bulkProductFile');
+        const statusEl = document.getElementById('bulkUploadStatus');
+        const btn = document.getElementById('bulkUploadBtn');
+        if (!fileInput.files || !fileInput.files.length) {
+            Swal.fire({ icon: 'warning', title: 'Select file', text: 'Please choose an Excel or CSV file.' });
+            return;
+        }
+        const file = fileInput.files[0];
+        btn.disabled = true;
+        statusEl.textContent = 'Reading file…';
+        parseBulkFileToRows(file, function(err, rows) {
+            if (err) {
+                btn.disabled = false;
+                statusEl.textContent = '';
+                Swal.fire({ icon: 'error', title: 'Read failed', text: err });
+                return;
+            }
+            if (!rows.length) {
+                btn.disabled = false;
+                statusEl.textContent = '';
+                Swal.fire({ icon: 'warning', title: 'No rows', text: 'No product rows found. Use the sample file format.' });
+                return;
+            }
+            statusEl.textContent = 'Uploading ' + rows.length + ' product(s)…';
+            fetch(contextPath + '/product/master/product/bulkUploadProducts.jsp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                body: 'rows=' + encodeURIComponent(JSON.stringify(rows))
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                btn.disabled = false;
+                statusEl.textContent = '';
+                if (res.successCount > 0) {
+                    loadProducts(1, document.getElementById('productSearch').value || '');
+                    fileInput.value = '';
+                }
+                let html = res.message || '';
+                if (res.errors && res.errors.length) {
+                    html += '<ul class="text-start small mt-2 mb-0">';
+                    res.errors.forEach(function(e) {
+                        html += '<li>Row ' + e.row + ': ' + e.message + '</li>';
+                    });
+                    html += '</ul>';
+                }
+                Swal.fire({
+                    icon: res.successCount > 0 && res.failCount === 0 ? 'success' : (res.successCount > 0 ? 'warning' : 'error'),
+                    title: res.successCount > 0 ? 'Import finished' : 'Import failed',
+                    html: html
+                });
+            })
+            .catch(function() {
+                btn.disabled = false;
+                statusEl.textContent = '';
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Upload failed. Please try again.' });
+            });
+        });
+    }
 
     function updateStockConversionNote() {
         const unitSelect = document.getElementById('unitSelect');

@@ -1,0 +1,15 @@
+billing
+customer add advance
+customer add due
+customer due collect
+Return or exchange
+cancel
+
+Purchase enty
+purchase return
+supplier add advance
+supplier add due
+supplier due collect
+cancel
+
+Expense entry

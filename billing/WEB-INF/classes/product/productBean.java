@@ -716,6 +716,67 @@ finally
 			}
 		}
 }
+
+public int getCategoryIdByName(String name) throws Exception {
+    if (name == null || name.trim().isEmpty()) return 0;
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        pt = con.prepareStatement(
+            "SELECT id FROM prod_category WHERE is_active=1 AND LOWER(TRIM(name))=LOWER(TRIM(?)) LIMIT 1"
+        );
+        pt.setString(1, name.trim());
+        rs = pt.executeQuery();
+        return rs.next() ? rs.getInt(1) : 0;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public int getBrandIdByName(String name) throws Exception {
+    if (name == null || name.trim().isEmpty()) return 0;
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        pt = con.prepareStatement(
+            "SELECT id FROM prod_brands WHERE is_active=1 AND LOWER(TRIM(name))=LOWER(TRIM(?)) LIMIT 1"
+        );
+        pt.setString(1, name.trim());
+        rs = pt.executeQuery();
+        return rs.next() ? rs.getInt(1) : 0;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public int getUnitIdByName(String name) throws Exception {
+    if (name == null || name.trim().isEmpty()) return 0;
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        pt = con.prepareStatement(
+            "SELECT id FROM prod_units WHERE LOWER(TRIM(name))=LOWER(TRIM(?)) LIMIT 1"
+        );
+        pt.setString(1, name.trim());
+        rs = pt.executeQuery();
+        return rs.next() ? rs.getInt(1) : 0;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
 ////////////////////////////------------------------
 public Vector getUnits() throws Exception
 	{
