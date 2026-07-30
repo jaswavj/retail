@@ -9,34 +9,78 @@ String purchaseId = request.getParameter("id");
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Purchase Details</title>
     <%@ include file="/assets/common/head.jsp" %>
     <style>
-        .table-wrapper {
-            overflow: auto;
+        .pd-page { min-height: 100vh; background: var(--bill-bg, #f1f5f9); }
+        .pd-header-grid .info-box {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 10px;
+            background: #fff;
+            height: 100%;
         }
-        thead th {
+        .pd-header-grid .form-label-sm {
+            font-size: 0.72rem;
+            margin-bottom: 2px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+        }
+        .pd-table-wrap {
+            overflow-x: auto;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .pd-table-wrap table {
+            min-width: 980px;
+            margin-bottom: 0;
+            font-size: 0.82rem;
+        }
+        .pd-table-wrap thead th {
             position: sticky;
             top: 0;
-            background-color: #f8f9fa;
-            z-index: 1;
-            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+            background: #f8fafc;
+            z-index: 2;
+            white-space: nowrap;
         }
-        .form-label-sm {
-            font-size: 0.8rem;
-            margin-bottom: 0;
-            color: #6c757d;
+        .pd-footer-totals {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            justify-content: flex-end;
+            align-items: center;
         }
-        .form-control-plaintext {
-            padding-top: 0;
-            padding-bottom: 0;
-            font-weight: 500;
+        .pd-footer-totals .total-item {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        .pd-footer-totals .total-item span {
+            color: #0f172a;
+            font-weight: 700;
+        }
+        .pd-footer-totals .grand-total {
+            font-size: 1rem;
+            width: 100%;
+            text-align: right;
+        }
+        @media (min-width: 768px) {
+            .pd-footer-totals .grand-total { width: auto; margin-left: 8px; }
+        }
+        @media (max-width: 767.98px) {
+            .pd-table-wrap table { font-size: 0.78rem; }
+            .pd-action-btns { display: flex; flex-direction: column; gap: 4px; min-width: 72px; }
+            .pd-action-btns .btn { width: 100%; font-size: 0.72rem; padding: 2px 6px; }
+            .pd-page { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
         }
     </style>
 </head>
-<body style="height: 100vh; overflow: hidden;">
-    <div class="container-fluid h-100 d-flex flex-column p-0">
+<body class="pd-page">
+    <div class="container-fluid p-0 pb-3">
         <%@ include file="/assets/navbar/navbar.jsp" %>
 
         <%
@@ -49,53 +93,53 @@ String purchaseId = request.getParameter("id");
         %>
 
         <!-- Top Section: Purchase Info -->
-        <div class="card m-2 flex-shrink-0">
-            <div class="card-body p-2">
-                <div class="row g-2">
-                    <div class="col-md-3">
-                        <div class="border rounded p-1 bg-light">
+        <div class="card m-2 m-md-3 border-0 shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                <div class="row g-2 pd-header-grid">
+                    <div class="col-6 col-md-3">
+                        <div class="info-box">
                             <label class="form-label-sm d-block">Invoice No</label>
                             <span class="fw-bold"><%= header.elementAt(1) %></span>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="border rounded p-1 bg-light">
+                    <div class="col-6 col-md-3">
+                        <div class="info-box">
                             <label class="form-label-sm d-block">Invoice Date</label>
                             <span class="fw-bold"><%= header.elementAt(2) %></span>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="border rounded p-1 bg-light">
+                    <div class="col-6 col-md-3">
+                        <div class="info-box">
                             <label class="form-label-sm d-block">Supplier</label>
-                            <span class="fw-bold"><%= header.elementAt(9) %></span>
+                            <span class="fw-bold text-break"><%= header.elementAt(9) %></span>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="border rounded p-1 bg-light">
+                    <div class="col-6 col-md-3">
+                        <div class="info-box">
                             <label class="form-label-sm d-block">Entry Date</label>
                             <span class="fw-bold"><%= header.elementAt(6) %> <%= header.elementAt(7) %></span>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="border rounded p-1 bg-light">
+                    <div class="col-6 col-md-3">
+                        <div class="info-box">
                             <label class="form-label-sm d-block">Entered By</label>
                             <span class="fw-bold"><%= header.elementAt(8) %></span>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="border rounded p-1 bg-light">
+                    <div class="col-6 col-md-3">
+                        <div class="info-box">
                             <label class="form-label-sm d-block">Total Amount</label>
                             <span class="fw-bold text-primary">₹<%= header.elementAt(3) %></span>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="border rounded p-1 bg-light">
+                    <div class="col-6 col-md-3">
+                        <div class="info-box">
                             <label class="form-label-sm d-block">Paid Amount</label>
                             <span class="fw-bold text-success">₹<%= header.elementAt(4) %></span>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="border rounded p-1 bg-light">
+                    <div class="col-6 col-md-3">
+                        <div class="info-box">
                             <label class="form-label-sm d-block">Balance</label>
                             <span class="fw-bold text-danger">₹<%= header.elementAt(5) %></span>
                         </div>
@@ -104,25 +148,30 @@ String purchaseId = request.getParameter("id");
             </div>
         </div>
 
-        <!-- Middle Section: Table -->
-        <div class="flex-grow-1 overflow-auto px-2">
+        <!-- Detail items -->
+        <div class="px-2 px-md-3 mb-2">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-list me-1"></i> Purchase Items</h6>
+                <small class="text-muted d-md-none">Swipe table → to see all columns</small>
+            </div>
+            <div class="pd-table-wrap">
             <table class="table table-bordered table-sm table-hover mb-0">
-                <thead class="table-light">
+                <thead>
                     <tr>
-                        <th style="width: 40px;">S.No</th>
-                        <th>Product Name</th>
-                        <th class="text-end" style="width: 70px;">Pack</th>
-                        <th class="text-end" style="width: 70px;">Qty/Pk</th>
-                        <th class="text-end" style="width: 70px;">Qty</th>
-                        <th class="text-end" style="width: 70px;">Free</th>
-                        <th class="text-end" style="width: 100px;">Rate</th>
-                        <th class="text-end" style="width: 100px;">MRP</th>
-                        <th class="text-end" style="width: 110px;">Total</th>
-                        <th class="text-end" style="width: 70px;">GST%</th>
-                        <th class="text-end" style="width: 90px;">CGST</th>
-                        <th class="text-end" style="width: 90px;">SGST</th>
-                        <th class="text-end" style="width: 110px;">Net Amt</th>
-                        <th style="width: 160px;">Action</th>
+                        <th style="width: 40px;">#</th>
+                        <th>Product</th>
+                        <th class="text-end d-none d-md-table-cell" style="width: 60px;">Pack</th>
+                        <th class="text-end d-none d-lg-table-cell" style="width: 60px;">Qty/Pk</th>
+                        <th class="text-end" style="width: 60px;">Qty</th>
+                        <th class="text-end d-none d-md-table-cell" style="width: 60px;">Free</th>
+                        <th class="text-end" style="width: 80px;">Rate</th>
+                        <th class="text-end d-none d-lg-table-cell" style="width: 80px;">MRP</th>
+                        <th class="text-end d-none d-lg-table-cell" style="width: 90px;">Total</th>
+                        <th class="text-end d-none d-xl-table-cell" style="width: 60px;">GST%</th>
+                        <th class="text-end d-none d-xl-table-cell" style="width: 80px;">CGST</th>
+                        <th class="text-end d-none d-xl-table-cell" style="width: 80px;">SGST</th>
+                        <th class="text-end" style="width: 90px;">Net</th>
+                        <th style="width: 100px;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -150,26 +199,28 @@ String purchaseId = request.getParameter("id");
                     %>
                     <tr class="<%= cancelled==1 ? "table-secondary text-decoration-line-through text-muted" : "" %>">
                         <td><%= i+1 %></td>
-                        <td><%= prodName %> <% if (cancelled==1) { %><span class="badge bg-danger ms-1">Cancelled</span><% } %></td>
-                        <td class="text-end"><%= String.format("%.0f",(Double)item.elementAt(3)) %></td>
-                        <td class="text-end"><%= String.format("%.3f",(Double)item.elementAt(4)) %></td>
+                        <td class="text-break"><%= prodName %> <% if (cancelled==1) { %><span class="badge bg-danger ms-1">Cancelled</span><% } %></td>
+                        <td class="text-end d-none d-md-table-cell"><%= String.format("%.0f",(Double)item.elementAt(3)) %></td>
+                        <td class="text-end d-none d-lg-table-cell"><%= String.format("%.3f",(Double)item.elementAt(4)) %></td>
                         <td class="text-end"><%= String.format("%.3f", qty) %></td>
-                        <td class="text-end"><%= String.format("%.3f", free) %></td>
+                        <td class="text-end d-none d-md-table-cell"><%= String.format("%.3f", free) %></td>
                         <td class="text-end"><%= String.format("%.3f", rate) %></td>
-                        <td class="text-end"><%= String.format("%.3f", mrp) %></td>
-                        <td class="text-end"><%= String.format("%.3f", itemTotal) %></td>
-                        <td class="text-end"><%= String.format("%.2f", tax) %></td>
-                        <td class="text-end"><%= String.format("%.3f", cgst) %></td>
-                        <td class="text-end"><%= String.format("%.3f", sgst) %></td>
+                        <td class="text-end d-none d-lg-table-cell"><%= String.format("%.3f", mrp) %></td>
+                        <td class="text-end d-none d-lg-table-cell"><%= String.format("%.3f", itemTotal) %></td>
+                        <td class="text-end d-none d-xl-table-cell"><%= String.format("%.2f", tax) %></td>
+                        <td class="text-end d-none d-xl-table-cell"><%= String.format("%.3f", cgst) %></td>
+                        <td class="text-end d-none d-xl-table-cell"><%= String.format("%.3f", sgst) %></td>
                         <td class="text-end fw-bold"><%= String.format("%.3f", netAmt) %></td>
                         <td class="text-center">
                         <% if (cancelled == 0) { %>
-                            <button class="btn btn-xs btn-outline-primary py-0 px-1 me-1"
+                            <div class="pd-action-btns">
+                            <button class="btn btn-outline-primary btn-sm py-0 px-1"
                                     onclick="openEditModal(<%= detId %>, '<%= purchaseId %>', '<%= prodName.replace("'","\\'"  ) %>', <%= rate %>, <%= mrp %>)"
-                                    title="Edit Price"><i class="fas fa-edit"></i> Edit</button>
-                            <button class="btn btn-xs btn-outline-danger py-0 px-1"
+                                    title="Edit Price"><i class="fas fa-edit"></i><span class="d-none d-md-inline"> Edit</span></button>
+                            <button class="btn btn-outline-danger btn-sm py-0 px-1"
                                     onclick="cancelItem(<%= detId %>, '<%= purchaseId %>', '<%= prodName.replace("'","\\'"  ) %>')"
-                                    title="Cancel Item"><i class="fas fa-ban"></i> Cancel</button>
+                                    title="Cancel Item"><i class="fas fa-ban"></i><span class="d-none d-md-inline"> Cancel</span></button>
+                            </div>
                         <% } %>
                         </td>
                     </tr>
@@ -183,25 +234,26 @@ String purchaseId = request.getParameter("id");
                     <% } %>
                 </tbody>
             </table>
+            </div>
         </div>
 
         <!-- Bottom Section: Footer Totals -->
-        <div class="card m-2 flex-shrink-0 bg-light">
-            <div class="card-body p-2">
-                <div class="row align-items-center">
-                    <div class="col-auto">
-                        <a href="page.jsp" class="btn btn-secondary btn-sm px-4">
+        <div class="card mx-2 mx-md-3 mb-3 border-0 shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-3">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="page.jsp" class="btn btn-secondary btn-sm">
                             <i class="fas fa-arrow-left me-1"></i> Back
                         </a>
-                        <a href="<%=contextPath%>/product/purchase/purchaseReturn/page.jsp?purchaseId=<%= purchaseId %>" class="btn btn-warning btn-sm px-3 ms-2">
-                            <i class="fas fa-undo me-1"></i> Purchase Return
+                        <a href="<%=contextPath%>/product/purchase/purchaseReturn/page.jsp?purchaseId=<%= purchaseId %>" class="btn btn-warning btn-sm">
+                            <i class="fas fa-undo me-1"></i> Return
                         </a>
                     </div>
-                    <div class="col text-end">
-                        <span class="me-3 text-muted">Sub Total: <span class="text-dark fw-bold">₹<%= String.format("%.3f", totalAmount) %></span></span>
-                        <span class="me-3 text-muted">CGST: <span class="text-dark fw-bold">₹<%= String.format("%.3f", totalCGST) %></span></span>
-                        <span class="me-3 text-muted">SGST: <span class="text-dark fw-bold">₹<%= String.format("%.3f", totalSGST) %></span></span>
-                        <span class="ms-2 fs-5">Grand Total: <span class="text-primary fw-bold">₹<%= String.format("%.3f", grandTotal) %></span></span>
+                    <div class="pd-footer-totals flex-grow-1">
+                        <div class="total-item">Sub Total: <span>₹<%= String.format("%.3f", totalAmount) %></span></div>
+                        <div class="total-item">CGST: <span>₹<%= String.format("%.3f", totalCGST) %></span></div>
+                        <div class="total-item">SGST: <span>₹<%= String.format("%.3f", totalSGST) %></span></div>
+                        <div class="total-item grand-total">Grand Total: <span class="text-primary fs-5">₹<%= String.format("%.3f", grandTotal) %></span></div>
                     </div>
                 </div>
             </div>

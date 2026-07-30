@@ -662,17 +662,24 @@ ps.executeUpdate();
     
 }
 
-/** bill_type 1 = customer bill (see bill_type table). supplierId use 0 or omit for NULL. */
-private void insertProdLedgerEntry(Connection con, int billType, int billId, int customerId,
+/** bill_type from bill_type table. supplierId/customerId use 0 for NULL. */
+public void insertProdLedgerEntry(Connection con, int billType, int billId, int customerId,
         int supplierId, int paymentMode, double billAmount, double cashPaid, double bankPaid,
         int paymentType, int uid) throws SQLException {
+    insertProdLedgerEntry(con, billType, billId, customerId, supplierId, paymentMode,
+            billAmount, cashPaid, bankPaid, paymentType, uid, null);
+}
+
+public void insertProdLedgerEntry(Connection con, int billType, int billId, int customerId,
+        int supplierId, int paymentMode, double billAmount, double cashPaid, double bankPaid,
+        int paymentType, int uid, String dateTime) throws SQLException {
     PreparedStatement ps = null;
     try {
-        ps = con.prepareStatement(
+        String sql =
             "INSERT INTO prod_ledger (bill_type, bill_id, customer_id, supplier_id, payment_mode, "
             + "bill_amount, cash_paid, bank_paid, payment_type, uid, date_time) "
-            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())"
-        );
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " + (dateTime != null ? "?" : "NOW()") + ")";
+        ps = con.prepareStatement(sql);
         ps.setInt(1, billType);
         ps.setInt(2, billId);
         if (customerId > 0) {
@@ -691,6 +698,9 @@ private void insertProdLedgerEntry(Connection con, int billType, int billId, int
         ps.setDouble(8, bankPaid);
         ps.setInt(9, paymentType);
         ps.setInt(10, uid);
+        if (dateTime != null) {
+            ps.setString(11, dateTime);
+        }
         ps.executeUpdate();
     } finally {
         if (ps != null) try { ps.close(); } catch (SQLException ignore) {}
@@ -1649,6 +1659,353 @@ public double saveCustomerOldDue(int customerId, double dueAmount, int uid, Stri
         updPS.executeUpdate();
         updPS.close();
 
+        con.commit();
+        return newBalance;
+    } catch (Exception e) {
+        if (con != null) try { con.rollback(); } catch (Exception ignore) {}
+        throw e;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception ignore) {}
+        if (selPS != null) try { selPS.close(); } catch (Exception ignore) {}
+        if (insPS != null) try { insPS.close(); } catch (Exception ignore) {}
+        if (updPS != null) try { updPS.close(); } catch (Exception ignore) {}
+        if (con != null) try { con.close(); } catch (Exception ignore) {}
+    }
+}
+
+// ===================== SUPPLIER ACCOUNT (mirror customer) =====================
+
+public Vector getSupplierAccount(int supplierId) throws Exception {
+    Connection con = null; PreparedStatement pt = null; ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector row = new Vector();
+        pt = con.prepareStatement(
+            "SELECT id, supplier_id, advance, balance FROM supplier_account WHERE supplier_id = ?"
+        );
+        pt.setInt(1, supplierId);
+        rs = pt.executeQuery();
+        if (rs.next()) {
+            row.addElement(rs.getString(1));
+            row.addElement(rs.getString(2));
+            row.addElement(rs.getString(3));
+            row.addElement(rs.getString(4));
+        }
+        return row;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public Vector getSupplierAccountTotals() throws Exception {
+    Connection con = null; PreparedStatement pt = null; ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector row = new Vector();
+        pt = con.prepareStatement(
+            "SELECT COUNT(CASE WHEN balance > 0 THEN 1 END), "
+            + "COALESCE(SUM(CASE WHEN balance > 0 THEN balance ELSE 0 END), 0), "
+            + "COALESCE(SUM(advance), 0) FROM supplier_account"
+        );
+        rs = pt.executeQuery();
+        if (rs.next()) {
+            row.addElement(rs.getString(1));
+            row.addElement(rs.getString(2));
+            row.addElement(rs.getString(3));
+        }
+        return row;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public Vector getSuppliersDueList() throws Exception {
+    Connection con = null; PreparedStatement pt = null; ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector vec = new Vector();
+        pt = con.prepareStatement(
+            "SELECT a.supplier_id, b.name, b.phone_number, a.balance "
+            + "FROM supplier_account a JOIN prod_supplier b ON b.id = a.supplier_id "
+            + "WHERE a.balance > 0 ORDER BY a.balance DESC"
+        );
+        rs = pt.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement(rs.getString(1));
+            row.addElement(rs.getString(2));
+            row.addElement(rs.getString(3));
+            row.addElement(rs.getString(4));
+            vec.addElement(row);
+        }
+        return vec;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public Vector getSupplierDuePayments(int supplierId) throws Exception {
+    Connection con = null; PreparedStatement pt = null; ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector vec = new Vector();
+        pt = con.prepareStatement(
+            "SELECT a.id, a.amount, a.cash_paid, a.bank_paid, a.balance, "
+            + "a.pay_mode, a.pay_type, a.uid, a.date, a.time, b.user_name, "
+            + "COALESCE(a.txn_type, 'COLLECTION'), COALESCE(a.notes, '') "
+            + "FROM prod_supplier_due a JOIN users b ON b.id = a.uid "
+            + "WHERE a.supplier_id = ? ORDER BY a.date DESC, a.time DESC, a.id DESC"
+        );
+        pt.setInt(1, supplierId);
+        rs = pt.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            for (int i = 1; i <= 13; i++) row.addElement(rs.getString(i));
+            vec.addElement(row);
+        }
+        return vec;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public Vector getPurchasesBySupplierId(int supplierId) throws Exception {
+    Connection con = null; PreparedStatement pt = null; ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector vec = new Vector();
+        pt = con.prepareStatement(
+            "SELECT COALESCE(pp.invno,''), COALESCE(s.phone_number,''), pp.net, pp.paid, pp.balance, "
+            + "pp.ent_date, pp.ent_time, u.user_name, pp.prno, pp.id "
+            + "FROM prod_purchase pp "
+            + "JOIN prod_supplier s ON s.id = pp.deal_id "
+            + "JOIN users u ON u.id = pp.ent_uid "
+            + "WHERE pp.deal_id = ? AND pp.is_cancelled = 0 AND pp.is_po = 0 "
+            + "ORDER BY pp.id DESC"
+        );
+        pt.setInt(1, supplierId);
+        rs = pt.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            for (int i = 1; i <= 10; i++) row.addElement(rs.getString(i));
+            vec.addElement(row);
+        }
+        return vec;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public Vector getPurchaseReturnsBySupplierId(int supplierId) throws Exception {
+    Connection con = null; PreparedStatement pt = null; ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        Vector vec = new Vector();
+        pt = con.prepareStatement(
+            "SELECT pr.return_no, pp.prno, pr.total, COALESCE(pr.notes,''), "
+            + "DATE(pr.date_time), TIME(pr.date_time), COALESCE(u.user_name,'—'), pr.id, pr.purchase_id "
+            + "FROM prod_purchase_return pr "
+            + "JOIN prod_purchase pp ON pr.purchase_id = pp.id "
+            + "LEFT JOIN users u ON u.id = pr.uid "
+            + "WHERE pr.supplier_id = ? "
+            + "ORDER BY pr.date_time DESC, pr.id DESC"
+        );
+        pt.setInt(1, supplierId);
+        rs = pt.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            for (int i = 1; i <= 9; i++) row.addElement(rs.getString(i));
+            vec.addElement(row);
+        }
+        return vec;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public double saveSupplierAccountPayment(int supplierId, double cashPaid, double bankPaid,
+        int payMode, int payType, int uid) throws Exception {
+    Connection con = null; PreparedStatement selPS = null; PreparedStatement insPS = null;
+    PreparedStatement updPS = null; ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        con.setAutoCommit(false);
+        selPS = con.prepareStatement(
+            "SELECT balance FROM supplier_account WHERE supplier_id = ? FOR UPDATE"
+        );
+        selPS.setInt(1, supplierId);
+        rs = selPS.executeQuery();
+        double currentBalance = 0;
+        if (rs.next()) currentBalance = rs.getDouble(1);
+        else throw new Exception("supplier_account not found for supplierId=" + supplierId);
+        rs.close(); selPS.close();
+        if (currentBalance <= 0) throw new Exception("No account balance due to pay.");
+
+        double amount = cashPaid + bankPaid;
+        double newBalance = currentBalance - amount;
+        if (newBalance < 0) newBalance = 0;
+
+        insPS = con.prepareStatement(
+            "INSERT INTO prod_supplier_due "
+            + "(supplier_id, amount, cash_paid, bank_paid, balance, pay_mode, pay_type, txn_type, notes, uid, date, time) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, 'COLLECTION', NULL, ?, CURRENT_DATE(), CURRENT_TIME())",
+            Statement.RETURN_GENERATED_KEYS
+        );
+        insPS.setInt(1, supplierId);
+        insPS.setDouble(2, amount);
+        insPS.setDouble(3, cashPaid);
+        insPS.setDouble(4, bankPaid);
+        insPS.setDouble(5, newBalance);
+        insPS.setInt(6, payMode);
+        insPS.setInt(7, payType);
+        insPS.setInt(8, uid);
+        insPS.executeUpdate();
+        int dueId = 0;
+        rs = insPS.getGeneratedKeys();
+        if (rs.next()) dueId = rs.getInt(1);
+        rs.close(); insPS.close();
+
+        insertProdLedgerEntry(con, 6, dueId, 0, supplierId, payMode, amount, cashPaid, bankPaid, payType, uid);
+
+        updPS = con.prepareStatement("UPDATE supplier_account SET balance = ? WHERE supplier_id = ?");
+        updPS.setDouble(1, newBalance);
+        updPS.setInt(2, supplierId);
+        updPS.executeUpdate();
+        updPS.close();
+        con.commit();
+        return newBalance;
+    } catch (Exception e) {
+        if (con != null) try { con.rollback(); } catch (Exception ignore) {}
+        throw e;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception ignore) {}
+        if (selPS != null) try { selPS.close(); } catch (Exception ignore) {}
+        if (insPS != null) try { insPS.close(); } catch (Exception ignore) {}
+        if (updPS != null) try { updPS.close(); } catch (Exception ignore) {}
+        if (con != null) try { con.close(); } catch (Exception ignore) {}
+    }
+}
+
+public double saveSupplierAdvance(int supplierId, double cashPaid, double bankPaid,
+        int payMode, int payType, int uid, String notes) throws Exception {
+    Connection con = null; PreparedStatement selPS = null; PreparedStatement insPS = null;
+    PreparedStatement updPS = null; ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        con.setAutoCommit(false);
+        selPS = con.prepareStatement(
+            "SELECT advance, balance FROM supplier_account WHERE supplier_id = ? FOR UPDATE"
+        );
+        selPS.setInt(1, supplierId);
+        rs = selPS.executeQuery();
+        double currentAdvance = 0, currentBalance = 0;
+        if (rs.next()) {
+            currentAdvance = rs.getDouble(1);
+            currentBalance = rs.getDouble(2);
+        } else throw new Exception("supplier_account not found for supplierId=" + supplierId);
+        rs.close(); selPS.close();
+
+        double amount = cashPaid + bankPaid;
+        if (amount <= 0) throw new Exception("Advance amount must be greater than zero.");
+        double newAdvance = currentAdvance + amount;
+
+        insPS = con.prepareStatement(
+            "INSERT INTO prod_supplier_due "
+            + "(supplier_id, amount, cash_paid, bank_paid, balance, pay_mode, pay_type, txn_type, notes, uid, date, time) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, 'ADVANCE', ?, ?, CURRENT_DATE(), CURRENT_TIME())",
+            Statement.RETURN_GENERATED_KEYS
+        );
+        insPS.setInt(1, supplierId);
+        insPS.setDouble(2, amount);
+        insPS.setDouble(3, cashPaid);
+        insPS.setDouble(4, bankPaid);
+        insPS.setDouble(5, currentBalance);
+        insPS.setInt(6, payMode);
+        insPS.setInt(7, payType);
+        insPS.setString(8, notes != null && !notes.trim().isEmpty() ? notes.trim() : "Supplier advance");
+        insPS.setInt(9, uid);
+        insPS.executeUpdate();
+        int dueId = 0;
+        rs = insPS.getGeneratedKeys();
+        if (rs.next()) dueId = rs.getInt(1);
+        rs.close(); insPS.close();
+
+        insertProdLedgerEntry(con, 7, dueId, 0, supplierId, payMode, amount, cashPaid, bankPaid, payType, uid);
+
+        updPS = con.prepareStatement("UPDATE supplier_account SET advance = ? WHERE supplier_id = ?");
+        updPS.setDouble(1, newAdvance);
+        updPS.setInt(2, supplierId);
+        updPS.executeUpdate();
+        updPS.close();
+        con.commit();
+        return newAdvance;
+    } catch (Exception e) {
+        if (con != null) try { con.rollback(); } catch (Exception ignore) {}
+        throw e;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception ignore) {}
+        if (selPS != null) try { selPS.close(); } catch (Exception ignore) {}
+        if (insPS != null) try { insPS.close(); } catch (Exception ignore) {}
+        if (updPS != null) try { updPS.close(); } catch (Exception ignore) {}
+        if (con != null) try { con.close(); } catch (Exception ignore) {}
+    }
+}
+
+public double saveSupplierOldDue(int supplierId, double dueAmount, int uid, String notes) throws Exception {
+    Connection con = null; PreparedStatement selPS = null; PreparedStatement insPS = null;
+    PreparedStatement updPS = null; ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        con.setAutoCommit(false);
+        selPS = con.prepareStatement(
+            "SELECT balance FROM supplier_account WHERE supplier_id = ? FOR UPDATE"
+        );
+        selPS.setInt(1, supplierId);
+        rs = selPS.executeQuery();
+        double currentBalance = 0;
+        if (rs.next()) currentBalance = rs.getDouble(1);
+        else throw new Exception("supplier_account not found for supplierId=" + supplierId);
+        rs.close(); selPS.close();
+        if (dueAmount <= 0) throw new Exception("Old due amount must be greater than zero.");
+        double newBalance = currentBalance + dueAmount;
+
+        insPS = con.prepareStatement(
+            "INSERT INTO prod_supplier_due "
+            + "(supplier_id, amount, cash_paid, bank_paid, balance, pay_mode, pay_type, txn_type, notes, uid, date, time) "
+            + "VALUES (?, ?, 0, 0, ?, 0, 0, 'OLD_DUE', ?, ?, CURRENT_DATE(), CURRENT_TIME())",
+            Statement.RETURN_GENERATED_KEYS
+        );
+        insPS.setInt(1, supplierId);
+        insPS.setDouble(2, dueAmount);
+        insPS.setDouble(3, newBalance);
+        insPS.setString(4, notes != null && !notes.trim().isEmpty() ? notes.trim() : "Old due (before system)");
+        insPS.setInt(5, uid);
+        insPS.executeUpdate();
+        int dueId = 0;
+        rs = insPS.getGeneratedKeys();
+        if (rs.next()) dueId = rs.getInt(1);
+        rs.close();
+        insPS.close();
+
+        insertProdLedgerEntry(con, 12, dueId, 0, supplierId, 0, dueAmount, 0, 0, 0, uid);
+
+        updPS = con.prepareStatement("UPDATE supplier_account SET balance = ? WHERE supplier_id = ?");
+        updPS.setDouble(1, newBalance);
+        updPS.setInt(2, supplierId);
+        updPS.executeUpdate();
+        updPS.close();
         con.commit();
         return newBalance;
     } catch (Exception e) {
@@ -6907,101 +7264,63 @@ public Vector getBalanceSummaryReport(String fromDate, String toDate) throws Exc
     return vec;
 }
 
-public double getDayBookCashOpeningBalance(String fromDate) throws Exception {
-    String prevDate = getDayBefore(fromDate);
-    if (prevDate != null && hasCashBookActivityOnOrBefore(prevDate)) {
-        return getDayBookCashClosingBalanceForDate(prevDate);
-    }
-    double manualBefore = getManualOpeningBalanceBefore(fromDate);
-    if (hasManualOpeningBalanceUpTo(fromDate)) {
-        return manualBefore;
-    }
-    return getTransactionCashOpeningBefore(fromDate) + manualBefore;
-}
+private static final String PROD_LEDGER_VALID =
+    " (pl.bill_type NOT IN (1,5,9,11) "
+    + " OR (pl.bill_type = 1 AND EXISTS (SELECT 1 FROM prod_bill x WHERE x.id = pl.bill_id AND x.is_cancelled = 0)) "
+    + " OR (pl.bill_type = 5 AND EXISTS (SELECT 1 FROM prod_purchase x WHERE x.id = pl.bill_id AND x.is_cancelled = 0 AND x.is_po = 0)) "
+    + " OR (pl.bill_type = 9 AND EXISTS (SELECT 1 FROM expense_entry x WHERE x.id = pl.bill_id AND x.is_active = 1)) "
+    + " OR (pl.bill_type = 11 AND EXISTS (SELECT 1 FROM daybook_opening_balance x WHERE x.id = pl.bill_id AND x.is_active = 1))) ";
 
-private String getDayBefore(String dateStr) throws Exception {
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    Calendar cal = Calendar.getInstance();
-    cal.setTime(sdf.parse(dateStr));
-    cal.add(Calendar.DAY_OF_MONTH, -1);
-    return sdf.format(cal.getTime());
-}
-
-private boolean hasCashBookActivityOnOrBefore(String date) throws Exception {
-    if (hasManualOpeningBalanceUpTo(date)) {
-        return true;
-    }
-    Vector rows = getDayBookCashBook(date, date);
-    return rows != null && !rows.isEmpty();
-}
-
-private double getDayBookCashClosingBalanceForDate(String date) throws Exception {
-    double opening = getDayBookCashOpeningBalance(date);
-    Vector rows = getDayBookCashBook(date, date);
-    double cashIn = 0;
-    double cashOut = 0;
-    for (int i = 0; i < rows.size(); i++) {
-        Vector row = (Vector) rows.get(i);
-        cashIn += (Double) row.get(4);
-        cashOut += (Double) row.get(5);
-    }
-    return opening + cashIn - cashOut;
-}
-
-private double getTransactionCashOpeningBefore(String fromDate) throws Exception {
-    Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
-    double opening = 0;
-    try {
-        con = util.DBConnectionManager.getConnectionFromPool();
-        String sql =
-            "SELECT COALESCE(SUM(s.cash_in),0) - COALESCE(SUM(s.cash_out),0) AS bal FROM ("
-            + " SELECT SUM(c.cash) AS cash_in, 0.0 AS cash_out FROM prod_bill a"
-            + "   JOIN prod_bill_payment c ON c.bill_id=a.id"
-            + "   WHERE a.is_cancelled=0 AND a.date < ?"
-            + " UNION ALL"
-            + " SELECT SUM(a.paid), 0.0 FROM prod_bill_due_collection a"
-            + "   WHERE a.mode=1 AND COALESCE(a.collectDate, a.date) < ?"
-            + " UNION ALL"
-            + " SELECT SUM(a.cash_paid), 0.0 FROM prod_bill_due a"
-            + "   WHERE a.date < ?"
-            + " UNION ALL"
-            + " SELECT 0.0, SUM(pp.paid) FROM prod_purchase pp"
-            + "   WHERE pp.pay_type=1 AND pp.is_cancelled=0 AND pp.is_po=0 AND pp.ent_date < ?"
-            + " UNION ALL"
-            + " SELECT 0.0, SUM(spd.paid) FROM prod_purchase_supplier_payment_details spd"
-            + "   WHERE spd.pay_type=1 AND DATE(spd.date) < ?"
-            + "     AND (spd.notes IS NULL OR spd.notes NOT IN ('Payment for Purchase Bill', 'Payment for Purchase from PO', 'pending payment'))"
-            + " UNION ALL"
-            + " SELECT 0.0, SUM(ee.amount) FROM expense_entry ee"
-            + "   WHERE ee.is_active=1 AND DATE(ee.exc_date_time) < ?"
-            + ") s";
-        ps = con.prepareStatement(sql);
-        for (int i = 1; i <= 6; i++) ps.setString(i, fromDate);
-        rs = ps.executeQuery();
-        if (rs.next()) opening = rs.getDouble("bal");
-    } finally {
-        if (rs != null) try { rs.close(); } catch (Exception e) {}
-        if (ps != null) try { ps.close(); } catch (Exception e) {}
-        if (con != null) try { con.close(); } catch (Exception e) {}
-    }
-    return opening;
-}
-
-private boolean hasManualOpeningBalanceUpTo(String fromDate) throws Exception {
+private double getLedgerCashBalanceBefore(String beforeDate) throws Exception {
     Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
     try {
         con = util.DBConnectionManager.getConnectionFromPool();
         ps = con.prepareStatement(
-            "SELECT 1 FROM daybook_opening_balance WHERE is_active=1 AND balance_date <= ? LIMIT 1"
+            "SELECT COALESCE(SUM(CASE "
+            + " WHEN pl.bill_type IN (1,2,3,11) THEN pl.cash_paid "
+            + " WHEN pl.bill_type IN (5,6,7,9) THEN -pl.cash_paid "
+            + " WHEN pl.bill_type = 8 THEN pl.cash_paid "
+            + " ELSE 0 END), 0) AS bal "
+            + "FROM prod_ledger pl WHERE DATE(pl.date_time) < ? AND " + PROD_LEDGER_VALID
         );
-        ps.setString(1, fromDate);
+        ps.setString(1, beforeDate);
         rs = ps.executeQuery();
-        return rs.next();
+        return rs.next() ? rs.getDouble("bal") : 0;
     } finally {
         if (rs != null) try { rs.close(); } catch (Exception e) {}
         if (ps != null) try { ps.close(); } catch (Exception e) {}
         if (con != null) try { con.close(); } catch (Exception e) {}
     }
+}
+
+private double getLedgerBankBalanceBefore(String beforeDate) throws Exception {
+    Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        ps = con.prepareStatement(
+            "SELECT COALESCE(SUM(CASE "
+            + " WHEN pl.bill_type IN (1,2,3,11) THEN pl.bank_paid "
+            + " WHEN pl.bill_type IN (5,6,7,9) THEN -pl.bank_paid "
+            + " WHEN pl.bill_type = 8 THEN pl.bank_paid "
+            + " ELSE 0 END), 0) AS bal "
+            + "FROM prod_ledger pl WHERE DATE(pl.date_time) < ? AND " + PROD_LEDGER_VALID
+        );
+        ps.setString(1, beforeDate);
+        rs = ps.executeQuery();
+        return rs.next() ? rs.getDouble("bal") : 0;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public double getDayBookCashOpeningBalance(String fromDate) throws Exception {
+    return getLedgerCashBalanceBefore(fromDate);
+}
+
+public double getDayBookBankOpeningBalance(String fromDate) throws Exception {
+    return getLedgerBankBalanceBefore(fromDate);
 }
 
 public Vector getDayBookCashBook(String fromDate, String toDate) throws Exception {
@@ -7009,72 +7328,65 @@ public Vector getDayBookCashBook(String fromDate, String toDate) throws Exceptio
     Vector vec = new Vector();
     try {
         con = util.DBConnectionManager.getConnectionFromPool();
-        String sql =
-            "SELECT t.txn_date, t.txn_time, t.category, t.description, t.cash_in, t.cash_out"
-            + " FROM ("
-            + "  SELECT a.date AS txn_date, a.time AS txn_time, 'Sales' AS category,"
-            + "         CONCAT('Bill #', a.bill_display, ' - ', COALESCE(a.cusName,'')) AS description,"
-            + "         c.cash AS cash_in, 0.0 AS cash_out"
-            + "  FROM prod_bill a JOIN prod_bill_payment c ON c.bill_id=a.id"
-            + "  WHERE a.is_cancelled=0 AND a.date BETWEEN ? AND ? AND c.cash > 0"
-            + "  UNION ALL"
-            + "  SELECT COALESCE(a.collectDate, a.date), a.collectTime, 'Balance Collection',"
-            + "         CONCAT('Bill #', b.bill_display, ' - ', COALESCE(b.cusName,'')),"
-            + "         a.paid, 0.0"
-            + "  FROM prod_bill_due_collection a JOIN prod_bill b ON b.id=a.bill_id"
-            + "  WHERE a.mode=1 AND COALESCE(a.collectDate, a.date) BETWEEN ? AND ?"
-            + "  UNION ALL"
-            + "  SELECT a.date, a.time, 'Balance Collection',"
-            + "         CONCAT('Customer Balance - ', COALESCE(c.name,''),"
-            + "                IF(c.phone_number IS NOT NULL AND c.phone_number!='' AND c.phone_number!='-',"
-            + "                   CONCAT(' (', c.phone_number, ')'), '')),"
-            + "         a.cash_paid, 0.0"
-            + "  FROM prod_bill_due a JOIN customers c ON c.id = a.customer_id"
-            + "  WHERE a.date BETWEEN ? AND ? AND a.cash_paid > 0"
-            + "  UNION ALL"
-            + "  SELECT pp.ent_date, pp.ent_time, 'Purchase',"
-            + "         CONCAT('GRN #', pp.prno, ' - ', COALESCE(s.name,'')),"
-            + "         0.0, pp.paid"
-            + "  FROM prod_purchase pp JOIN prod_supplier s ON s.id=pp.deal_id"
-            + "  WHERE pp.pay_type=1 AND pp.is_cancelled=0 AND pp.is_po=0"
-            + "    AND pp.ent_date BETWEEN ? AND ? AND pp.paid > 0"
-            + "  UNION ALL"
-            + "  SELECT DATE(spd.date), TIME(spd.time), 'Supplier Payment',"
-            + "         CONCAT('GRN #', p.prno, ' - ', COALESCE(su.name,''),"
-            + "                IF(spd.notes IS NOT NULL AND spd.notes!='', CONCAT(' (',spd.notes,')'), '')),"
-            + "         0.0, spd.paid"
-            + "  FROM prod_purchase_supplier_payment_details spd"
-            + "  JOIN prod_purchase_supplier_payment sp ON sp.id=spd.supPayId"
-            + "  JOIN prod_purchase p ON p.id=sp.prid"
-            + "  JOIN prod_supplier su ON su.id=sp.deal_id"
-            + "  WHERE spd.pay_type=1 AND DATE(spd.date) BETWEEN ? AND ?"
-            + "    AND (spd.notes IS NULL OR spd.notes NOT IN ('Payment for Purchase Bill', 'Payment for Purchase from PO'))"
-            + "  UNION ALL"
-            + "  SELECT DATE(ee.exc_date_time), TIME(ee.exc_date_time), 'Expense',"
-            + "         CONCAT(COALESCE(et.type,'Expense'), ' - ', ee.content),"
-            + "         0.0, ee.amount"
-            + "  FROM expense_entry ee LEFT JOIN expense_type et ON et.id=ee.exp_type"
-            + "  WHERE ee.is_active=1 AND DATE(ee.exc_date_time) BETWEEN ? AND ?"
-            + "  UNION ALL"
-            + "  SELECT ob.balance_date, ob.entry_time, 'Opening Balance',"
-            + "         COALESCE(NULLIF(ob.notes,''), 'Manual Opening Balance'),"
-            + "         CASE WHEN ob.amount >= 0 THEN ob.amount ELSE 0 END,"
-            + "         CASE WHEN ob.amount < 0 THEN ABS(ob.amount) ELSE 0 END"
-            + "  FROM daybook_opening_balance ob"
-            + "  WHERE ob.is_active=1 AND ob.balance_date BETWEEN ? AND ?"
-            + " ) t ORDER BY CASE WHEN t.category='Opening Balance' THEN 0 ELSE 1 END,"
-            + " t.txn_date, t.txn_time, t.category, t.description";
-        ps = con.prepareStatement(sql);
-        for (int i = 1; i <= 13; i += 2) { ps.setString(i, fromDate); ps.setString(i + 1, toDate); }
+        ps = con.prepareStatement(
+            "SELECT COALESCE(bt.type, CONCAT('Type ', pl.bill_type)) AS category,"
+            + " SUM(CASE WHEN pl.bill_type IN (1,2,3,8,11) THEN pl.cash_paid ELSE 0 END) AS cash_in,"
+            + " SUM(CASE WHEN pl.bill_type IN (5,6,7,9) THEN pl.cash_paid ELSE 0 END) AS cash_out "
+            + "FROM prod_ledger pl "
+            + "LEFT JOIN bill_type bt ON bt.id = pl.bill_type "
+            + "WHERE DATE(pl.date_time) BETWEEN ? AND ? AND " + PROD_LEDGER_VALID
+            + " GROUP BY pl.bill_type, bt.type "
+            + "HAVING cash_in <> 0 OR cash_out <> 0 "
+            + "ORDER BY CASE pl.bill_type WHEN 11 THEN 0 ELSE pl.bill_type END, pl.bill_type"
+        );
+        ps.setString(1, fromDate);
+        ps.setString(2, toDate);
         rs = ps.executeQuery();
         while (rs.next()) {
             Vector row = new Vector();
-            row.addElement(rs.getString("txn_date") != null ? rs.getString("txn_date") : "");
-            row.addElement(rs.getString("txn_time") != null ? rs.getString("txn_time") : "");
-            row.addElement(rs.getString("category")  != null ? rs.getString("category")  : "");
-            row.addElement(rs.getString("description") != null ? rs.getString("description") : "");
+            row.addElement("");
+            row.addElement("");
+            row.addElement(rs.getString("category") != null ? rs.getString("category") : "");
+            row.addElement("");
             row.addElement(rs.getDouble("cash_in"));
             row.addElement(rs.getDouble("cash_out"));
+            vec.addElement(row);
+        }
+    } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (ps != null) try { ps.close(); } catch (Exception e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+    return vec;
+}
+
+public Vector getDayBookBankBook(String fromDate, String toDate) throws Exception {
+    Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
+    Vector vec = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        ps = con.prepareStatement(
+            "SELECT COALESCE(bt.type, CONCAT('Type ', pl.bill_type)) AS category,"
+            + " SUM(CASE WHEN pl.bill_type IN (1,2,3,8,11) THEN pl.bank_paid ELSE 0 END) AS bank_in,"
+            + " SUM(CASE WHEN pl.bill_type IN (5,6,7,9) THEN pl.bank_paid ELSE 0 END) AS bank_out "
+            + "FROM prod_ledger pl "
+            + "LEFT JOIN bill_type bt ON bt.id = pl.bill_type "
+            + "WHERE DATE(pl.date_time) BETWEEN ? AND ? AND " + PROD_LEDGER_VALID
+            + " GROUP BY pl.bill_type, bt.type "
+            + "HAVING bank_in <> 0 OR bank_out <> 0 "
+            + "ORDER BY CASE pl.bill_type WHEN 11 THEN 0 ELSE pl.bill_type END, pl.bill_type"
+        );
+        ps.setString(1, fromDate);
+        ps.setString(2, toDate);
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            Vector row = new Vector();
+            row.addElement("");
+            row.addElement("");
+            row.addElement(rs.getString("category") != null ? rs.getString("category") : "");
+            row.addElement("");
+            row.addElement(rs.getDouble("bank_in"));
+            row.addElement(rs.getDouble("bank_out"));
             vec.addElement(row);
         }
     } finally {
@@ -7090,77 +7402,40 @@ public Vector getDayBookDetail(String fromDate, String toDate) throws Exception 
     Vector vec = new Vector();
     try {
         con = util.DBConnectionManager.getConnectionFromPool();
-        String sql =
-            "SELECT t.txn_date, t.txn_time, t.category, t.description, t.cash_amt, t.credit_amt, t.bank_amt, t.total_amt"
-            + " FROM ("
-            + "  SELECT a.date AS txn_date, a.time AS txn_time, 'Sales' AS category,"
-            + "         CONCAT('Bill #', a.bill_display, ' - ', COALESCE(a.cusName,'')) AS description,"
-            + "         c.cash AS cash_amt, a.balance AS credit_amt, c.bank AS bank_amt, a.payable AS total_amt"
-            + "  FROM prod_bill a JOIN prod_bill_payment c ON c.bill_id=a.id"
-            + "  WHERE a.is_cancelled=0 AND a.date BETWEEN ? AND ?"
-            + "  UNION ALL"
-            + "  SELECT COALESCE(a.collectDate, a.date), a.collectTime, 'Balance Collection',"
-            + "         CONCAT('Bill #', b.bill_display, ' - ', COALESCE(b.cusName,'')),"
-            + "         CASE WHEN a.mode=1 THEN a.paid ELSE 0 END,"
-            + "         0.0,"
-            + "         CASE WHEN a.mode=2 THEN a.paid ELSE 0 END,"
-            + "         a.paid"
-            + "  FROM prod_bill_due_collection a JOIN prod_bill b ON b.id=a.bill_id"
-            + "  WHERE COALESCE(a.collectDate, a.date) BETWEEN ? AND ?"
-            + "  UNION ALL"
-            + "  SELECT a.date, a.time, 'Balance Collection',"
-            + "         CONCAT('Customer Balance - ', COALESCE(c.name,''),"
-            + "                IF(c.phone_number IS NOT NULL AND c.phone_number!='' AND c.phone_number!='-',"
-            + "                   CONCAT(' (', c.phone_number, ')'), '')),"
-            + "         a.cash_paid, 0.0, a.bank_paid, a.amount"
-            + "  FROM prod_bill_due a JOIN customers c ON c.id = a.customer_id"
-            + "  WHERE a.date BETWEEN ? AND ?"
-            + "  UNION ALL"
-            + "  SELECT pp.ent_date, pp.ent_time, 'Purchase',"
-            + "         CONCAT('GRN #', pp.prno, ' - ', COALESCE(s.name,'')),"
-            + "         CASE WHEN pp.pay_type=1 THEN pp.paid ELSE 0 END,"
-            + "         pp.balance,"
-            + "         CASE WHEN pp.pay_type<>1 THEN pp.paid ELSE 0 END,"
-            + "         pp.net"
-            + "  FROM prod_purchase pp JOIN prod_supplier s ON s.id=pp.deal_id"
-            + "  WHERE pp.is_cancelled=0 AND pp.is_po=0 AND pp.ent_date BETWEEN ? AND ?"
-            + "  UNION ALL"
-            + "  SELECT DATE(spd.date), TIME(spd.time), 'Supplier Payment',"
-            + "         CONCAT('GRN #', p.prno, ' - ', COALESCE(su.name,''),"
-            + "                IF(spd.notes IS NOT NULL AND spd.notes!='', CONCAT(' (',spd.notes,')'), '')),"
-            + "         CASE WHEN spd.pay_type=1 THEN spd.paid ELSE 0 END,"
-            + "         0.0,"
-            + "         CASE WHEN spd.pay_type<>1 THEN spd.paid ELSE 0 END,"
-            + "         spd.paid"
-            + "  FROM prod_purchase_supplier_payment_details spd"
-            + "  JOIN prod_purchase_supplier_payment sp ON sp.id=spd.supPayId"
-            + "  JOIN prod_purchase p ON p.id=sp.prid"
-            + "  JOIN prod_supplier su ON su.id=sp.deal_id"
-            + "  WHERE DATE(spd.date) BETWEEN ? AND ?"
-            + "    AND (spd.notes IS NULL OR spd.notes NOT IN ('Payment for Purchase Bill', 'Payment for Purchase from PO'))"
-            + "  UNION ALL"
-            + "  SELECT DATE(ee.exc_date_time), TIME(ee.exc_date_time), 'Expense',"
-            + "         CONCAT(COALESCE(et.type,'Expense'), ' - ', ee.content),"
-            + "         ee.amount, 0.0, 0.0, ee.amount"
-            + "  FROM expense_entry ee LEFT JOIN expense_type et ON et.id=ee.exp_type"
-            + "  WHERE ee.is_active=1 AND DATE(ee.exc_date_time) BETWEEN ? AND ?"
-            + "  UNION ALL"
-            + "  SELECT ob.balance_date, ob.entry_time, 'Opening Balance',"
-            + "         COALESCE(NULLIF(ob.notes,''), 'Manual Opening Balance'),"
-            + "         ob.amount, 0.0, 0.0, ob.amount"
-            + "  FROM daybook_opening_balance ob"
-            + "  WHERE ob.is_active=1 AND ob.balance_date BETWEEN ? AND ?"
-            + " ) t ORDER BY CASE WHEN t.category='Opening Balance' THEN 0 ELSE 1 END,"
-            + " t.txn_date, t.txn_time, t.category, t.description";
-        ps = con.prepareStatement(sql);
-        for (int i = 1; i <= 13; i += 2) { ps.setString(i, fromDate); ps.setString(i + 1, toDate); }
+        ps = con.prepareStatement(
+            "SELECT COALESCE(bt.type, CONCAT('Type ', pl.bill_type)) AS category,"
+            + " SUM(CASE "
+            + "   WHEN pl.bill_type IN (1,2,3,5,6,7,9,11) THEN pl.cash_paid "
+            + "   WHEN pl.bill_type = 8 THEN 0 "
+            + "   ELSE 0 END) AS cash_amt,"
+            + " SUM(CASE "
+            + "   WHEN pl.bill_type IN (1,5) THEN GREATEST(pl.bill_amount - pl.cash_paid - pl.bank_paid, 0) "
+            + "   WHEN pl.bill_type IN (4,12) THEN pl.bill_amount "
+            + "   WHEN pl.bill_type = 8 THEN -pl.bill_amount "
+            + "   ELSE 0 END) AS credit_amt,"
+            + " SUM(CASE "
+            + "   WHEN pl.bill_type IN (1,2,3,5,6,7,9,11) THEN pl.bank_paid "
+            + "   WHEN pl.bill_type = 8 THEN 0 "
+            + "   ELSE 0 END) AS bank_amt,"
+            + " SUM(CASE "
+            + "   WHEN pl.bill_type = 8 THEN -pl.bill_amount "
+            + "   ELSE pl.bill_amount END) AS total_amt "
+            + "FROM prod_ledger pl "
+            + "LEFT JOIN bill_type bt ON bt.id = pl.bill_type "
+            + "WHERE DATE(pl.date_time) BETWEEN ? AND ? AND " + PROD_LEDGER_VALID
+            + " GROUP BY pl.bill_type, bt.type "
+            + "HAVING cash_amt <> 0 OR credit_amt <> 0 OR bank_amt <> 0 OR total_amt <> 0 "
+            + "ORDER BY CASE pl.bill_type WHEN 11 THEN 0 ELSE pl.bill_type END, pl.bill_type"
+        );
+        ps.setString(1, fromDate);
+        ps.setString(2, toDate);
         rs = ps.executeQuery();
         while (rs.next()) {
             Vector row = new Vector();
-            row.addElement(rs.getString("txn_date") != null ? rs.getString("txn_date") : "");
-            row.addElement(rs.getString("txn_time") != null ? rs.getString("txn_time") : "");
-            row.addElement(rs.getString("category")  != null ? rs.getString("category")  : "");
-            row.addElement(rs.getString("description") != null ? rs.getString("description") : "");
+            row.addElement("");
+            row.addElement("");
+            row.addElement(rs.getString("category") != null ? rs.getString("category") : "");
+            row.addElement("");
             row.addElement(rs.getDouble("cash_amt"));
             row.addElement(rs.getDouble("credit_amt"));
             row.addElement(rs.getDouble("bank_amt"));
@@ -7175,7 +7450,8 @@ public Vector getDayBookDetail(String fromDate, String toDate) throws Exception 
     return vec;
 }
 
-public int saveDayBookOpeningBalance(String balanceDate, double amount, String notes, int uid) throws Exception {
+public int saveDayBookOpeningBalance(String balanceDate, double amount, String notes,
+        int payMode, int payType, double cashPaid, double bankPaid, int uid) throws Exception {
     Connection con = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
@@ -7197,15 +7473,17 @@ public int saveDayBookOpeningBalance(String balanceDate, double amount, String n
         }
         int newId = 0;
         rs = ps.getGeneratedKeys();
-        if (rs.next()) {
-            newId = rs.getInt(1);
-        }
+        if (rs.next()) newId = rs.getInt(1);
+        rs.close();
+        ps.close();
+
+        String ledgerDateTime = balanceDate + " " + new SimpleDateFormat("HH:mm:ss").format(new java.util.Date());
+        insertProdLedgerEntry(con, 11, newId, 0, 0, payMode, amount, cashPaid, bankPaid, payType, uid, ledgerDateTime);
+
         con.commit();
         return newId;
     } catch (Exception e) {
-        if (con != null) {
-            try { con.rollback(); } catch (Exception ignore) {}
-        }
+        if (con != null) try { con.rollback(); } catch (Exception ignore) {}
         throw e;
     } finally {
         if (rs != null) try { rs.close(); } catch (Exception e) {}
@@ -7215,23 +7493,7 @@ public int saveDayBookOpeningBalance(String balanceDate, double amount, String n
 }
 
 public double getManualOpeningBalanceBefore(String fromDate) throws Exception {
-    Connection con = null; PreparedStatement ps = null; ResultSet rs = null;
-    double total = 0;
-    try {
-        con = util.DBConnectionManager.getConnectionFromPool();
-        ps = con.prepareStatement(
-            "SELECT COALESCE(SUM(amount),0) FROM daybook_opening_balance "
-            + "WHERE is_active=1 AND balance_date < ?"
-        );
-        ps.setString(1, fromDate);
-        rs = ps.executeQuery();
-        if (rs.next()) total = rs.getDouble(1);
-    } finally {
-        if (rs != null) try { rs.close(); } catch (Exception e) {}
-        if (ps != null) try { ps.close(); } catch (Exception e) {}
-        if (con != null) try { con.close(); } catch (Exception e) {}
-    }
-    return total;
+    return getLedgerCashBalanceBefore(fromDate);
 }
 
 public Vector getDayBookOpeningBalanceList() throws Exception {
@@ -7241,9 +7503,11 @@ public Vector getDayBookOpeningBalanceList() throws Exception {
         con = util.DBConnectionManager.getConnectionFromPool();
         ps = con.prepareStatement(
             "SELECT ob.id, ob.balance_date, ob.amount, COALESCE(ob.notes,''), "
-            + "COALESCE(u.user_name,''), ob.entry_date, ob.entry_time "
+            + "COALESCE(u.user_name,''), ob.entry_date, ob.entry_time, "
+            + "COALESCE(pl.payment_mode, 1), COALESCE(pl.cash_paid, ob.amount), COALESCE(pl.bank_paid, 0) "
             + "FROM daybook_opening_balance ob "
             + "LEFT JOIN users u ON u.id = ob.uid "
+            + "LEFT JOIN prod_ledger pl ON pl.bill_type = 11 AND pl.bill_id = ob.id "
             + "WHERE ob.is_active=1 "
             + "ORDER BY ob.balance_date DESC, ob.id DESC LIMIT 50"
         );
@@ -7257,6 +7521,9 @@ public Vector getDayBookOpeningBalanceList() throws Exception {
             row.addElement(rs.getString(5));
             row.addElement(rs.getString(6));
             row.addElement(rs.getString(7));
+            row.addElement(rs.getString(8));
+            row.addElement(rs.getString(9));
+            row.addElement(rs.getString(10));
             vec.addElement(row);
         }
     } finally {

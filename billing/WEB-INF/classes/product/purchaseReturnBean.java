@@ -529,11 +529,16 @@ public class purchaseReturnBean {
 
             // Update return header total
             ps = con.prepareStatement("UPDATE prod_purchase_return SET total = ? WHERE id = ?");
-            ps.setDouble(1, grandReturnTotal);
-            ps.setInt(2, returnId);
-            ps.executeUpdate(); ps.close();
+        ps.setDouble(1, grandReturnTotal);
+        ps.setInt(2, returnId);
+        ps.executeUpdate(); ps.close();
 
-            con.commit();
+        if (grandReturnTotal > 0 && supplierId > 0) {
+            product.productBean accountBean = new product.productBean();
+            accountBean.recordPurchaseReturnLedgerAndAccount(con, returnId, supplierId, grandReturnTotal, uid);
+        }
+
+        con.commit();
             return returnNo;
         } catch (Exception e) {
             if (con != null) { try { con.rollback(); } catch (Exception ex) { ; } }

@@ -15,6 +15,5 @@ CREATE TABLE IF NOT EXISTS daybook_opening_balance (
     INDEX idx_active_date (is_active, balance_date)
 );
 
--- Example:
--- INSERT INTO daybook_opening_balance (balance_date, amount, notes, uid, entry_date, entry_time)
--- VALUES ('2026-07-01', 5000.00, 'Opening cash in hand', 1, CURDATE(), CURTIME());
+-- bill_type 11 = opening balance (daybook_opening_balance.id)
+-- Run database/prod_ledger_setup.sql if prod_ledger table is missing.

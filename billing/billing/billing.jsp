@@ -13,7 +13,7 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
 <head>
     <meta charset="UTF-8">
     <title>Billing</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <jsp:include page="/assets/common/head.jsp" />
     <style>
         /* =====================================================
@@ -354,7 +354,7 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
 
             .tbl-panel { margin: 4px 6px; }
 
-            .bot-panel { padding: 5px 8px 82px; overflow-y: auto; max-height: 42vh; }
+            .bot-panel { padding: 5px 8px var(--mobile-bottom-offset, calc(96px + env(safe-area-inset-bottom, 0px))); overflow-y: auto; max-height: 42vh; }
 
             .bot-inner { flex-direction: column; gap: 5px; align-items: stretch; }
 
@@ -380,6 +380,7 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
                 border-top-style: solid;
                 box-shadow: 0 -3px 10px rgba(0,0,0,.12);
                 padding: 6px 8px;
+                padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
                 display: grid !important;
                 grid-template-columns: repeat(3, 1fr);
                 gap: 5px;
@@ -608,9 +609,11 @@ int userDiscPer = (uid != null) ? userBn.getUserDiscPer(uid) : 100;
                     <i class="fa-solid fa-copy"></i> DUPE
                 </button>
                 <div class="bill-badge" id="billNoSpan"></div>
+                
             </div>
-
+            
         </div>
+        
     </div><!-- /bot-panel -->
 
 </div><!-- /bw -->

@@ -3,51 +3,41 @@
 <jsp:useBean id="bill"  class="billing.billingBean" />
 <jsp:useBean id="prod"  class="product.productBean" />
 <%
-// contextPath declared by head.jsp include
-String customerIdStr = request.getParameter("customerId");
-if (customerIdStr == null || customerIdStr.trim().isEmpty()) {
-    response.sendRedirect(request.getContextPath() + "/billing/customer/index.jsp");
+String supplierIdStr = request.getParameter("supplierId");
+if (supplierIdStr == null || supplierIdStr.trim().isEmpty()) {
+    response.sendRedirect(request.getContextPath() + "/product/supplier/account/index.jsp");
     return;
 }
-int customerId = Integer.parseInt(customerIdStr);
+int supplierId = Integer.parseInt(supplierIdStr);
 
-// Customer info
-Vector custInfo = prod.getCustomerById(customerId);
-String custName  = custInfo != null && custInfo.size() > 0 ? custInfo.get(0).toString() : "Unknown";
-String custPhone = custInfo != null && custInfo.size() > 1 ? custInfo.get(1).toString() : "-";
+Vector supInfo = prod.getSupplierById(supplierId);
+String supName  = supInfo != null && supInfo.size() > 0 ? supInfo.get(0).toString() : "Unknown";
+String supPhone = supInfo != null && supInfo.size() > 1 ? supInfo.get(1).toString() : "-";
 
-// Bills
-Vector billList = bill.getBillsByCustomerId(customerId);
+Vector purchaseList = bill.getPurchasesBySupplierId(supplierId);
 
-// Account
-Vector account = bill.getCustomerAccount(customerId);
+Vector account = bill.getSupplierAccount(supplierId);
 double accAdvance = 0, accBalance = 0;
 if (account != null && account.size() >= 4) {
     try { accAdvance = Double.parseDouble(account.get(2).toString()); } catch(Exception e){}
     try { accBalance = Double.parseDouble(account.get(3).toString()); } catch(Exception e){}
 }
 
-// Due payment collections
-Vector duePayments = bill.getCustomerDuePayments(customerId);
+Vector duePayments = bill.getSupplierDuePayments(supplierId);
+Vector returnList    = bill.getPurchaseReturnsBySupplierId(supplierId);
 
-// Total pending from bills
-double totalPending = 0;
-for (int i = 0; i < billList.size(); i++) {
-    Vector r = (Vector) billList.get(i);
-    try { double cb = Double.parseDouble(r.get(4).toString()); if (cb > 0) totalPending += cb; } catch(Exception e){}
-}
-
-// Build unified timeline (bills + due collections) sorted by date+time desc
-// Row layout: [0]type [1]billNo [2]col1 [3]col2 [4]col3 [5]balAfter [6]mode [7]payType [8]date [9]time [10]biller [11]billId [12]pendingD
 String[] _modeL = {"", "Cash", "Bank", "Mixed"};
 String[] _typeL = {"-", "UPI", "Debit Card", "Credit Card", "Net Banking", "Wallet"};
 java.util.ArrayList timeline = new java.util.ArrayList();
-for (int i = 0; i < billList.size(); i++) {
-    Vector r = (Vector) billList.get(i);
+for (int i = 0; i < purchaseList.size(); i++) {
+    Vector r = (Vector) purchaseList.get(i);
     double pd = 0; try { pd = Double.parseDouble(r.get(4).toString()); } catch(Exception ex){}
+    String prNo = r.get(8).toString();
+    String invNo = r.get(0).toString();
+    String docNo = (!invNo.isEmpty() ? invNo + "/" : "") + prNo;
     Vector e = new Vector();
-    e.addElement("BILL");
-    e.addElement(r.get(8).toString());
+    e.addElement("PURCHASE");
+    e.addElement(docNo);
     e.addElement(r.get(2).toString());
     e.addElement(r.get(3).toString());
     e.addElement(r.get(4).toString());
@@ -60,6 +50,28 @@ for (int i = 0; i < billList.size(); i++) {
     e.addElement(r.get(9).toString());
     e.addElement(String.valueOf(pd));
     e.addElement("");
+    timeline.add(e);
+}
+for (int i = 0; i < returnList.size(); i++) {
+    Vector r = (Vector) returnList.get(i);
+    String returnNo = r.get(0).toString();
+    String prNo     = r.get(1).toString();
+    String docNo    = returnNo + " / " + prNo;
+    Vector e = new Vector();
+    e.addElement("RETURN");
+    e.addElement(docNo);
+    e.addElement(r.get(2).toString());
+    e.addElement("");
+    e.addElement("");
+    e.addElement("");
+    e.addElement("");
+    e.addElement("");
+    e.addElement(r.get(4).toString());
+    e.addElement(r.get(5) != null ? r.get(5).toString() : "");
+    e.addElement(r.get(6).toString());
+    e.addElement(r.get(7).toString());
+    e.addElement("0");
+    e.addElement(r.get(3) != null ? r.get(3).toString() : "");
     timeline.add(e);
 }
 if (duePayments != null) {
@@ -110,13 +122,13 @@ java.util.Collections.sort(timeline, new java.util.Comparator() {
         return dtB.compareTo(dtA);
     }
 });
-boolean canCollectDue = accBalance > 0.005;
+boolean canPayDue = accBalance > 0.005;
 %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Customer Balance — <%=custName%></title>
+    <title>Supplier Balance — <%=supName%></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <%@ include file="/assets/common/head.jsp" %>
     <style>
@@ -124,13 +136,10 @@ boolean canCollectDue = accBalance > 0.005;
         .bill-row-link:hover td { background: var(--table-hover, #f1f5f9) !important; }
         .bill-row-link.selected td { background: #eff6ff !important; border-left: 3px solid #3b82f6; }
         #rightPanel { position:sticky; top:80px; }
-
-        /* Payment fields */
         .pay-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:3px; }
         .pay-inp   { height:34px; border:1.5px solid #d1d9e6; border-radius:6px; padding:0 9px; font-size:13px; width:100%; outline:none; }
         .pay-sel   { height:34px; border:1.5px solid #d1d9e6; border-radius:6px; padding:0 7px; font-size:13px; width:100%; outline:none; }
         .pay-inp:focus, .pay-sel:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.15); }
-
         @media (max-width:768px) {
             .left-col, .right-col { width:100% !important; }
         }
@@ -139,32 +148,29 @@ boolean canCollectDue = accBalance > 0.005;
 <body>
 <jsp:include page="/assets/navbar/navbar.jsp" />
 <%
-    request.setAttribute("pageTitle",    custName);
-    request.setAttribute("pageSubtitle", "Customer Account — " + custPhone);
-    request.setAttribute("pageIcon",     "fa-solid fa-user-circle");
+    request.setAttribute("pageTitle",    supName);
+    request.setAttribute("pageSubtitle", "Supplier Account — " + supPhone);
+    request.setAttribute("pageIcon",     "fa-solid fa-truck-field");
 %>
 <jsp:include page="/assets/common/pageHeader.jsp" />
 
 <div class="container-fluid px-3 pt-2 mst-page" style="max-width:100%;">
-  <a href="<%=contextPath%>/billing/customer/index.jsp" class="bb bb-outline" style="font-size:12px;height:30px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;">
+  <a href="<%=contextPath%>/product/supplier/account/index.jsp" class="bb bb-outline" style="font-size:12px;height:30px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;">
     <i class="fa-solid fa-arrow-left"></i> Back
   </a>
 </div>
 
 <div class="container-fluid mt-2 mst-page">
 
-  <!-- Main 2-column layout -->
   <div class="d-flex gap-3 align-items-start" style="flex-wrap:wrap;">
 
-    <!-- LEFT: Stats + Bills table (60%) -->
     <div class="left-col" style="flex:3;min-width:0;">
 
-      <!-- Stat cards above bills table -->
       <div class="row g-3 mb-3">
         <div class="col-4">
           <div class="mst-card p-3 text-center">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.7;">Total Bills</div>
-            <div style="font-size:26px;font-weight:900;"><%=billList.size()%></div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.7;">Total Purchases</div>
+            <div style="font-size:26px;font-weight:900;"><%=purchaseList.size()%></div>
           </div>
         </div>
         <div class="col-4">
@@ -191,12 +197,12 @@ boolean canCollectDue = accBalance > 0.005;
               <tr>
                 <th>#</th>
                 <th>Type</th>
-                <th>Bill No</th>
+                <th>GRN No</th>
                 <th class="text-end">Payable / Amt</th>
                 <th class="text-end">Paid</th>
                 <th class="text-end">Pending</th>
                 <th>Date / Time</th>
-                <th>Biller</th>
+                <th>User</th>
               </tr>
             </thead>
             <tbody>
@@ -206,57 +212,56 @@ boolean canCollectDue = accBalance > 0.005;
               } else {
                 for (int i = 0; i < timeline.size(); i++) {
                   Vector te      = (Vector) timeline.get(i);
-                  boolean isBill = "BILL".equals(te.get(0).toString());
-                  String txnType = isBill ? "BILL" : te.get(0).toString();
+                  boolean isPurchase = "PURCHASE".equals(te.get(0).toString());
+                  boolean isReturn   = "RETURN".equals(te.get(0).toString());
+                  String txnType = isPurchase ? "PURCHASE" : te.get(0).toString();
                   String teNotes = te.size() > 13 && te.get(13) != null ? te.get(13).toString() : "";
-                  String teBillNo= te.get(1).toString();
+                  String teDocNo = te.get(1).toString();
                   String teCol1  = te.get(2).toString();
                   String teCol2  = te.get(3).toString();
                   String teCol3  = te.get(4).toString();
-                  String teCol4  = te.get(5).toString();
-                  String teMode  = te.get(6).toString();
-                  String tePType = te.get(7).toString();
                   String teDate  = te.get(8).toString();
                   String teTime  = te.get(9).toString();
-                  String teBiller= te.get(10).toString();
-                  String teBillId= te.get(11).toString();
+                  String teUser  = te.get(10).toString();
+                  String tePurId = te.get(11).toString();
                   double tePendD = 0; try { tePendD = Double.parseDouble(te.get(12).toString()); } catch(Exception ex){}
                   double teCol3D = 0; try { teCol3D = Double.parseDouble(teCol3.isEmpty() ? "0" : teCol3); } catch(Exception ex){}
-                  boolean hasPend = isBill && tePendD > 0;
+                  boolean hasPend = isPurchase && tePendD > 0;
                   boolean isOldDue = "OLD_DUE".equals(txnType);
                   boolean isAdvance = "ADVANCE".equals(txnType);
-                  boolean isCollection = !isBill && "COLLECTION".equals(txnType);
-                  String rowBg   = isBill ? (hasPend ? "background:#fff1f1;" : "") : (isOldDue ? "background:#fff7ed;" : (isAdvance ? "background:#eff6ff;" : "background:#f0fdf4;"));
-                  String tdBg    = isBill ? (hasPend ? "background:#fff1f1 !important;" : "") : (isOldDue ? "background:#ffedd5 !important;" : (isAdvance ? "background:#dbeafe !important;" : "background:#ecfdf5 !important;"));
+                  String rowBg   = isPurchase ? (hasPend ? "background:#fff1f1;" : "") : (isReturn ? "background:#faf5ff;" : (isOldDue ? "background:#fff7ed;" : (isAdvance ? "background:#eff6ff;" : "background:#f0fdf4;")));
+                  String tdBg    = isPurchase ? (hasPend ? "background:#fff1f1 !important;" : "") : (isReturn ? "background:#f3e8ff !important;" : (isOldDue ? "background:#ffedd5 !important;" : (isAdvance ? "background:#dbeafe !important;" : "background:#ecfdf5 !important;")));
               %>
-              <tr <%=isBill ? "class=\"bill-row-link\" data-bill-id=\""+teBillId+"\" onclick=\"selectBill(this,"+teBillId+")\"" : ""%>
+              <tr <%=isPurchase ? "class=\"bill-row-link\" data-purchase-id=\""+tePurId+"\" onclick=\"selectPurchase(this,"+tePurId+")\"" : ""%>
                   style="<%=rowBg%>">
                 <td style="<%=tdBg%>"><%=i+1%></td>
                 <td style="<%=tdBg%>">
-                  <% if (isBill) { %>
-                  <span class="badge" style="font-size:10px;font-weight:700;background:<%=hasPend ? "#fee2e2;color:#b91c1c" : "#dbeafe;color:#1d4ed8"%>;">BILL</span>
+                  <% if (isPurchase) { %>
+                  <span class="badge" style="font-size:10px;font-weight:700;background:<%=hasPend ? "#fee2e2;color:#b91c1c" : "#dbeafe;color:#1d4ed8"%>;">PURCHASE</span>
+                  <% } else if (isReturn) { %>
+                  <span class="badge" style="font-size:10px;font-weight:700;background:#f3e8ff;color:#7e22ce;">RETURN</span>
                   <% } else if (isOldDue) { %>
                   <span class="badge" style="font-size:10px;font-weight:700;background:#ffedd5;color:#c2410c;">OLD DUE</span>
                   <% } else if (isAdvance) { %>
                   <span class="badge" style="font-size:10px;font-weight:700;background:#dbeafe;color:#1d4ed8;">ADVANCE</span>
                   <% } else { %>
-                  <span class="badge" style="font-size:10px;font-weight:700;background:#dcfce7;color:#15803d;">COLLECTION</span>
+                  <span class="badge" style="font-size:10px;font-weight:700;background:#dcfce7;color:#15803d;">PAYMENT</span>
                   <% } %>
                 </td>
                 <td style="<%=tdBg%>">
-                  <% if (isBill) { %><span style="font-weight:600;"><%=teBillNo%></span>
+                  <% if (isPurchase || isReturn) { %><span style="font-weight:600;"><%=teDocNo%></span>
                   <% } else if (!teNotes.isEmpty()) { %><span style="font-size:11px;"><%=teNotes%></span>
                   <% } else { %><span style="opacity:.35;">—</span><% } %>
                 </td>
                 <td class="text-end" style="<%=tdBg%>"><%=teCol1.isEmpty() ? "<span style='opacity:.3'>—</span>" : teCol1%></td>
                 <td class="text-end" style="<%=tdBg%>"><%=teCol2.isEmpty() ? "<span style='opacity:.3'>—</span>" : teCol2%></td>
-                <td class="text-end <%=isBill ? (hasPend ? "text-danger fw-bold" : "text-success") : (isOldDue ? "text-danger fw-bold" : (teCol3D > 0 ? "text-danger fw-bold" : "text-success"))%>" style="<%=tdBg%>">
+                <td class="text-end <%=isPurchase ? (hasPend ? "text-danger fw-bold" : "text-success") : (isOldDue ? "text-danger fw-bold" : (teCol3D > 0 ? "text-danger fw-bold" : "text-success"))%>" style="<%=tdBg%>">
                   <%=teCol3.isEmpty() ? "<span style='opacity:.3'>—</span>" : teCol3%>
                 </td>
                 <td style="white-space:nowrap;<%=tdBg%>"><%=teDate%>
                   <% if (!teTime.isEmpty()) { %><br><span style="font-size:10px;opacity:.6;"><%=teTime%></span><% } %>
                 </td>
-                <td style="<%=tdBg%>"><%=teBiller%></td>
+                <td style="<%=tdBg%>"><%=teUser%></td>
               </tr>
               <% } } %>
             </tbody>
@@ -265,20 +270,8 @@ boolean canCollectDue = accBalance > 0.005;
       </div>
     </div>
 
-    <!-- RIGHT: Account info + payment (40%) -->
     <div class="right-col" id="rightPanel" style="flex:2;min-width:280px;">
 
-      <!-- Bill detail placeholder -->
-      <div class="mst-card mb-3" id="billDetailBox" style="display:none;">
-        <div class="mst-card-header px-3 py-2">
-          <span style="font-weight:700;font-size:13px;"><i class="fa-solid fa-receipt me-2"></i>Bill Detail</span>
-        </div>
-        <div class="p-3" id="billDetailContent">
-          <div class="text-center text-muted py-3"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>
-        </div>
-      </div>
-
-      <!-- Payment Box -->
       <div class="mst-card">
         <div class="mst-card-header px-3 py-2">
           <span style="font-weight:700;font-size:13px;"><i class="fa-solid fa-circle-dollar-to-slot me-2"></i>Account Entry</span>
@@ -287,17 +280,17 @@ boolean canCollectDue = accBalance > 0.005;
           <div class="mb-2">
             <label class="pay-label">Entry Type</label>
             <select id="entryType" class="pay-sel" onchange="onEntryTypeChange()">
-              <option value="COLLECTION" <%= canCollectDue ? "selected" : "disabled" %>>Collect Payment (Due)</option>
-              <option value="ADVANCE" <%= !canCollectDue ? "selected" : "" %>>Add Advance</option>
+              <option value="COLLECTION" <%= canPayDue ? "selected" : "disabled" %>>Pay Supplier (Due)</option>
+              <option value="ADVANCE" <%= !canPayDue ? "selected" : "" %>>Add Advance</option>
               <option value="OLD_DUE">Add Old Due (Before System)</option>
             </select>
           </div>
-          <div id="noDueHint" class="small mb-2" style="display:<%= canCollectDue ? "none" : "block" %>;color:#b45309;">
-            <i class="fa-solid fa-circle-info me-1"></i>No account balance due. You cannot collect payment until there is a due balance.
+          <div id="noDueHint" class="small mb-2" style="display:<%= canPayDue ? "none" : "block" %>;color:#b45309;">
+            <i class="fa-solid fa-circle-info me-1"></i>No account balance due. You cannot pay until there is a due balance.
           </div>
 
           <div class="mb-2">
-            <label class="pay-label" id="amountLabel">Amount to Collect</label>
+            <label class="pay-label" id="amountLabel">Amount to Pay</label>
             <input type="number" id="collectAmount" class="pay-inp" placeholder="0.00" min="0" step="0.01"
                    value="<%= String.format("%.2f", Math.max(0, accBalance))%>"
                    oninput="onAmountChange()"
@@ -356,15 +349,16 @@ boolean canCollectDue = accBalance > 0.005;
   </div>
 </div>
 
-<!-- Bill Detail Modal (for mobile or overflow) -->
-<div class="modal fade" id="billDetailModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="purchaseDetailModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header mst-card-header">
-        <h5 class="modal-title">Bill Details</h5>
+        <h5 class="modal-title">Purchase Details</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body" id="modalBillContent"></div>
+      <div class="modal-body" id="modalPurchaseContent">
+        <div class="text-center text-muted py-5">Select a purchase row to view details.</div>
+      </div>
       <div class="modal-footer">
         <button class="bb bb-outline" data-bs-dismiss="modal">Close</button>
       </div>
@@ -374,30 +368,17 @@ boolean canCollectDue = accBalance > 0.005;
 
 <script>
 const contextPath = '<%=contextPath%>';
-const customerId  = <%=customerId%>;
+const supplierId  = <%=supplierId%>;
 const accBalance  = <%=accBalance%>;
 const accAdvance  = <%=accAdvance%>;
-const canCollectDue = <%=canCollectDue%>;
+const canPayDue   = <%=canPayDue%>;
 
-// ── Bill row selection ──────────────────────────────────────
-function selectBill(row, billId) {
+function selectPurchase(row, purchaseId) {
     document.querySelectorAll('.bill-row-link').forEach(r => r.classList.remove('selected'));
     row.classList.add('selected');
-
-    const modalContent = document.getElementById('modalBillContent');
-    modalContent.innerHTML =
-        '<div class="text-center text-muted py-5"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p class="mt-2">Loading…</p></div>';
-
-    const modal = new bootstrap.Modal(document.getElementById('billDetailModal'));
-    modal.show();
-
-    fetch(contextPath + '/billing/balanceDetailModal.jsp?billId=' + billId)
-        .then(r => r.text())
-        .then(html => { modalContent.innerHTML = html; })
-        .catch(() => { modalContent.innerHTML = '<p class="text-danger p-3">Error loading bill details.</p>'; });
+    window.open(contextPath + '/product/purchase/report/purchaseRegister/purchaseDetails.jsp?id=' + purchaseId, '_blank');
 }
 
-// ── Payment logic (mirrors billing.jsp) ────────────────────
 const netPayable = Math.max(0, accBalance);
 
 function onEntryTypeChange() {
@@ -434,10 +415,10 @@ function onEntryTypeChange() {
         amountInp.style.color = '#1d4ed8';
         payModeBlock.style.display = '';
         remainingBlock.style.display = 'none';
-        if (!notesInp.value) notesInp.placeholder = 'e.g. Advance for future bills';
+        if (!notesInp.value) notesInp.placeholder = 'e.g. Advance for future purchases';
         onModeChange();
     } else {
-        amountLabel.textContent = 'Amount to Collect';
+        amountLabel.textContent = 'Amount to Pay';
         submitLabel.textContent = 'Submit Payment';
         amountInp.value = netPayable.toFixed(2);
         amountInp.style.background = '#f0fdf4';
@@ -446,7 +427,7 @@ function onEntryTypeChange() {
         payModeBlock.style.display = '';
         remainingBlock.style.display = '';
         notesInp.placeholder = 'Remark or reference';
-        if (!canCollectDue) {
+        if (!canPayDue) {
             document.getElementById('entryType').value = 'ADVANCE';
             onEntryTypeChange();
             return;
@@ -460,13 +441,13 @@ function updateCollectionSubmitState() {
     const entryType = document.getElementById('entryType').value;
     const btn = document.getElementById('submitBtn');
     const errBox = document.getElementById('payError');
-    if (entryType === 'COLLECTION' && !canCollectDue) {
+    if (entryType === 'COLLECTION' && !canPayDue) {
         btn.disabled = true;
-        errBox.textContent = 'No account balance due to collect.';
+        errBox.textContent = 'No account balance due to pay.';
         errBox.style.display = 'block';
     } else if (entryType === 'COLLECTION' || entryType === 'ADVANCE' || entryType === 'OLD_DUE') {
         btn.disabled = false;
-        if (errBox.textContent === 'No account balance due to collect.') {
+        if (errBox.textContent === 'No account balance due to pay.') {
             errBox.style.display = 'none';
             errBox.textContent = '';
         }
@@ -495,9 +476,7 @@ function onModeChange() {
     calcRemaining();
 }
 
-function onAmountChange() {
-    onModeChange();
-}
+function onAmountChange() { onModeChange(); }
 
 function onCashChange() {
     const mode  = document.getElementById('payMode').value;
@@ -540,8 +519,8 @@ function submitPayment() {
     const bank   = parseFloat(document.getElementById('bankPaid').value)  || 0;
     const notes  = document.getElementById('entryNotes').value || '';
 
-    if (entryType === 'COLLECTION' && !canCollectDue) {
-        errBox.textContent = 'No account balance due to collect.';
+    if (entryType === 'COLLECTION' && !canPayDue) {
+        errBox.textContent = 'No account balance due to pay.';
         errBox.style.display = 'block';
         return;
     }
@@ -551,9 +530,7 @@ function submitPayment() {
         errBox.style.display = 'block'; return;
     }
 
-    if (entryType === 'OLD_DUE') {
-        // no pay mode validation
-    } else if (entryType === 'ADVANCE' || entryType === 'COLLECTION') {
+    if (entryType !== 'OLD_DUE') {
         if (mode === '1' && cash <= 0) {
             errBox.textContent = 'Please enter cash paid amount.';
             errBox.style.display = 'block'; return;
@@ -579,7 +556,7 @@ function submitPayment() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Saving…';
 
     const params = new URLSearchParams({
-        customerId: customerId,
+        supplierId: supplierId,
         entryType:  entryType,
         amount:     amount.toFixed(2),
         cashPaid:   (entryType === 'OLD_DUE' || mode === '2') ? '0' : cash.toFixed(2),
@@ -589,7 +566,7 @@ function submitPayment() {
         notes:      notes
     });
 
-    fetch(contextPath + '/billing/customer/saveCustomerAccountEntry.jsp', {
+    fetch(contextPath + '/product/supplier/account/saveSupplierAccountEntry.jsp', {
         method:  'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body:    params.toString()
@@ -626,7 +603,6 @@ function submitPayment() {
     });
 }
 
-// Init — onEntryTypeChange before onModeChange
 onEntryTypeChange();
 </script>
 </body>

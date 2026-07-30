@@ -13,33 +13,37 @@ if (fromDate == null || fromDate.isEmpty() || toDate == null || toDate.isEmpty()
 }
 
 double cashOpening = billing.getDayBookCashOpeningBalance(fromDate);
+double bankOpening = billing.getDayBookBankOpeningBalance(fromDate);
 Vector cashBookRows = billing.getDayBookCashBook(fromDate, toDate);
+Vector bankBookRows = billing.getDayBookBankBook(fromDate, toDate);
 Vector dayBookRows  = billing.getDayBookDetail(fromDate, toDate);
 Vector salesRows    = billing.getDayBookSalesDetails(fromDate, toDate);
 
-String[] descOrder = {"Opening Balance", "Sales", "Balance Collection", "Purchase", "Supplier Payment", "Expense"};
-
-LinkedHashMap<String, double[]> cashByDesc = new LinkedHashMap<>();
-for (int o = 0; o < descOrder.length; o++) cashByDesc.put(descOrder[o], new double[]{0, 0});
+LinkedHashMap<String, double[]> cashGroups = new LinkedHashMap<>();
 for (int i = 0; i < cashBookRows.size(); i++) {
     Vector row = (Vector) cashBookRows.get(i);
     String category = row.get(2).toString();
     double cashIn  = (Double) row.get(4);
     double cashOut = (Double) row.get(5);
-    if (!cashByDesc.containsKey(category)) cashByDesc.put(category, new double[]{0, 0});
-    double[] t = cashByDesc.get(category);
+    if (!cashGroups.containsKey(category)) cashGroups.put(category, new double[]{0, 0});
+    double[] t = cashGroups.get(category);
     t[0] += cashIn;
     t[1] += cashOut;
 }
-LinkedHashMap<String, double[]> cashGroups = new LinkedHashMap<>();
-for (Iterator cit = cashByDesc.entrySet().iterator(); cit.hasNext();) {
-    Map.Entry ce = (Map.Entry) cit.next();
-    double[] t = (double[]) ce.getValue();
-    if (t[0] != 0 || t[1] != 0) cashGroups.put((String) ce.getKey(), t);
+
+LinkedHashMap<String, double[]> bankGroups = new LinkedHashMap<>();
+for (int i = 0; i < bankBookRows.size(); i++) {
+    Vector row = (Vector) bankBookRows.get(i);
+    String category = row.get(2).toString();
+    double bankIn  = (Double) row.get(4);
+    double bankOut = (Double) row.get(5);
+    if (!bankGroups.containsKey(category)) bankGroups.put(category, new double[]{0, 0});
+    double[] t = bankGroups.get(category);
+    t[0] += bankIn;
+    t[1] += bankOut;
 }
 
-LinkedHashMap<String, double[]> dayByDesc = new LinkedHashMap<>();
-for (int o = 0; o < descOrder.length; o++) dayByDesc.put(descOrder[o], new double[]{0, 0, 0, 0});
+LinkedHashMap<String, double[]> dayGroups = new LinkedHashMap<>();
 for (int i = 0; i < dayBookRows.size(); i++) {
     Vector row = (Vector) dayBookRows.get(i);
     String category = row.get(2).toString();
@@ -47,18 +51,12 @@ for (int i = 0; i < dayBookRows.size(); i++) {
     double creditAmt = (Double) row.get(5);
     double bankAmt   = (Double) row.get(6);
     double totalAmt  = (Double) row.get(7);
-    if (!dayByDesc.containsKey(category)) dayByDesc.put(category, new double[]{0, 0, 0, 0});
-    double[] t = dayByDesc.get(category);
+    if (!dayGroups.containsKey(category)) dayGroups.put(category, new double[]{0, 0, 0, 0});
+    double[] t = dayGroups.get(category);
     t[0] += cashAmt;
     t[1] += creditAmt;
     t[2] += bankAmt;
     t[3] += totalAmt;
-}
-LinkedHashMap<String, double[]> dayGroups = new LinkedHashMap<>();
-for (Iterator dit = dayByDesc.entrySet().iterator(); dit.hasNext();) {
-    Map.Entry de = (Map.Entry) dit.next();
-    double[] t = (double[]) de.getValue();
-    if (t[0] != 0 || t[1] != 0 || t[2] != 0 || t[3] != 0) dayGroups.put((String) de.getKey(), t);
 }
 %>
 <!DOCTYPE html>
@@ -174,7 +172,7 @@ for (Iterator git = cashGroups.entrySet().iterator(); git.hasNext();) {
     totCashIn  += cashIn;
     totCashOut += cashOut;
     sno++;
-    String catKey = category.replace(" ", "-");
+    String catKey = category.replaceAll("[^a-zA-Z0-9]+", "-");
 %>
                 <tr>
                     <td><%=sno%></td>
@@ -195,8 +193,66 @@ for (Iterator git = cashGroups.entrySet().iterator(); git.hasNext();) {
         </table>
         </div>
 
-        <!-- ========== SECTION 2: DAY BOOK ========== -->
-        <div class="section-title">2. Day Book</div>
+        <!-- ========== SECTION 2: BANK BOOK ========== -->
+        <div class="section-title">2. Bank Book</div>
+        <div class="table-responsive">
+        <table id="bankBookTable" class="table mst-table table-sm">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Description</th>
+                    <th class="text-end">Bank In</th>
+                    <th class="text-end">Bank Out</th>
+                    <th class="text-end">Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+<%
+double bankBal = bankOpening;
+double totBankIn = 0, totBankOut = 0;
+sno = 0;
+%>
+                <tr class="opening-row">
+                    <td></td>
+                    <td><strong>Opening Balance (B/F)</strong></td>
+                    <td class="text-end"></td>
+                    <td class="text-end"></td>
+                    <td class="text-end <%=bankBal >= 0 ? "bal-pos" : "bal-neg"%>"><%=String.format("%.2f", bankBal)%></td>
+                </tr>
+<%
+for (Iterator bit = bankGroups.entrySet().iterator(); bit.hasNext();) {
+    Map.Entry be = (Map.Entry) bit.next();
+    String category = (String) be.getKey();
+    double[] t = (double[]) be.getValue();
+    double bankIn  = t[0];
+    double bankOut = t[1];
+    bankBal += bankIn - bankOut;
+    totBankIn  += bankIn;
+    totBankOut += bankOut;
+    sno++;
+    String catKey = category.replaceAll("[^a-zA-Z0-9]+", "-");
+%>
+                <tr>
+                    <td><%=sno%></td>
+                    <td><span class="badge-cat cat-<%=catKey%>"><%=category%></span></td>
+                    <td class="text-end amt-in"><%=bankIn > 0 ? String.format("%.2f", bankIn) : ""%></td>
+                    <td class="text-end amt-out"><%=bankOut > 0 ? String.format("%.2f", bankOut) : ""%></td>
+                    <td class="text-end <%=bankBal >= 0 ? "bal-pos" : "bal-neg"%>"><%=String.format("%.2f", bankBal)%></td>
+                </tr>
+<% } %>
+                <tr class="closing-row">
+                    <td></td>
+                    <td><strong>Closing Balance</strong></td>
+                    <td class="text-end amt-in"><strong><%=String.format("%.2f", totBankIn)%></strong></td>
+                    <td class="text-end amt-out"><strong><%=String.format("%.2f", totBankOut)%></strong></td>
+                    <td class="text-end <%=bankBal >= 0 ? "bal-pos" : "bal-neg"%>"><strong><%=String.format("%.2f", bankBal)%></strong></td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+
+        <!-- ========== SECTION 3: DAY BOOK ========== -->
+        <div class="section-title">3. Day Book</div>
         <div class="table-responsive">
         <table id="dayBookTable" class="table mst-table table-sm">
             <thead>
@@ -237,7 +293,7 @@ for (Iterator dgit = dayGroups.entrySet().iterator(); dgit.hasNext();) {
     sumBank   += bankAmt;
     sumTotal  += totalAmt;
     sno++;
-    String catKey = category.replace(" ", "-");
+    String catKey = category.replaceAll("[^a-zA-Z0-9]+", "-");
 %>
                 <tr>
                     <td><%=sno%></td>
@@ -261,8 +317,8 @@ for (Iterator dgit = dayGroups.entrySet().iterator(); dgit.hasNext();) {
         </table>
         </div>
 
-        <!-- ========== SECTION 3: SALES DETAILS ========== -->
-        <div class="section-title">3. Sales Amount Details</div>
+        <!-- ========== SECTION 4: SALES DETAILS ========== -->
+        <div class="section-title">4. Sales Amount Details</div>
         <div class="table-responsive">
         <table id="salesDetailTable" class="table mst-table table-sm">
             <thead>
@@ -341,8 +397,8 @@ function printReport() {
 }
 
 function exportAllExcel() {
-    var tables = ['cashBookTable', 'dayBookTable', 'salesDetailTable'];
-    var titles = ['Cash Book', 'Day Book', 'Sales Amount Details'];
+    var tables = ['cashBookTable', 'bankBookTable', 'dayBookTable', 'salesDetailTable'];
+    var titles = ['Cash Book', 'Bank Book', 'Day Book', 'Sales Amount Details'];
     var html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8">';
     html += '<style>table{border-collapse:collapse;margin-bottom:20px} th,td{border:1px solid #000;padding:4px;font-size:12px} h3{margin-top:16px}</style></head><body>';
     html += '<h2>Day Book Report — <%=fromDate%> to <%=toDate%></h2>';
@@ -380,40 +436,93 @@ function downloadPdf() {
     html2pdf().set(opt).from(element).save();
 }
 
+function obPayDisplay(row) {
+    const cash = parseFloat(row.cashPaid) || 0;
+    const bank = parseFloat(row.bankPaid) || 0;
+    if (row.payLabel === 'Mixed') {
+        return 'Cash ₹' + cash.toFixed(2) + ' / Bank ₹' + bank.toFixed(2);
+    }
+    if (row.payLabel === 'Bank') {
+        return 'Bank ₹' + (bank > 0 ? bank : parseFloat(row.amount)).toFixed(2);
+    }
+    return 'Cash ₹' + (cash > 0 ? cash : parseFloat(row.amount)).toFixed(2);
+}
+
 function loadOpeningBalanceList() {
     fetch('<%=contextPath%>/reports/dayBook/getOpeningBalanceList.jsp')
         .then(r => r.json())
         .then(data => {
             const tbody = document.getElementById('obListBody');
             if (!data.length) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No opening balance entries yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No opening balance entries yet.</td></tr>';
                 return;
             }
             tbody.innerHTML = data.map(row =>
                 '<tr><td>' + row.balanceDate + '</td>' +
                 '<td class="text-end fw-bold">' + parseFloat(row.amount).toFixed(2) + '</td>' +
+                '<td>' + obPayDisplay(row) + '</td>' +
                 '<td>' + (row.notes || '-') + '</td>' +
                 '<td>' + (row.userName || '-') + '</td></tr>'
             ).join('');
         })
         .catch(() => {
             document.getElementById('obListBody').innerHTML =
-                '<tr><td colspan="4" class="text-center text-danger">Could not load list.</td></tr>';
+                '<tr><td colspan="5" class="text-center text-danger">Could not load list.</td></tr>';
         });
 }
 
+function obTogglePayType() {
+    const mode = document.getElementById('obPayMode').value;
+    const typeSelect = document.getElementById('obPayType');
+    if (mode === '1') { typeSelect.disabled = true; typeSelect.value = '0'; }
+    else { typeSelect.disabled = false; if (!typeSelect.value || typeSelect.value === '0') typeSelect.value = '1'; }
+}
+function obUpdatePaymentFields() {
+    const payable = parseFloat(document.getElementById('obAmount').value) || 0;
+    const mode = document.getElementById('obPayMode').value;
+    const cashInp = document.getElementById('obCashPaid');
+    const bankInp = document.getElementById('obBankPaid');
+    cashInp.oninput = null; bankInp.oninput = null;
+    if (mode === '1') {
+        cashInp.disabled = false; bankInp.disabled = true;
+        cashInp.value = payable.toFixed(2); bankInp.value = '0.00';
+    } else if (mode === '2') {
+        cashInp.disabled = true; bankInp.disabled = false;
+        cashInp.value = '0.00'; bankInp.value = payable.toFixed(2);
+    } else {
+        cashInp.disabled = false; bankInp.disabled = false;
+        cashInp.value = payable.toFixed(2); bankInp.value = '0.00';
+        cashInp.oninput = function() { bankInp.value = Math.max(0, payable - (parseFloat(cashInp.value)||0)).toFixed(2); };
+        bankInp.oninput = function() { cashInp.value = Math.max(0, payable - (parseFloat(bankInp.value)||0)).toFixed(2); };
+    }
+}
+function obOnModeChange() { obTogglePayType(); obUpdatePaymentFields(); }
+
 function saveOpeningBalance() {
     const balanceDate = document.getElementById('obDate').value;
-    const amount = document.getElementById('obAmount').value;
+    const amount = parseFloat(document.getElementById('obAmount').value) || 0;
     const notes = document.getElementById('obNotes').value;
-    if (!balanceDate || !amount) {
+    const payMode = document.getElementById('obPayMode').value;
+    const payType = document.getElementById('obPayType').value;
+    const cashPaid = parseFloat(document.getElementById('obCashPaid').value) || 0;
+    const bankPaid = parseFloat(document.getElementById('obBankPaid').value) || 0;
+    if (!balanceDate || amount <= 0) {
         Swal.fire({ icon: 'warning', title: 'Required', text: 'Please enter date and amount.' });
+        return;
+    }
+    if (Math.abs((cashPaid + bankPaid) - amount) > 0.01) {
+        Swal.fire({ icon: 'warning', title: 'Payment', text: 'Cash + Bank must equal the amount.' });
         return;
     }
     fetch('<%=contextPath%>/reports/dayBook/saveOpeningBalance.jsp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ balanceDate, amount, notes }).toString()
+        body: new URLSearchParams({
+            balanceDate, amount: amount.toFixed(2), notes,
+            payMode, payType,
+            cashPaid: cashPaid.toFixed(2),
+            bankPaid: bankPaid.toFixed(2)
+        }).toString()
     })
     .then(r => r.json())
     .then(res => {
@@ -428,7 +537,10 @@ function saveOpeningBalance() {
     });
 }
 
-document.getElementById('openingBalanceModal').addEventListener('show.bs.modal', loadOpeningBalanceList);
+document.getElementById('openingBalanceModal').addEventListener('show.bs.modal', function() {
+    loadOpeningBalanceList();
+    obOnModeChange();
+});
 </script>
 
 <!-- Opening Balance Modal -->
@@ -447,11 +559,40 @@ document.getElementById('openingBalanceModal').addEventListener('show.bs.modal',
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-bold">Amount</label>
-                        <input type="number" id="obAmount" class="form-control" step="0.01" placeholder="0.00">
+                        <input type="number" id="obAmount" class="form-control" step="0.01" placeholder="0.00" oninput="obUpdatePaymentFields()">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-bold">Notes</label>
                         <input type="text" id="obNotes" class="form-control" placeholder="Opening cash in hand">
+                    </div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Pay Mode</label>
+                        <select id="obPayMode" class="form-select" onchange="obOnModeChange()">
+                            <option value="1">Cash</option>
+                            <option value="2">Bank</option>
+                            <option value="3">Mixed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Pay Type</label>
+                        <select id="obPayType" class="form-select">
+                            <option value="0">—</option>
+                            <option value="1">UPI</option>
+                            <option value="2">Debit Card</option>
+                            <option value="3">Credit Card</option>
+                            <option value="4">Net Banking</option>
+                            <option value="5">Wallet</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Cash Paid</label>
+                        <input type="number" id="obCashPaid" class="form-control" step="0.01" value="0.00">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Bank Paid</label>
+                        <input type="number" id="obBankPaid" class="form-control" step="0.01" value="0.00">
                     </div>
                 </div>
                 <button type="button" class="bb bb-primary mb-3" onclick="saveOpeningBalance()">
@@ -459,8 +600,8 @@ document.getElementById('openingBalanceModal').addEventListener('show.bs.modal',
                 </button>
                 <div class="table-responsive" style="max-height:260px;">
                     <table class="table table-sm mst-table">
-                        <thead><tr><th>Date</th><th class="text-end">Amount</th><th>Notes</th><th>User</th></tr></thead>
-                        <tbody id="obListBody"><tr><td colspan="4" class="text-center text-muted">Loading...</td></tr></tbody>
+                        <thead><tr><th>Date</th><th class="text-end">Amount</th><th>Cash / Bank</th><th>Notes</th><th>User</th></tr></thead>
+                        <tbody id="obListBody"><tr><td colspan="5" class="text-center text-muted">Loading...</td></tr></tbody>
                     </table>
                 </div>
             </div>

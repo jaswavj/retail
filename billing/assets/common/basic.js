@@ -127,3 +127,47 @@ document.addEventListener("DOMContentLoaded", function () {
         sidebarTexts.forEach(text => text.style.display = 'none');
     }
 }*/
+
+
+
+//////////////////// Mobile bottom bar — clear iOS Safari URL / home indicator
+(function () {
+    function adjustMobileBottomBar() {
+        if (window.innerWidth > 768) {
+            document.documentElement.style.removeProperty('--mobile-bottom-offset');
+            document.querySelectorAll('.grp-act').forEach(function (bar) {
+                bar.style.paddingBottom = '';
+            });
+            return;
+        }
+        var bars = document.querySelectorAll('.grp-act');
+        if (!bars.length) return;
+
+        var vv = window.visualViewport;
+        var browserOverlap = 0;
+        if (vv) {
+            browserOverlap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+        }
+
+        var maxBarHeight = 0;
+        bars.forEach(function (bar) {
+            if (getComputedStyle(bar).position !== 'fixed') return;
+            var pad = Math.max(12, browserOverlap);
+            bar.style.paddingBottom = pad + 'px';
+            maxBarHeight = Math.max(maxBarHeight, bar.offsetHeight + pad);
+        });
+
+        if (maxBarHeight > 0) {
+            document.documentElement.style.setProperty('--mobile-bottom-offset', maxBarHeight + 'px');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', adjustMobileBottomBar);
+    window.addEventListener('load', adjustMobileBottomBar);
+    window.addEventListener('resize', adjustMobileBottomBar);
+    window.addEventListener('orientationchange', adjustMobileBottomBar);
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', adjustMobileBottomBar);
+        window.visualViewport.addEventListener('scroll', adjustMobileBottomBar);
+    }
+})();

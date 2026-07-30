@@ -2,7 +2,8 @@
 -- prod_ledger — unified transaction ledger
 -- bill_type references bill_type table:
 --   1 customer bill, 2 customer balance collection, 3 customer add advance,
---   4 customer old balance add, 5 purchase entry, ...
+--   4 customer old balance add, 5 purchase entry, 6 supplier balance collection,
+--   7 supplier add advance, 8 purchase return, 9 expense entry, 11 opening balance, 12 supplier old balance add, ...
 -- ============================================================
 CREATE TABLE IF NOT EXISTS prod_ledger (
     id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,

@@ -36,8 +36,9 @@ response.setDateHeader("Expires", 0);
                     width="100%" 
                     height="100%" 
                     frameborder="0"
-                    style="margin:0; padding:0; display:block; height: calc(107vh - 60px);">
+                    style="margin:0; padding:0; display:block; height: calc(107vh - 40px);">
                 </iframe>
+                
     <!--script>
         $(document).ready(function() {
             // Check for today's bills and due cheques

@@ -246,7 +246,7 @@ for (int i = 0; i < vecPer.size(); i++) {
       </a>
       <div class="collapse sidebar-submenu" id="chequeMenu">
         <a href="<%=request.getContextPath()%>/billing/customer/index.jsp" class="sidebar-subitem">Customers Balance</a>
-        <a href="<%=request.getContextPath()%>/product/supplierPayment/page.jsp" class="sidebar-subitem">Supplier Payment</a>
+        <a href="<%=request.getContextPath()%>/product/supplier/account/index.jsp" class="sidebar-subitem">Supplier Payment</a>
       </div>
     </div>
     <% } %>

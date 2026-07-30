@@ -1419,7 +1419,17 @@ body:has(.mst-page) { background: var(--bill-bg); }
 
 /* Mobile: bottom action bar */
 @media (max-width: 768px) {
-    .grp-act { background: var(--bill-card); border-top-color: var(--bill-border-lt); }
+    .grp-act {
+        background: var(--bill-card);
+        border-top-color: var(--bill-border-lt);
+        padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+    .bot-panel {
+        padding-bottom: var(--mobile-bottom-offset, calc(96px + env(safe-area-inset-bottom, 0px))) !important;
+    }
+    .tbl-panel {
+        padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 /* ============================================

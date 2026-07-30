@@ -448,40 +448,46 @@ public void blockExpenseType(int id) throws Exception {
 }
 
 //////////////////////////----------------------------
-public void addExpenseEntry(int expenseType, String content, String description, double amount, String expenseDateTime, int userId) throws Exception {
+public void addExpenseEntry(int expenseType, String content, String description, double amount,
+        String expenseDateTime, int payMode, int payType, double cashPaid, double bankPaid, int userId) throws Exception {
     Connection con = null;
     PreparedStatement pt = null;
+    ResultSet rs = null;
 
     try {
         con = util.DBConnectionManager.getConnectionFromPool();
         con.setAutoCommit(false);
 
-        String sql = "INSERT INTO expense_entry(exp_type, content, description, amount, exc_date_time, entry_date_time, uid, is_active) VALUES (?, ?, ?, ?, ?, NOW(), ?, 1)";
-        pt = con.prepareStatement(sql);
+        String sql = "INSERT INTO expense_entry(exp_type, content, description, amount, exc_date_time, entry_date_time, uid, is_active) "
+                + "VALUES (?, ?, ?, ?, ?, NOW(), ?, 1)";
+        pt = con.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS);
         pt.setInt(1, expenseType);
         pt.setString(2, content);
         pt.setString(3, description);
         pt.setDouble(4, amount);
         pt.setString(5, expenseDateTime);
         pt.setInt(6, userId);
+        pt.executeUpdate();
 
-        int rows = pt.executeUpdate();
-        if (rows > 0) {
-            System.out.println("Expense entry inserted successfully.");
-        } else {
-            System.out.println("No rows inserted.");
-        }
+        int expenseId = 0;
+        rs = pt.getGeneratedKeys();
+        if (rs.next()) expenseId = rs.getInt(1);
+        rs.close();
+        pt.close();
+
+        if (expenseId <= 0) throw new Exception("Failed to create expense entry.");
+
+        billing.billingBean billBean = new billing.billingBean();
+        billBean.insertProdLedgerEntry(con, 9, expenseId, 0, 0, payMode, amount, cashPaid, bankPaid, payType, userId);
 
         con.commit();
     } catch (Exception e) {
-        if (con != null) {
-            con.rollback();
-        }
-        System.err.println("Error inserting expense entry: " + e.getMessage());
+        if (con != null) con.rollback();
         throw e;
     } finally {
-        if (pt != null) try { pt.close(); } catch (SQLException e) { }
-        if (con != null) try { con.close(); } catch (Exception e) { }
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
     }
 }
 
@@ -2170,7 +2176,7 @@ public void AddSupplier(String name,String supDesc,String supPhn,String gstin, i
         con.setAutoCommit(false); // IMPORTANT
 
         String sql = "INSERT INTO prod_supplier(NAME, date, time,description,phone_number,gstin,is_gst) VALUES (?, NOW(), NOW(),?,?,?,?)";
-        pt = con.prepareStatement(sql);
+        pt = con.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS);
         pt.setString(1, name);
 		pt.setString(2, supDesc);
 		pt.setString(3, supPhn);
@@ -2179,6 +2185,15 @@ public void AddSupplier(String name,String supDesc,String supPhn,String gstin, i
 		
         int rows = pt.executeUpdate();
         if (rows > 0) {
+            java.sql.ResultSet generatedKeys = pt.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                int newSupplierId = generatedKeys.getInt(1);
+                pt = con.prepareStatement(
+                    "INSERT INTO supplier_account(supplier_id, advance, balance) VALUES (?, 0.00, 0.00)"
+                );
+                pt.setInt(1, newSupplierId);
+                pt.executeUpdate();
+            }
             System.out.println("Supplier inserted successfully.");
         } else {
             System.out.println("No rows inserted.");
@@ -2338,6 +2353,113 @@ public void addDueToCustomerAccount(int customerId, double dueAmount) throws Exc
         if (ptUpdate != null) try { ptUpdate.close(); } catch (SQLException e) { }
         if (ptInsert != null) try { ptInsert.close(); } catch (SQLException e) { }
         if (con != null) try { con.close(); } catch (Exception e) { }
+    }
+}
+
+public Vector getSupplierById(int supplierId) throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    ResultSet rs = null;
+    Vector row = new Vector();
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        pt = con.prepareStatement("SELECT name, phone_number FROM prod_supplier WHERE id = ?");
+        pt.setInt(1, supplierId);
+        rs = pt.executeQuery();
+        if (rs.next()) {
+            row.addElement(rs.getString(1));
+            row.addElement(rs.getString(2) != null ? rs.getString(2) : "-");
+        }
+        return row;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (pt != null) try { pt.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public void addDueToSupplierAccount(int supplierId, double dueAmount) throws Exception {
+    Connection con = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        con.setAutoCommit(false);
+        addDueToSupplierAccount(con, supplierId, dueAmount);
+        con.commit();
+    } catch (Exception e) {
+        if (con != null) con.rollback();
+        throw e;
+    } finally {
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public void addDueToSupplierAccount(Connection con, int supplierId, double dueAmount) throws Exception {
+    PreparedStatement ptUpdate = null;
+    PreparedStatement ptInsert = null;
+    try {
+        ptUpdate = con.prepareStatement(
+            "UPDATE supplier_account SET balance = balance + ? WHERE supplier_id = ?"
+        );
+        ptUpdate.setDouble(1, dueAmount);
+        ptUpdate.setInt(2, supplierId);
+        int rows = ptUpdate.executeUpdate();
+        if (rows == 0) {
+            ptInsert = con.prepareStatement(
+                "INSERT INTO supplier_account (supplier_id, advance, balance) VALUES (?, 0.00, ?)"
+            );
+            ptInsert.setInt(1, supplierId);
+            ptInsert.setDouble(2, dueAmount);
+            ptInsert.executeUpdate();
+        }
+    } finally {
+        if (ptUpdate != null) try { ptUpdate.close(); } catch (SQLException e) {}
+        if (ptInsert != null) try { ptInsert.close(); } catch (SQLException e) {}
+    }
+}
+
+public void reduceDueFromSupplierAccount(Connection con, int supplierId, double amount) throws Exception {
+    if (amount <= 0 || supplierId <= 0) return;
+    PreparedStatement ptUpdate = null;
+    PreparedStatement ptInsert = null;
+    try {
+        ptUpdate = con.prepareStatement(
+            "UPDATE supplier_account SET balance = GREATEST(0, balance - ?) WHERE supplier_id = ?"
+        );
+        ptUpdate.setDouble(1, amount);
+        ptUpdate.setInt(2, supplierId);
+        int rows = ptUpdate.executeUpdate();
+        if (rows == 0) {
+            ptInsert = con.prepareStatement(
+                "INSERT INTO supplier_account (supplier_id, advance, balance) VALUES (?, 0.00, 0.00)"
+            );
+            ptInsert.setInt(1, supplierId);
+            ptInsert.executeUpdate();
+        }
+    } finally {
+        if (ptUpdate != null) try { ptUpdate.close(); } catch (SQLException e) {}
+        if (ptInsert != null) try { ptInsert.close(); } catch (SQLException e) {}
+    }
+}
+
+public void recordPurchaseReturnLedgerAndAccount(Connection con, int returnId, int supplierId,
+        double returnTotal, int uid) throws Exception {
+    if (returnTotal <= 0 || supplierId <= 0 || returnId <= 0) return;
+    billing.billingBean billBean = new billing.billingBean();
+    billBean.insertProdLedgerEntry(con, 8, returnId, 0, supplierId, 1,
+            returnTotal, 0, 0, 0, uid);
+    reduceDueFromSupplierAccount(con, supplierId, returnTotal);
+}
+
+private void recordPurchaseLedgerAndAccount(Connection con, int purchaseId, int supplierId,
+        int payTypeInt, double billAmount, double paidAmount, double balanceAmount, int uid) throws Exception {
+    int paymentMode = payTypeInt == 1 ? 1 : 2;
+    double cashPaid = payTypeInt == 1 ? paidAmount : 0;
+    double bankPaid = payTypeInt != 1 ? paidAmount : 0;
+    billing.billingBean billBean = new billing.billingBean();
+    billBean.insertProdLedgerEntry(con, 5, purchaseId, 0, supplierId, paymentMode,
+            billAmount, cashPaid, bankPaid, payTypeInt, uid);
+    if (balanceAmount > 0) {
+        addDueToSupplierAccount(con, supplierId, balanceAmount);
     }
 }
 ////////////////////////////--------------------
@@ -2699,10 +2821,11 @@ public Vector searchSuppliers(String query) throws Exception {
             "CASE WHEN DESCRIPTION = '' OR DESCRIPTION IS NULL THEN '-' ELSE DESCRIPTION END AS address, " +
             "CASE WHEN gstin = '' OR gstin IS NULL THEN '-' ELSE gstin END AS gstin " +
             "FROM prod_supplier " +
-            "WHERE is_active = 1 AND name LIKE ? " +
+            "WHERE is_active = 1 AND (name LIKE ? OR phone_number LIKE ?) " +
             "ORDER BY name LIMIT 10"
         );
         pt.setString(1, "%" + query + "%");
+        pt.setString(2, "%" + query + "%");
         rs = pt.executeQuery();
         
         while (rs.next()) {
@@ -4344,6 +4467,10 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
             }
         }
 
+        recordPurchaseLedgerAndAccount(con, purids, Integer.parseInt(supplier),
+                Integer.parseInt(payType), Double.parseDouble(grandTotal),
+                Double.parseDouble(paidAmount), Double.parseDouble(balanceAmount), uid);
+
         // Commit the transaction
         con.commit();
         
@@ -4764,6 +4891,10 @@ public String savePurchaseBill(String invArr, String payArr, String prodArr, int
                 }
             }
         }
+
+        recordPurchaseLedgerAndAccount(con, purids, Integer.parseInt(supplier),
+                Integer.parseInt(payType), Double.parseDouble(grandTotal),
+                Double.parseDouble(paidAmount), Double.parseDouble(balanceAmount), uid);
 
         // Commit the transaction
         con.commit();
@@ -7540,6 +7671,10 @@ public String savePurchaseReturn(int purchaseId, String itemsArr, String notes, 
         ps.setDouble(1, grandReturnTotal);
         ps.setInt(2, returnId);
         ps.executeUpdate(); ps.close();
+
+        if (grandReturnTotal > 0 && supplierId > 0) {
+            recordPurchaseReturnLedgerAndAccount(con, returnId, supplierId, grandReturnTotal, uid);
+        }
 
         con.commit();
         return returnNo;

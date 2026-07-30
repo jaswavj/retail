@@ -49,10 +49,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <title>Purchase Item - Billing App</title>
     <%@ include file="/assets/common/head.jsp" %>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 </head>
 <style>
     /* =====================================================
@@ -245,13 +244,15 @@
         .top-panel { padding: 5px 8px 7px; }
         .tp-row { gap: 5px; }
         .tbl-panel { margin: 4px 6px; }
-        .bot-panel { padding: 5px 8px 82px; overflow-y: auto; max-height: 48vh; }
+        .bot-panel { padding: 5px 8px var(--mobile-bottom-offset, calc(96px + env(safe-area-inset-bottom, 0px))); overflow-y: auto; max-height: 48vh; }
         .bot-inner { flex-direction: column; gap: 5px; align-items: stretch; }
         .grp-pay { flex: none; width: 100%; display: grid; grid-template-columns: repeat(2,1fr); gap: 5px; }
         .grp-act {
             position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
             background: var(--bill-card); border-top: 2px solid var(--bill-border-lt);
-            box-shadow: 0 -3px 10px rgba(0,0,0,.12); padding: 6px 8px;
+            box-shadow: 0 -3px 10px rgba(0,0,0,.12);
+            padding: 6px 8px;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
             display: flex !important; gap: 5px;
         }
         .grp-act .bb { flex: 1; justify-content: center; }
