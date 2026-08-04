@@ -2454,14 +2454,75 @@ public double getDueBankTotal( String fromDate, String toDate)throws Exception
 			}
 		}
 	}
-public void cancelBill(int billId, String cancelReason, int uid) throws Exception {
+
+// Returns null if cancel is allowed; otherwise an error message.
+public String validateBillCancel(int billId) throws Exception {
     Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        ps = con.prepareStatement(
+            "SELECT b.customerId, b.currentBalance, COALESCE(ca.balance, 0) AS accountBalance " +
+            "FROM prod_bill b " +
+            "LEFT JOIN customer_account ca ON ca.customer_id = b.customerId " +
+            "WHERE b.id = ? AND b.is_cancelled = 0"
+        );
+        ps.setInt(1, billId);
+        rs = ps.executeQuery();
+        if (!rs.next()) {
+            return "Bill not found or already cancelled.";
+        }
+
+        int customerId = rs.getInt("customerId");
+        double billDue = rs.getDouble("currentBalance");
+        double accountBalance = rs.getDouble("accountBalance");
+
+        if (customerId > 0 && billDue > 0.001 && accountBalance > billDue + 0.001) {
+            return "Cannot cancel this bill. Bill due is "
+                + String.format("%.2f", billDue)
+                + " but customer account balance is "
+                + String.format("%.2f", accountBalance)
+                + ". Clear or adjust the customer account balance first.";
+        }
+        return null;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) {}
+        if (ps != null) try { ps.close(); } catch (SQLException e) {}
+        if (con != null) try { con.close(); } catch (Exception e) {}
+    }
+}
+
+public void cancelBill(int billId, String cancelReason, int uid) throws Exception {
+    String blockMsg = validateBillCancel(billId);
+    if (blockMsg != null) {
+        throw new Exception(blockMsg);
+    }
+
+    Connection con = null;
+    PreparedStatement psSelect = null;
     PreparedStatement psUpdate = null;
     PreparedStatement psInsert = null;
+    ResultSet rs = null;
 
     try {
         con = util.DBConnectionManager.getConnectionFromPool();
         con.setAutoCommit(false);   // start transaction
+
+        psSelect = con.prepareStatement(
+            "SELECT customerId, currentBalance FROM prod_bill WHERE id = ? AND is_cancelled = 0"
+        );
+        psSelect.setInt(1, billId);
+        rs = psSelect.executeQuery();
+
+        int customerId = 0;
+        double dueAmount = 0;
+        if (rs.next()) {
+            customerId = rs.getInt("customerId");
+            dueAmount = rs.getDouble("currentBalance");
+        } else {
+            throw new Exception("Bill not found or already cancelled: " + billId);
+        }
 
         String updateSql = "UPDATE prod_bill SET is_cancelled = 1 WHERE id = ?";
         psUpdate = con.prepareStatement(updateSql);
@@ -2478,7 +2539,12 @@ public void cancelBill(int billId, String cancelReason, int uid) throws Exceptio
         psInsert.setInt(3, uid);
         psInsert.executeUpdate();
 
-        con.commit();               // commit both operations
+        if (customerId > 0 && dueAmount > 0) {
+            product.productBean prod = new product.productBean();
+            prod.reduceDueFromCustomerAccount(con, customerId, dueAmount);
+        }
+
+        con.commit();               // commit all operations
         System.out.println("Bill cancelled and reason saved.");
     } catch (Exception e) {
         if (con != null) {
@@ -2491,6 +2557,8 @@ public void cancelBill(int billId, String cancelReason, int uid) throws Exceptio
         }
         throw e;                    // rethrow to caller
     } finally {
+        if (rs != null) try { rs.close(); } catch (Exception e) {}
+        if (psSelect != null) try { psSelect.close(); } catch (Exception e) {}
         if (psInsert != null) try { psInsert.close(); } catch (Exception e) {}
         if (psUpdate != null) try { psUpdate.close(); } catch (Exception e) {}
         if (con != null) try { con.close(); } catch (Exception e) {}

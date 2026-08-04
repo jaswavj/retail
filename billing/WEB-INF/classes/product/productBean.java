@@ -2356,6 +2356,30 @@ public void addDueToCustomerAccount(int customerId, double dueAmount) throws Exc
     }
 }
 
+public void reduceDueFromCustomerAccount(Connection con, int customerId, double amount) throws Exception {
+    if (amount <= 0 || customerId <= 0) return;
+    PreparedStatement ptUpdate = null;
+    PreparedStatement ptInsert = null;
+    try {
+        ptUpdate = con.prepareStatement(
+            "UPDATE customer_account SET balance = GREATEST(0, balance - ?) WHERE customer_id = ?"
+        );
+        ptUpdate.setDouble(1, amount);
+        ptUpdate.setInt(2, customerId);
+        int rows = ptUpdate.executeUpdate();
+        if (rows == 0) {
+            ptInsert = con.prepareStatement(
+                "INSERT INTO customer_account (customer_id, advance, balance) VALUES (?, 0.00, 0.00)"
+            );
+            ptInsert.setInt(1, customerId);
+            ptInsert.executeUpdate();
+        }
+    } finally {
+        if (ptUpdate != null) try { ptUpdate.close(); } catch (SQLException e) {}
+        if (ptInsert != null) try { ptInsert.close(); } catch (SQLException e) {}
+    }
+}
+
 public Vector getSupplierById(int supplierId) throws Exception {
     Connection con = null;
     PreparedStatement pt = null;

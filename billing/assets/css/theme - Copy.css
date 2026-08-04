@@ -2028,7 +2028,7 @@ thead.sticky-top th {
     z-index: 1050;
 }
 
-/* Mobile Responsive Styles */
+/* Mobile Responsive Styles for Billing */
 @media (max-width: 768px) {
     .card-body .row {
         margin-bottom: 10px;
@@ -2047,57 +2047,43 @@ thead.sticky-top th {
         -webkit-overflow-scrolling: touch;
     }
     
-    /* Touch-friendly inputs — all pages */
-    .form-control,
-    .form-select {
-        font-size: 16px !important;
-        padding: 10px 12px !important;
-        min-height: 44px;
-        line-height: 1.4;
+    /* Reduce font sizes */
+    body {
+        font-size: 10px;
     }
-
-    .input-outline input,
-    .input-outline textarea,
-    .input-outline select,
-    .input-outline .form-control,
-    .input-outline .form-select {
-        font-size: 16px !important;
-        padding: 12px 14px !important;
-        min-height: 48px;
+    
+    .form-control, .form-select, .btn {
+        font-size: 10px !important;
+        padding: 3px !important; 
     }
-
-    .input-outline label,
-    .form-label {
-        font-size: 0.82rem !important;
+    
+    label {
+        font-size: 10px;
     }
-
-    label:not(.form-check-label):not(.tog-lbl) {
-        font-size: 0.82rem;
-    }
-
-    /* Primary buttons — readable tap targets */
-    .bb,
-    .btn:not(.btn-sm):not(.btn-xs):not(.btn-close):not(.qty-btn):not(.cat-pill):not(.tb-btn) {
-        font-size: 14px !important;
-        padding: 10px 14px !important;
-        min-height: 44px;
-    }
-
+    
+    /* Button adjustments */
     .btn-sm {
         padding: 6px 10px;
         font-size: 12px;
-        min-height: auto;
     }
     
-    /* Table text on mobile */
+    /* Table cell widths for mobile */
     thead th {
-        font-size: 11px;
-        padding: 6px !important;
+        font-size: 10px;
+        padding: 5px !important;
     }
     
     tbody td {
-        font-size: 12px;
-        padding: 6px !important;
+        font-size: 10px;
+        padding: 5px !important;
+    }
+    
+    /* Adjust input fields */
+    .input-outline input,
+    .input-outline textarea,
+    .input-outline .form-control {
+        padding: 0.45rem 0.75rem;
+        font-size: 0.85rem;
     }
     
     /* Make buttons full width on mobile */

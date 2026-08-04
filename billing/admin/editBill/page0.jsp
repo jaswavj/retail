@@ -130,15 +130,10 @@
             <td><strong><%=String.format("%.3f", finPayable)%></strong></td>
             <td><strong><%=String.format("%.3f", finPaid)%></strong></td>
             <td><strong><%=finBalance%></strong></td>
-            <!--<% if(modeId !=2) { %><td><strong><%=String.format("%.3f", finCash)%></strong></td><%}%>
-            <% if(modeId !=1) { %><td><strong><%=String.format("%.3f", finBank)%></strong></td><%}%>
-        -->
-            <td><strong><%=finCurBalance%></strong></td>
-            <% if(modeId !=1) { %><td></td><%}%>
             <td></td>
             <td></td>
-            
-            
+            <td></td>
+            <td></td>
         </tr>
     </tbody>
 </table>
@@ -181,12 +176,10 @@
         String date        = row.elementAt(6).toString();   // Date
         String time        = row.elementAt(7).toString();   // Time
         String userName    = row.elementAt(8).toString();   // Biller
-        String billDisplay = row.elementAt(9).toString();   // Bill No
 
         double balance  = Double.parseDouble(row.elementAt(1).toString());
         double cashPaid = Double.parseDouble(row.elementAt(2).toString());
         double bankPaid = Double.parseDouble(row.elementAt(3).toString());
-        int billId      = Integer.parseInt(row.elementAt(10).toString());
 
         totalCashPaid += cashPaid;
         totalBankPaid += bankPaid;
@@ -194,7 +187,7 @@
 %>
     <tr>
         <td><%= j + 1 %></td>
-        <td><%= billDisplay %></td>
+        <td>-</td>
         <td><%= cusName %></td>
         <td><%= balance %></td>
         <td><%= cashPaid %></td>

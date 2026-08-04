@@ -14,13 +14,36 @@ public class salesReturnBean {
     }
 
     public void cancelBill(int billId, String cancelReason, int uid) throws Exception {
+        billing.billingBean billCheck = new billing.billingBean();
+        String blockMsg = billCheck.validateBillCancel(billId);
+        if (blockMsg != null) {
+            throw new Exception(blockMsg);
+        }
+
         Connection con = null;
+        PreparedStatement psSelect = null;
         PreparedStatement psUpdate = null;
         PreparedStatement psInsert = null;
+        ResultSet rs = null;
 
         try {
             con = util.DBConnectionManager.getConnectionFromPool();
             con.setAutoCommit(false);
+
+            psSelect = con.prepareStatement(
+                "SELECT customerId, currentBalance FROM prod_bill WHERE id = ? AND is_cancelled = 0"
+            );
+            psSelect.setInt(1, billId);
+            rs = psSelect.executeQuery();
+
+            int customerId = 0;
+            double dueAmount = 0;
+            if (rs.next()) {
+                customerId = rs.getInt("customerId");
+                dueAmount = rs.getDouble("currentBalance");
+            } else {
+                throw new Exception("Bill not found or already cancelled: " + billId);
+            }
 
             String updateSql = "UPDATE prod_bill SET is_cancelled = 1 WHERE id = ?";
             psUpdate = con.prepareStatement(updateSql);
@@ -36,6 +59,11 @@ public class salesReturnBean {
             psInsert.setInt(3, uid);
             psInsert.executeUpdate();
 
+            if (customerId > 0 && dueAmount > 0) {
+                product.productBean prod = new product.productBean();
+                prod.reduceDueFromCustomerAccount(con, customerId, dueAmount);
+            }
+
             con.commit();
         } catch (Exception e) {
             if (con != null) {
@@ -43,6 +71,8 @@ public class salesReturnBean {
             }
             throw e;
         } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) { ; }
+            if (psSelect != null) try { psSelect.close(); } catch (Exception e) { ; }
             if (psInsert != null) try { psInsert.close(); } catch (Exception e) { ; }
             if (psUpdate != null) try { psUpdate.close(); } catch (Exception e) { ; }
             if (con != null) try { con.close(); } catch (Exception e) { ; }

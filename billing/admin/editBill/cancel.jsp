@@ -30,6 +30,13 @@ if (billInfo != null && !billInfo.isEmpty()) {
     out.print("<p style='color:red'>No bill info found for Bill No: " + billId + "</p>");
 }
 
+String cancelBlockMsg = null;
+try {
+    cancelBlockMsg = bill.validateBillCancel(billId);
+} catch (Exception e) {
+    cancelBlockMsg = e.getMessage();
+}
+
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -86,17 +93,27 @@ if (billInfo != null && !billInfo.isEmpty()) {
     <div class="row mt-4">
     <!-- Left: Cancel reason -->
     <div class="col-md-6">
+        <% if (cancelBlockMsg != null) { %>
+        <div class="alert alert-danger">
+            <i class="fa-solid fa-circle-exclamation me-1"></i>
+            <%= cancelBlockMsg %>
+        </div>
+        <% } %>
         <form action="<%= request.getContextPath() %>/admin/editBill/cancelAction.jsp" method="post">
             <input type="hidden" name="billId" value="<%= billId %>">
 
             <div class="mb-3">
                 <label for="cancelReason" class="form-label fw-bold">Reason for Cancellation</label>
                 <textarea class="form-control fg-inp" id="cancelReason" name="cancelReason"
-                          rows="5" placeholder="Enter reason..." required></textarea>
+                          rows="5" placeholder="Enter reason..." required<%= cancelBlockMsg != null ? " disabled" : "" %>></textarea>
             </div>
 
             <div class="mt-3">
+                <% if (cancelBlockMsg != null) { %>
+                <button type="button" class="bb bb-primary" disabled><i class="fa-solid fa-ban"></i> Cancel Bill</button>
+                <% } else { %>
                 <button type="submit" class="bb bb-primary"><i class="fa-solid fa-ban"></i> Cancel Bill</button>
+                <% } %>
                 <button type="button" class="bb bb-outline" onclick="window.history.back();"><i class="fa-solid fa-arrow-left"></i> Back</button>
             </div>
         </form>

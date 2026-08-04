@@ -10,19 +10,29 @@ if(request.getParameter("billId") != null){
 }
 String cancelReason = request.getParameter("cancelReason");
 
-
-
-bill.cancelBill(billId, cancelReason,uid);
-Vector details = bill.getBillDetails(billId);
-for(int i=0; i<details.size(); i++){
-    Vector row = (Vector)details.elementAt(i);
-    int prodId = Integer.parseInt(row.elementAt(2).toString());
-    BigDecimal qty = new BigDecimal(row.elementAt(4).toString());
-    int status =bill.getStatus(billId,prodId);
-    if(status == 0){
-        bill.updateStockAfterCancel(prodId, qty,uid);
+try {
+    billing.billingBean billCheck = new billing.billingBean();
+    String blockMsg = billCheck.validateBillCancel(billId);
+    if (blockMsg != null) {
+        String safeMsg = blockMsg.replace("\\", "\\\\").replace("'", "\\'").replace("\r", " ").replace("\n", " ");
+        out.print("<script>alert('" + safeMsg + "'); window.history.back();</script>");
+        return;
     }
-    
+
+    bill.cancelBill(billId, cancelReason, uid);
+    Vector details = bill.getBillDetails(billId);
+    for (int i = 0; i < details.size(); i++) {
+        Vector row = (Vector) details.elementAt(i);
+        int prodId = Integer.parseInt(row.elementAt(2).toString());
+        BigDecimal qty = new BigDecimal(row.elementAt(4).toString());
+        int status = bill.getStatus(billId, prodId);
+        if (status == 0) {
+            bill.updateStockAfterCancel(prodId, qty, uid);
+        }
+    }
+    response.sendRedirect(request.getContextPath() + "/admin/editBill/page.jsp");
+} catch (Exception e) {
+    String safeMsg = e.getMessage().replace("\\", "\\\\").replace("'", "\\'").replace("\r", " ").replace("\n", " ");
+    out.print("<script>alert('" + safeMsg + "'); window.history.back();</script>");
 }
-response.sendRedirect(request.getContextPath() + "/admin/editBill/page.jsp");
 %>
