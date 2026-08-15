@@ -177,6 +177,15 @@ String type = request.getParameter("type"); // success / warning / danger / info
                                     <option value="28">28%</option>
                                 </select>
                             </div>
+                            <div class="col-md-12" id="editBlockRow" style="display: none;">
+                                <div class="form-check" style="padding: 8px; background: #fff5f5; border-radius: 6px; border-left: 3px solid #f56565;">
+                                    <input class="form-check-input" type="checkbox" name="block" value="block" id="editBlock">
+                                    <label class="form-check-label" for="editBlock" style="color: #c53030; font-weight: 500; font-size: 0.85rem;">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Block this <%=head3%>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Blocking will hide this product from billing and selection lists</small>
+                            </div>
                             <div class="col-md-12 mt-2 d-flex gap-2">
                                 <button type="submit" id="submitBtn" class="bb bb-primary flex-grow-1">
                                     <i class="fas fa-save me-1" id="submitBtnIcon"></i><span id="submitBtnText">Add <%=head3%></span>
@@ -848,6 +857,8 @@ String type = request.getParameter("type"); // success / warning / danger / info
         document.getElementById('submitBtn').classList.remove('btn-primary');
         document.getElementById('submitBtn').classList.add('btn-success');
         document.getElementById('cancelEditBtn').style.display = 'inline-block';
+        document.getElementById('editBlockRow').style.display = 'block';
+        document.getElementById('editBlock').checked = false;
 
         // Update card header
         document.querySelector('.card-header h6').innerHTML = '<i class="fas fa-edit me-2"></i>Edit ' + (product.productName || '');
@@ -874,6 +885,8 @@ String type = request.getParameter("type"); // success / warning / danger / info
         document.getElementById('submitBtn').classList.remove('btn-success');
         document.getElementById('submitBtn').classList.add('btn-primary');
         document.getElementById('cancelEditBtn').style.display = 'none';
+        document.getElementById('editBlockRow').style.display = 'none';
+        document.getElementById('editBlock').checked = false;
 
         // Reset card header
         document.querySelector('.card-header h6').innerHTML = '<i class="fas fa-plus-circle me-2"></i>Add New Product';

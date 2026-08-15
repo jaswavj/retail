@@ -32,6 +32,13 @@ int productId      = Integer.parseInt(productIdParam);
 int categoryId     = Integer.parseInt(categoryIdParam != null ? categoryIdParam : "0");
 int brandId        = Integer.parseInt(brandIdParam != null ? brandIdParam : "0");
 
+String block = request.getParameter("block");
+if (block != null) {
+    prod.blockProduct(productId);
+    response.sendRedirect(request.getContextPath() + "/product/master/product/product.jsp?msg=Product+blocked+successfully&type=info");
+    return;
+}
+
 double mrp         = Double.parseDouble(mrpParam != null ? mrpParam : "0");
 double cost        = Double.parseDouble(costParam != null ? costParam : "0");
 double discValue   = Double.parseDouble(discValueParam != null ? discValueParam : "0");
