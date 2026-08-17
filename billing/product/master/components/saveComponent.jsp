@@ -11,14 +11,14 @@ if (userId == null) {
 try {
     int productId = Integer.parseInt(request.getParameter("productId"));
     int componentProductId = Integer.parseInt(request.getParameter("componentProductId"));
-    double quantity = Double.parseDouble(request.getParameter("quantity"));
+    java.math.BigDecimal quantity = new java.math.BigDecimal(request.getParameter("quantity"));
     
     if (productId == componentProductId) {
         response.sendRedirect(request.getContextPath() + "/product/master/components/page.jsp?msg=Product+cannot+be+its+own+component&type=warning");
         return;
     }
     
-    prod.addProductComponent(productId, componentProductId, quantity, userId);
+    prod.addProductComponent(productId, componentProductId, quantity, userId.intValue());
     response.sendRedirect(request.getContextPath() + "/product/master/components/page.jsp?msg=Component+added+successfully&type=success");
     
 } catch (com.mysql.cj.jdbc.exceptions.MysqlDataTruncation e) {
