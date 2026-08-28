@@ -555,6 +555,9 @@ public class salesReturnBean {
             if (billId != fetchedBillId) {
                 throw new Exception("Bill / detail mismatch.");
             }
+            if (customerId == 1) {
+                throw new Exception("Please assign the actual customer to this bill before exchange.");
+            }
 
             double newItemTotal = new BigDecimal(newPrice).multiply(qty)
                                        .setScale(3, java.math.RoundingMode.HALF_UP).doubleValue();
@@ -820,6 +823,9 @@ public class salesReturnBean {
             rs.close(); ps.close();
 
             if (billId != fetchedBillId) throw new Exception("Bill / detail mismatch.");
+            if (customerId == 1) {
+                throw new Exception("Please assign the actual customer to this bill before return.");
+            }
 
             int batchId = 0;
             ps = con.prepareStatement(
@@ -1227,6 +1233,53 @@ public class salesReturnBean {
             ps.close();
 
             con.commit();
+        } catch (Exception e) {
+            if (con != null) { try { con.rollback(); } catch (Exception ex) { ; } }
+            throw e;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (Exception e) { ; }
+            if (ps != null) try { ps.close(); } catch (Exception e) { ; }
+            if (con != null) try { con.close(); } catch (Exception e) { ; }
+        }
+    }
+
+    /**
+     * Updates walk-in bill (customerId=1) with the actual customer before exchange/return.
+     */
+    public String updateBillCustomer(int billId, int customerId, String cusName, String cusPhn) throws Exception {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            if (billId <= 0) throw new Exception("Invalid bill.");
+            if (customerId <= 1) throw new Exception("Please select a valid customer.");
+            if (cusName == null || cusName.trim().isEmpty()) throw new Exception("Customer name is required.");
+
+            con = util.DBConnectionManager.getConnectionFromPool();
+            con.setAutoCommit(false);
+
+            ps = con.prepareStatement("SELECT id FROM customers WHERE id = ? AND is_active = 1");
+            ps.setInt(1, customerId);
+            rs = ps.executeQuery();
+            if (!rs.next()) throw new Exception("Selected customer not found.");
+            rs.close(); ps.close();
+
+            ps = con.prepareStatement(
+                "UPDATE prod_bill SET customerId = ?, cusName = ?, cusPhn = ? "
+              + "WHERE id = ? AND is_cancelled = 0 AND customerId = 1");
+            ps.setInt(1, customerId);
+            ps.setString(2, cusName.trim());
+            ps.setString(3, cusPhn != null ? cusPhn.trim() : "");
+            ps.setInt(4, billId);
+            int updated = ps.executeUpdate();
+            ps.close();
+
+            if (updated == 0) {
+                throw new Exception("Bill not found or customer already assigned.");
+            }
+
+            con.commit();
+            return "Customer updated successfully.";
         } catch (Exception e) {
             if (con != null) { try { con.rollback(); } catch (Exception ex) { ; } }
             throw e;

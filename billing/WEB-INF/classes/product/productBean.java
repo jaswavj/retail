@@ -2318,6 +2318,50 @@ public void AddCustomer(String name,String custAddress,String custPhn,String gst
         if (con != null) try { con.close(); } catch (Exception e) { }
     }
 }
+
+/** Creates a customer and returns the new id (for quick entry from exchange/billing). */
+public int addCustomerReturnId(String name, String phone) throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    PreparedStatement ptAcc = null;
+    ResultSet rs = null;
+    try {
+        if (name == null || name.trim().isEmpty()) {
+            throw new Exception("Customer name is required.");
+        }
+        con = util.DBConnectionManager.getConnectionFromPool();
+        con.setAutoCommit(false);
+
+        String sql = "INSERT INTO customers(name, date, time, address, phone_number, gstin, is_gst, is_eligible_for_commission) "
+                   + "VALUES (?, NOW(), NOW(), '', ?, '', 0, 0)";
+        pt = con.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS);
+        pt.setString(1, name.trim());
+        pt.setString(2, phone != null ? phone.trim() : "");
+        int rows = pt.executeUpdate();
+        if (rows <= 0) throw new Exception("Failed to create customer.");
+
+        rs = pt.getGeneratedKeys();
+        if (!rs.next()) throw new Exception("Failed to get new customer id.");
+        int newCustomerId = rs.getInt(1);
+        rs.close(); pt.close();
+
+        ptAcc = con.prepareStatement("INSERT INTO customer_account(customer_id, advance, balance) VALUES (?, 0.00, 0.00)");
+        ptAcc.setInt(1, newCustomerId);
+        ptAcc.executeUpdate();
+        ptAcc.close();
+
+        con.commit();
+        return newCustomerId;
+    } catch (Exception e) {
+        if (con != null) { try { con.rollback(); } catch (SQLException ex) { } }
+        throw e;
+    } finally {
+        if (rs != null) try { rs.close(); } catch (SQLException e) { }
+        if (ptAcc != null) try { ptAcc.close(); } catch (SQLException e) { }
+        if (pt != null) try { pt.close(); } catch (SQLException e) { }
+        if (con != null) try { con.close(); } catch (Exception e) { }
+    }
+}
 ////////////////////////////--------------------
 public void addDueToCustomerAccount(int customerId, double dueAmount) throws Exception {
     Connection con = null;
@@ -5392,6 +5436,31 @@ public Vector getPurchaseDetailsById(int purchaseId) throws Exception {
         if (con != null) try { con.close(); } catch (Exception e) {}
     }
     return vec;
+}
+
+// Update cost in prod_batch for a product (used during purchase entry)
+public String updateProductBatchCost(int productId, double cost) throws Exception {
+    Connection con = null;
+    PreparedStatement pt = null;
+    try {
+        con = util.DBConnectionManager.getConnectionFromPool();
+        pt = con.prepareStatement("UPDATE prod_batch SET cost = ? WHERE product_id = ?");
+        pt.setDouble(1, cost);
+        pt.setInt(2, productId);
+        int updated = pt.executeUpdate();
+        if (updated == 0) {
+            con.rollback();
+            return "ERROR: Product batch not found.";
+        }
+        con.commit();
+        return "OK";
+    } catch (Exception e) {
+        if (con != null) con.rollback();
+        throw e;
+    } finally {
+        if (pt != null) try { pt.close(); } catch (SQLException e) { ; }
+        if (con != null) try { con.close(); } catch (SQLException e) { ; }
+    }
 }
 
 ////////////////////////////------------------------

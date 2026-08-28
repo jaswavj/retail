@@ -143,6 +143,22 @@ if(Status == 8)
 	}
 
 ////////////////////////
+if(Status == 9)
+	{
+		try {
+			int productId = Integer.parseInt(request.getParameter("productId").toString());
+			double cost = Double.parseDouble(request.getParameter("cost").toString());
+			if (productId <= 0 || cost < 0) {
+				out.print("ERROR: Invalid product or cost.");
+			} else {
+				out.print(ph.updateProductBatchCost(productId, cost));
+			}
+		} catch (Exception e) {
+			out.print("ERROR: " + e.getMessage());
+		}
+	}
+
+////////////////////////
 if(Status == 4)
 	{
 		String invArr	= request.getParameter("invArr");

@@ -56,6 +56,15 @@
             background: var(--bill-navy);
             color: #fff;
         }
+        .cust-search-input { position: relative; }
+        .customer-pending-banner {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            color: #856404;
+        }
     </style>
 </head>
 <body>
@@ -116,6 +125,39 @@
         </div>
     </div>
 
+    <!-- Customer Update Modal (required when bill customerId = 1) -->
+    <div class="modal fade" id="customerUpdateModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header mst-card-header">
+                    <h5 class="modal-title"><i class="fa-solid fa-user-pen me-2"></i>Assign Customer</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning py-2 mb-3">
+                        <i class="fa-solid fa-circle-info me-1"></i>
+                        This bill has no customer assigned. Select an existing customer from the list, or type a new name and phone to create one.
+                    </div>
+                    <div class="mb-3 cust-search-input">
+                        <label class="form-label fw-semibold">Customer Name <span class="text-danger">*</span></label>
+                        <input type="text" id="custNameInput" class="form-control fg-inp" placeholder="Type customer name…" autocomplete="off">
+                        <ul class="autocomplete-list d-none" id="custNameList"></ul>
+                    </div>
+                    <div class="mb-3 cust-search-input">
+                        <label class="form-label fw-semibold">Phone Number</label>
+                        <input type="text" id="custPhoneInput" class="form-control fg-inp" placeholder="Type phone number…" autocomplete="off">
+                        <ul class="autocomplete-list d-none" id="custPhoneList"></ul>
+                    </div>
+                    <input type="hidden" id="custIdInput" value="">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="bb bb-primary" id="confirmCustomerBtn">
+                        <i class="fa-solid fa-check me-1"></i>Update &amp; Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Exchange Modal -->
     <div class="modal fade" id="exchangeModal" tabindex="-1" aria-labelledby="exchangeModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -161,6 +203,7 @@
     <script>
     const CTX = '<%=contextPathExc%>';
     let currentBillData = null;  // { billId, customerId, items[] }
+    let customerUpdateRequired = false;
     let currentDetailId = null;
     let currentOldTotal = 0;
     let currentQty = 0;
@@ -183,20 +226,28 @@
                     return;
                 }
                 currentBillData = data;
+                customerUpdateRequired = (parseInt(data.customerId) === 1);
                 renderBill(data);
+                if (customerUpdateRequired) {
+                    openCustomerUpdateModal();
+                }
             })
             .catch(() => Swal.fire('Error', 'Failed to load bill.', 'error'));
     }
 
     function renderBill(data) {
         // Summary
-        document.getElementById('billSummaryArea').innerHTML = `
-            <div class="d-flex flex-wrap gap-3">
+        let summaryHtml = `
+            <div class="d-flex flex-wrap gap-3 align-items-center">
                 <span class="badge bg-secondary fs-6">Customer: ${escHtml(data.cusName)}</span>
                 <span class="badge bg-info text-dark fs-6">Total: ₹${data.total}</span>
                 <span class="badge bg-success fs-6">Payable: ₹${data.payable}</span>
                 <span class="badge bg-warning text-dark fs-6">Date: ${escHtml(data.billDate)}</span>
             </div>`;
+        if (customerUpdateRequired) {
+            summaryHtml += `<div class="customer-pending-banner mt-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> Customer not assigned — please update customer to proceed with exchange or return.</div>`;
+        }
+        document.getElementById('billSummaryArea').innerHTML = summaryHtml;
         document.getElementById('billNoDisplay').textContent = 'Bill #' + data.billNo;
 
         const tbody = document.getElementById('billItemsTbody');
@@ -217,8 +268,9 @@
             if (exchanged || returned) {
                 actionBtns = `<button class="btn btn-sm btn-outline-secondary" disabled><i class="fa-solid fa-ban me-1"></i>${exchanged ? 'Exchanged' : 'Returned'}</button>`;
             } else {
+                const disabled = customerUpdateRequired ? 'disabled title="Assign customer first"' : '';
                 actionBtns = `
-                    <button class="btn btn-sm btn-outline-warning open-return-btn"
+                    <button class="btn btn-sm btn-outline-warning open-return-btn" ${disabled}
                         data-detail-id="${item.detailId}"
                         data-prod-name="${escHtml(item.productName)}"
                         data-qty="${item.qty}"
@@ -272,6 +324,11 @@
     function attachReturnButtons() {
         document.querySelectorAll('.open-return-btn').forEach(btn => {
             btn.addEventListener('click', function() {
+                if (customerUpdateRequired) {
+                    Swal.fire('Customer Required', 'Please assign the actual customer before return.', 'warning');
+                    openCustomerUpdateModal();
+                    return;
+                }
                 const detailId  = this.dataset.detailId;
                 const prodName  = this.dataset.prodName;
                 const maxQty    = parseFloat(this.dataset.qty);
@@ -349,6 +406,116 @@
             });
         });
     }
+
+    // ── Customer Update Modal ───────────────────────────────────
+    let custNameTimer = null, custPhoneTimer = null;
+
+    function openCustomerUpdateModal() {
+        document.getElementById('custNameInput').value = '';
+        document.getElementById('custPhoneInput').value = '';
+        document.getElementById('custIdInput').value = '';
+        hideCustLists();
+        new bootstrap.Modal(document.getElementById('customerUpdateModal')).show();
+        setTimeout(() => document.getElementById('custNameInput').focus(), 300);
+    }
+
+    function hideCustLists() {
+        document.getElementById('custNameList').classList.add('d-none');
+        document.getElementById('custPhoneList').classList.add('d-none');
+    }
+
+    function selectCustomerForBill(c) {
+        document.getElementById('custNameInput').value = c.name || '';
+        document.getElementById('custPhoneInput').value = (c.phone && c.phone !== '-') ? c.phone : '';
+        document.getElementById('custIdInput').value = c.id || '';
+        hideCustLists();
+    }
+
+    function renderCustAutocomplete(listId, customers, onSelect) {
+        const list = document.getElementById(listId);
+        list.innerHTML = '';
+        if (!customers || customers.length === 0) { list.classList.add('d-none'); return; }
+        customers.forEach(c => {
+            const li = document.createElement('li');
+            li.textContent = c.name + (c.phone && c.phone !== '-' ? ' — ' + c.phone : '');
+            li.addEventListener('click', () => onSelect(c));
+            list.appendChild(li);
+        });
+        list.classList.remove('d-none');
+    }
+
+    document.getElementById('custNameInput').addEventListener('input', function() {
+        clearTimeout(custNameTimer);
+        const q = this.value.trim();
+        document.getElementById('custIdInput').value = '';
+        if (q.length < 2) { document.getElementById('custNameList').classList.add('d-none'); return; }
+        custNameTimer = setTimeout(() => {
+            fetch(CTX + '/billing/customerAutocomplete.jsp?query=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(arr => renderCustAutocomplete('custNameList', arr, selectCustomerForBill))
+                .catch(() => {});
+        }, 250);
+    });
+
+    document.getElementById('custPhoneInput').addEventListener('input', function() {
+        clearTimeout(custPhoneTimer);
+        const q = this.value.trim();
+        document.getElementById('custIdInput').value = '';
+        if (q.length < 3) { document.getElementById('custPhoneList').classList.add('d-none'); return; }
+        custPhoneTimer = setTimeout(() => {
+            fetch(CTX + '/billing/customerAutocomplete.jsp?phone=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(arr => renderCustAutocomplete('custPhoneList', arr, selectCustomerForBill))
+                .catch(() => {});
+        }, 250);
+    });
+
+    document.getElementById('confirmCustomerBtn').addEventListener('click', function() {
+        const customerId = parseInt(document.getElementById('custIdInput').value) || 0;
+        const cusName    = document.getElementById('custNameInput').value.trim();
+        const cusPhn     = document.getElementById('custPhoneInput').value.trim();
+
+        if (!cusName) {
+            Swal.fire('Validation', 'Customer name is required.', 'warning');
+            return;
+        }
+
+        const params = new URLSearchParams({
+            billId: currentBillData.billId,
+            customerId: customerId,
+            cusName: cusName,
+            cusPhn: cusPhn
+        });
+
+        fetch(CTX + '/admin/Exchange/updateBillCustomer.jsp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString()
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                Swal.fire('Error', data.message || 'Failed to update customer.', 'error');
+                return;
+            }
+            customerUpdateRequired = false;
+            currentBillData.customerId = data.customerId;
+            currentBillData.cusName = data.cusName;
+            bootstrap.Modal.getInstance(document.getElementById('customerUpdateModal')).hide();
+            renderBill(currentBillData);
+            Swal.fire({ icon: 'success', title: 'Customer Updated', text: data.message, timer: 1800, showConfirmButton: false });
+        })
+        .catch(() => Swal.fire('Error', 'Network error.', 'error'));
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#custNameInput') && !e.target.closest('#custNameList')) {
+            document.getElementById('custNameList').classList.add('d-none');
+        }
+        if (!e.target.closest('#custPhoneInput') && !e.target.closest('#custPhoneList')) {
+            document.getElementById('custPhoneList').classList.add('d-none');
+        }
+    });
 
     // ── Product Autocomplete ────────────────────────────────────
     let acTimer = null;

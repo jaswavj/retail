@@ -141,6 +141,12 @@
         box-shadow: 0 0 0 3px rgba(201,162,39,.18);
         background: #fff;
     }
+    .btbl .form-control[readonly],
+    .btbl .form-control-sm[readonly] {
+        background: #f1f5f9;
+        color: #64748b;
+        cursor: not-allowed;
+    }
     .btbl label { font-size: 14px; font-weight: 600; }
     .btbl small { font-size: 11px; }
     .btn-success { background: var(--bill-green); color: #fff; border-color: var(--bill-green); }
@@ -516,8 +522,8 @@
                 + "<td class='text-center'><button type='button' class='tbl-icon-btn del' id='_delProcRow_" + proRowCount + "' onclick='deleteProductRow(this);' title='Delete row'><i class='fas fa-times' style='font-size:12px;'></i></button></td>"
                 + '<td><input type="text" class="form-control form-control-sm" id="_productName_' + proRowCount + '" name="_productName_' + proRowCount + '" value="' + escapedName + '" readonly></td>'
                 + "<td><div class='d-flex flex-column'><div class='d-flex align-items-center gap-1'><input type='text' class='form-control form-control-sm' id='_totqty_" + proRowCount + "' name='_totqty_" + proRowCount + "' value='" + (((parseFloat(itemData.pack) || 0) * (parseFloat(itemData.qtyperpack) || 0)).toFixed(3)) + "' style='min-width:65px;' onkeyup='calculateRow(" + proRowCount + ");'><span class='text-muted small' id='_totunit_" + proRowCount + "'></span></div><small class='text-primary' id='_convtotqty_" + proRowCount + "'></small><input type='hidden' id='_pack_" + proRowCount + "' name='_pack_" + proRowCount + "' value='1'><input type='hidden' id='_qtyperpack_" + proRowCount + "' name='_qtyperpack_" + proRowCount + "' value='" + (((parseFloat(itemData.pack) || 0) * (parseFloat(itemData.qtyperpack) || 0)).toFixed(3)) + "'></div></td>"
-                + "<td><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_cost_" + proRowCount + "' name='_cost_" + proRowCount + "' value='" + itemData.cost + "' onkeyup='calculateRow(" + proRowCount + ");'><small class='text-info' id='_costperconv_" + proRowCount + "'></small></div></td>"
-                + "<td><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_mrp_" + proRowCount + "' name='_mrp_" + proRowCount + "' value='" + itemData.mrp + "' onkeyup='calculateRow(" + proRowCount + ");'><small class='text-info' id='_mrpperconv_" + proRowCount + "'></small></div></td>"
+                + "<td><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_cost_" + proRowCount + "' name='_cost_" + proRowCount + "' value='" + itemData.cost + "' onkeyup='calculateRow(" + proRowCount + ");' onblur='updateProductCost(" + proRowCount + ");'><small class='text-info' id='_costperconv_" + proRowCount + "'></small></div></td>"
+                + "<td><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_mrp_" + proRowCount + "' name='_mrp_" + proRowCount + "' value='" + itemData.mrp + "' readonly tabindex='-1'><small class='text-info' id='_mrpperconv_" + proRowCount + "'></small></div></td>"
                 + "<td><input type='text' class='form-control form-control-sm' id='_disc_" + proRowCount + "' name='_disc_" + proRowCount + "' value='" + itemData.disc + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
                 + "<td><input type='text' class='form-control form-control-sm' id='_tax_" + proRowCount + "' name='_tax_" + proRowCount + "' value='" + itemData.tax + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"
                 + "<td><input type='text' class='form-control form-control-sm' id='_freeqty_" + proRowCount + "' name='_freeqty_" + proRowCount + "' value='" + itemData.free + "' onkeyup='calculateRow(" + proRowCount + ");'></td>"

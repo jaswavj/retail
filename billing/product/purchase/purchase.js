@@ -97,7 +97,33 @@ function disableProductInputs(rowIndex) {
 }
 function enableProductInputs(rowIndex) {
     $('#_cost_' + rowIndex).prop('readonly', false);
-    $('#_mrp_' + rowIndex).prop('readonly', false);
+    $('#_mrp_' + rowIndex).prop('readonly', true);
+}
+function updateProductCost(rowIndex) {
+    var productId = parseInt($('#_productName_' + rowIndex).data('productId')) || 0;
+    if (productId <= 0) return;
+
+    var cost = parseFloat($('#_cost_' + rowIndex).val()) || 0;
+    if (cost <= 0) return;
+
+    var convertionCalc = parseFloat($('#_productName_' + rowIndex).data('convertionCalc')) || 1;
+    var baseCost = convertionCalc > 1 ? cost / convertionCalc : cost;
+
+    $.ajax({
+        type: 'POST',
+        url: contextPath + '/product/purchase/details.jsp',
+        data: {
+            status: 9,
+            productId: productId,
+            cost: baseCost.toFixed(6)
+        },
+        success: function(result) {
+            var res = (result || '').trim();
+            if (res !== 'OK') {
+                console.warn('Cost update failed:', res);
+            }
+        }
+    });
 }
 /////////////////////////////
 function openAddProductModal() {
@@ -323,7 +349,7 @@ function applyProductDetails(str, resArr) {
     var rawMrp  = parseFloat(resArr[5]) || 0;
     enableProductInputs(str);
     $('#_cost_' + str).val(convertionCalc > 1 ? (rawCost * convertionCalc).toFixed(3) : rawCost);
-    $('#_mrp_' + str).val(convertionCalc > 1 ? (rawMrp * convertionCalc).toFixed(3) : rawMrp);
+    $('#_mrp_' + str).val(convertionCalc > 1 ? (rawMrp * convertionCalc).toFixed(3) : rawMrp).prop('readonly', true);
 
     if (resArr.length > 13 && resArr[13].trim() !== '') {
         $('#_tax_' + str).val(resArr[13].trim());
@@ -428,8 +454,8 @@ function addProductRow(event, str) {
             + "<td class='text-center'><button type='button' class='tbl-icon-btn del' id='_delProcRow_" + proRowCount + "' name='_delProcRow_" + proRowCount + "' onclick='deleteProductRow(this);' title='Delete row'><i class='fas fa-times' style='font-size:12px;'></i></button></td>"
             + "<td ><input type='text' class='form-control form-control-sm' id='_productName_" + proRowCount + "' name='_productName_" + proRowCount + "' placeholder='Product' onfocus='window._activeProductRow=" + proRowCount + ";autoComplete(event," + proRowCount + ",1);' onblur='getProductDetails(" + proRowCount + ",1);calculateRow(" + proRowCount + ");enableAddButton(" + proRowCount + ");'></td>"
             + "<td ><div class='d-flex flex-column'><div class='d-flex align-items-center gap-1'><input type='text' class='form-control form-control-sm' id='_totqty_" + proRowCount + "' name='_totqty_" + proRowCount + "' placeholder='Qty' value='0' style='min-width:0;width:100%;' onkeyup='calculateRow(" + proRowCount + ");tryAddProductRow(event," + proRowCount + ");'><span class='text-muted small' id='_totunit_" + proRowCount + "'></span></div><small class='text-primary' id='_convtotqty_" + proRowCount + "'></small><input type='hidden' id='_pack_" + proRowCount + "' name='_pack_" + proRowCount + "' value='1'><input type='hidden' id='_qtyperpack_" + proRowCount + "' name='_qtyperpack_" + proRowCount + "' value='0'></div></td>"
-            + "<td ><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_cost_" + proRowCount + "' name='_cost_" + proRowCount + "' placeholder='Cost' value='0.00' onkeyup='calculateRow(" + proRowCount + ");tryAddProductRow(event," + proRowCount + ");'><small class='text-info' id='_costperconv_" + proRowCount + "'></small></div></td>"
-            + "<td ><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_mrp_" + proRowCount + "' name='_mrp_" + proRowCount + "' placeholder='Mrp' value='0.00' onkeyup='calculateRow(" + proRowCount + ");tryAddProductRow(event," + proRowCount + ");'><small class='text-info' id='_mrpperconv_" + proRowCount + "'></small></div></td>"
+            + "<td ><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_cost_" + proRowCount + "' name='_cost_" + proRowCount + "' placeholder='Cost' value='0.00' onkeyup='calculateRow(" + proRowCount + ");tryAddProductRow(event," + proRowCount + ");' onblur='updateProductCost(" + proRowCount + ");'><small class='text-info' id='_costperconv_" + proRowCount + "'></small></div></td>"
+            + "<td ><div class='d-flex flex-column'><input type='text' class='form-control form-control-sm' id='_mrp_" + proRowCount + "' name='_mrp_" + proRowCount + "' placeholder='Mrp' value='0.00' readonly tabindex='-1'><small class='text-info' id='_mrpperconv_" + proRowCount + "'></small></div></td>"
             + "<td ><input type='text' class='form-control form-control-sm' id='_disc_" + proRowCount + "' name='_disc_" + proRowCount + "' placeholder='Disc' value='0' onkeyup='calculateRow(" + proRowCount + ");tryAddProductRow(event," + proRowCount + ");'></td>"
             + "<td ><input type='text' class='form-control form-control-sm' id='_tax_" + proRowCount + "' name='_tax_" + proRowCount + "' placeholder='Tax' value='0' onkeyup='calculateRow(" + proRowCount + ");tryAddProductRow(event," + proRowCount + ");'></td>"
             + "<td ><input type='text' class='form-control form-control-sm' id='_freeqty_" + proRowCount + "' name='_freeqty_" + proRowCount + "' placeholder='Free' value='0' onkeyup='calculateRow(" + proRowCount + ");tryAddProductRow(event," + proRowCount + ");'></td>"
